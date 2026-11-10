@@ -1,0 +1,201 @@
+#if UNITY_EDITOR
+using System.IO;
+using ArcadeEmpire.Player;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using UnityEngine.SceneManagement;
+
+namespace ArcadeEmpire.EditorTools
+{
+    /// <summary>
+    /// Génère la première salle d'arcade (rétro années 80) avec des PRIMITIVES Unity (modèles provisoires :
+    /// aucun modèle 3D final n'est importé à ce stade). Dimensions : 12 x 10 m, hauteur 3,5 m.
+    /// Scène produite : Assets/_Project/Scenes/ArcadeRoom.unity.
+    /// </summary>
+    public static class RoomBuilder
+    {
+        public const string ScenePath = "Assets/_Project/Scenes/ArcadeRoom.unity";
+        const string MatDir = "Assets/_Project/Materials";
+
+        const float W = 12f, D = 10f, H = 3.5f;
+
+        [MenuItem("ArcadeEmpire/Générer la salle d'arcade")]
+        public static void Build()
+        {
+            ProjectSetup.EnsureFolder(MatDir);
+            ProjectSetup.EnsureFolder("Assets/_Project/Scenes");
+
+            Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+            var floorA = Mat("Floor_A", new Color(0.10f, 0.10f, 0.14f), 0.7f);
+            var floorB = Mat("Floor_B", new Color(0.16f, 0.12f, 0.22f), 0.7f);
+            var wall = Mat("Wall", new Color(0.12f, 0.08f, 0.20f), 0.2f);
+            var ceiling = Mat("Ceiling", new Color(0.05f, 0.05f, 0.08f), 0.1f);
+            var cabinet = Mat("Cabinet", new Color(0.08f, 0.08f, 0.10f), 0.5f);
+            var neonPink = Neon("Neon_Pink", new Color(1f, 0.1f, 0.6f));
+            var neonCyan = Neon("Neon_Cyan", new Color(0.1f, 0.9f, 1f));
+            var neonYellow = Neon("Neon_Yellow", new Color(1f, 0.85f, 0.1f));
+
+            var root = new GameObject("Room").transform;
+
+            // Sol en damier (1 m x 1 m)
+            var floor = Group("Floor", root);
+            for (int x = 0; x < (int)W; x++)
+                for (int z = 0; z < (int)D; z++)
+                    Box("Tile", floor, new Vector3(x + 0.5f - W / 2, -0.05f, z + 0.5f - D / 2), new Vector3(1f, 0.1f, 1f), (x + z) % 2 == 0 ? floorA : floorB, false);
+
+            // Murs et plafond
+            var walls = Group("Walls", root);
+            Box("Wall_Back", walls, new Vector3(0, H / 2, D / 2), new Vector3(W, H, 0.2f), wall, true);
+            Box("Wall_Front", walls, new Vector3(0, H / 2, -D / 2), new Vector3(W, H, 0.2f), wall, true);
+            Box("Wall_Left", walls, new Vector3(-W / 2, H / 2, 0), new Vector3(0.2f, H, D), wall, true);
+            Box("Wall_Right", walls, new Vector3(W / 2, H / 2, 0), new Vector3(0.2f, H, D), wall, true);
+            Box("Ceiling", walls, new Vector3(0, H + 0.1f, 0), new Vector3(W + 0.4f, 0.2f, D + 0.4f), ceiling, false);
+
+            // Néons : bandes le long du plafond et enseigne
+            var neons = Group("Neons", root);
+            Box("Neon_Back", neons, new Vector3(0, H - 0.2f, D / 2 - 0.15f), new Vector3(W - 0.4f, 0.08f, 0.08f), neonPink, false);
+            Box("Neon_Front", neons, new Vector3(0, H - 0.2f, -D / 2 + 0.15f), new Vector3(W - 0.4f, 0.08f, 0.08f), neonCyan, false);
+            Box("Neon_Left", neons, new Vector3(-W / 2 + 0.15f, H - 0.2f, 0), new Vector3(0.08f, 0.08f, D - 0.4f), neonCyan, false);
+            Box("Neon_Right", neons, new Vector3(W / 2 - 0.15f, H - 0.2f, 0), new Vector3(0.08f, 0.08f, D - 0.4f), neonPink, false);
+            Box("Sign_Arcade", neons, new Vector3(0, 2.4f, D / 2 - 0.15f), new Vector3(4f, 0.6f, 0.1f), neonYellow, false);
+
+            // Éclairage : lumières ponctuelles colorées + faible lumière d'ambiance
+            var lights = Group("Lights", root);
+            PointLight("Light_Pink", lights, new Vector3(-3.5f, 3f, 2f), new Color(1f, 0.2f, 0.65f), 6f);
+            PointLight("Light_Cyan", lights, new Vector3(3.5f, 3f, 2f), new Color(0.2f, 0.9f, 1f), 6f);
+            PointLight("Light_Pink2", lights, new Vector3(3.5f, 3f, -2.5f), new Color(1f, 0.2f, 0.65f), 6f);
+            PointLight("Light_Cyan2", lights, new Vector3(-3.5f, 3f, -2.5f), new Color(0.2f, 0.9f, 1f), 6f);
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.10f, 0.09f, 0.16f);
+
+            // Emplacements de machines (provisoires : bornes en primitives, remplacées par de vrais prefabs aux phases 4 et 5)
+            var slots = Group("MachineSlots", root);
+            for (int i = 0; i < 4; i++)
+                Cabinet($"Slot_Claw_{i + 1}", slots, new Vector3(-4.5f + i * 3f, 0f, 3.6f), 180f, cabinet, neonCyan);
+            for (int i = 0; i < 2; i++)
+                Cabinet($"Slot_CoinPusher_{i + 1}", slots, new Vector3(-3f + i * 6f, 0f, -3.6f), 0f, cabinet, neonPink);
+
+            // Point d'apparition du joueur
+            var spawn = new GameObject("PlayerSpawn");
+            spawn.transform.SetParent(root, false);
+            spawn.transform.position = new Vector3(0, 0, -1f);
+
+            // Caméra (visite libre, remplacée par le personnage en Phase 3) + post-traitement (bloom des néons)
+            var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
+            camGo.transform.position = new Vector3(0, 1.7f, -4f);
+            camGo.transform.rotation = Quaternion.Euler(8f, 0f, 0f);
+            var cam = camGo.AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = Color.black;
+            cam.nearClipPlane = 0.05f;
+            camGo.AddComponent<AudioListener>();
+            camGo.AddComponent<SimpleFlyCamera>();
+            var camData = camGo.AddComponent<UniversalAdditionalCameraData>();
+            camData.renderPostProcessing = true;
+
+            var volGo = new GameObject("Global Volume");
+            var vol = volGo.AddComponent<Volume>();
+            vol.isGlobal = true;
+            vol.sharedProfile = EnsureProfile();
+
+            EditorSceneManager.SaveScene(scene, ScenePath);
+            AssetDatabase.SaveAssets();
+        }
+
+        static VolumeProfile EnsureProfile()
+        {
+            string path = MatDir + "/ArcadeVolume.asset";
+            var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
+            if (profile != null) return profile;
+
+            profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            AssetDatabase.CreateAsset(profile, path);
+
+            var bloom = profile.Add<Bloom>(true);
+            bloom.threshold.Override(0.9f);
+            bloom.intensity.Override(1.4f);
+            bloom.scatter.Override(0.7f);
+            AssetDatabase.AddObjectToAsset(bloom, profile);
+
+            var tone = profile.Add<Tonemapping>(true);
+            tone.mode.Override(TonemappingMode.ACES);
+            AssetDatabase.AddObjectToAsset(tone, profile);
+
+            EditorUtility.SetDirty(profile);
+            return profile;
+        }
+
+        static void Cabinet(string name, Transform parent, Vector3 pos, float rotY, Material body, Material screenGlow)
+        {
+            var root = new GameObject(name).transform;
+            root.SetParent(parent, false);
+            root.position = pos;
+            root.rotation = Quaternion.Euler(0f, rotY, 0f);
+            Box("Body", root, new Vector3(0, 0.95f, 0), new Vector3(1.4f, 1.9f, 0.9f), body, true, true);
+            Box("Screen", root, new Vector3(0, 1.35f, -0.46f), new Vector3(1.1f, 0.7f, 0.04f), screenGlow, false, true);
+            Box("Marquee", root, new Vector3(0, 1.85f, -0.3f), new Vector3(1.3f, 0.2f, 0.4f), screenGlow, false, true);
+        }
+
+        static Transform Group(string name, Transform parent)
+        {
+            var t = new GameObject(name).transform;
+            t.SetParent(parent, false);
+            return t;
+        }
+
+        static void Box(string name, Transform parent, Vector3 pos, Vector3 size, Material mat, bool collider, bool local = false)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            if (local) go.transform.localPosition = pos; else go.transform.position = pos;
+            go.transform.localScale = size;
+            go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+            if (!collider) Object.DestroyImmediate(go.GetComponent<BoxCollider>());
+            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
+        }
+
+        static void PointLight(string name, Transform parent, Vector3 pos, Color color, float range)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            go.transform.position = pos;
+            var l = go.AddComponent<Light>();
+            l.type = LightType.Point;
+            l.color = color;
+            l.range = range;
+            l.intensity = 6f;
+            l.shadows = LightShadows.None;
+        }
+
+        static Material Mat(string name, Color color, float smoothness)
+        {
+            string path = $"{MatDir}/{name}.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.SetColor("_BaseColor", color);
+            m.SetFloat("_Smoothness", smoothness);
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        static Material Neon(string name, Color color)
+        {
+            var m = Mat(name, color, 0.5f);
+            m.EnableKeyword("_EMISSION");
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            m.SetColor("_EmissionColor", color * 3f);
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+    }
+}
+#endif

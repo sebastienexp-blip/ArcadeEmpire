@@ -29,7 +29,9 @@ namespace ArcadeEmpire.EditorTools
             GraphicsSettings.defaultRenderPipeline = pc;
             QualitySettings.renderPipeline = pc;
             PlayerSettings.colorSpace = ColorSpace.Linear;
+            RoomBuilder.Build();
             EnsureBootScene(pc, mobile);
+            EnableInputSystemOnly();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -82,11 +84,30 @@ namespace ArcadeEmpire.EditorTools
             var managers = new GameObject("Managers");
             managers.AddComponent<CurrencyManager>();
             managers.AddComponent<SaveManager>();
+            managers.AddComponent<BootLoader>();
             var gfx = managers.AddComponent<GraphicsQualityManager>();
             gfx.Configure(pc, mobile);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
-            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(ScenePath, true) };
+            EditorBuildSettings.scenes = new[]
+            {
+                new EditorBuildSettingsScene(ScenePath, true),
+                new EditorBuildSettingsScene(RoomBuilder.ScenePath, true)
+            };
+        }
+
+        /// <summary>Le jeu utilise uniquement le nouvel Input System (activeInputHandler = 1).</summary>
+        static void EnableInputSystemOnly()
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
+            if (assets == null || assets.Length == 0) return;
+            var so = new SerializedObject(assets[0]);
+            var prop = so.FindProperty("activeInputHandler");
+            if (prop != null && prop.intValue != 1)
+            {
+                prop.intValue = 1;
+                so.ApplyModifiedPropertiesWithoutUndo();
+            }
         }
 
         public static void EnsureFolder(string path)

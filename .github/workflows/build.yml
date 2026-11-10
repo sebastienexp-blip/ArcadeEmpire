@@ -27,10 +27,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: android
-            target: Android
-            method: ArcadeEmpire.EditorTools.Builder.BuildAndroid
-            artifact: build/Android/ArcadeEmpire.apk
+          # Android mis de côté pour l'instant (à réactiver en fin de projet : décommenter ce bloc)
+          # - name: android
+          #   target: Android
+          #   method: ArcadeEmpire.EditorTools.Builder.BuildAndroid
+          #   artifact: build/Android/ArcadeEmpire.apk
           - name: windows
             target: StandaloneWindows64
             method: ArcadeEmpire.EditorTools.Builder.BuildWindows

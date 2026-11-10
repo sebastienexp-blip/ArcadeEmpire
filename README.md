@@ -5,7 +5,7 @@ Jeu Unity 3D de gestion de salle d'arcade (machines à pinces, coin pusher, mini
 ## État d'avancement
 
 - [x] **Phase 1** : architecture, économie de base, sauvegarde, données, classe de base des machines, qualité PC/Mobile
-- [ ] Phase 2 : environnement 3D et première salle
+- [x] Phase 2 : première salle (primitives provisoires, générée par `RoomBuilder` ; visite à la caméra libre)
 - [ ] Phase 3 : personnage et déplacements
 - [ ] Phase 4 : machine à pinces
 - [ ] Phase 5 : coin pusher
@@ -20,7 +20,7 @@ Jeu Unity 3D de gestion de salle d'arcade (machines à pinces, coin pusher, mini
 Le workflow `.github/workflows/build.yml` (onglet **Actions**) compile le jeu dans le cloud avec **Unity 6000.0.32f1**, la même version que Korvalune. La licence est lue dans le secret GitHub `UNITY_LICENSE` (Settings > Secrets and variables > Actions : y coller le contenu du fichier `Unity_lic.ulf`).
 
 - À chaque modification de `Assets/`, `Packages/` ou `ProjectSettings/`, ou via *Run workflow* :
-  - **APK Android** (ARM64, profil graphique Mobile) : release `apk-derniere`
+  - ~~APK Android~~ : mis de côté, à réactiver en fin de projet (bloc commenté dans `build.yml`)
   - **Jeu Windows** (profil graphique PC) : release `pc-derniere` (zip)
 - La CI crée automatiquement les deux assets URP (PC / Mobile) et la scène `Boot` (script `ProjectSetup`).
 - Les rapports de build sont dans les artefacts de chaque exécution (`ci-out/<plateforme>/build.md`).
