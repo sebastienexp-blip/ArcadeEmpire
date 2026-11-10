@@ -34,3 +34,7 @@ crashlytics-build.properties
 # OS
 .DS_Store
 Thumbs.db
+
+# Licence Unity : ne jamais committer, utiliser le secret UNITY_LICENSE
+.licence/
+*.ulf

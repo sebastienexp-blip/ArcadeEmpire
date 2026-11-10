@@ -1,0 +1,120 @@
+# Construit l'APK Android et le jeu Windows (PC) dans le cloud, puis les publie dans des releases téléchargeables
+# (« apk-derniere » et « pc-derniere »). Se lance à chaque modification du code, ou à la demande (onglet Actions).
+name: Build — Android et PC
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'Assets/**'
+      - 'Packages/**'
+      - 'ProjectSettings/**'
+      - '.github/workflows/build.yml'
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: android
+            target: Android
+            method: ArcadeEmpire.EditorTools.Builder.BuildAndroid
+            artifact: build/Android/ArcadeEmpire.apk
+          - name: windows
+            target: StandaloneWindows64
+            method: ArcadeEmpire.EditorTools.Builder.BuildWindows
+            artifact: build/Windows
+    steps:
+      - name: Libérer de l'espace disque
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: ${{ matrix.name != 'android' }}
+          dotnet: true
+          haskell: true
+          large-packages: false
+
+      - name: Mémoire d'échange (16 Go)
+        run: |
+          sudo swapoff -a || true
+          sudo fallocate -l 16G /mnt/ae.swap && sudo chmod 600 /mnt/ae.swap && sudo mkswap /mnt/ae.swap && sudo swapon /mnt/ae.swap
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: Library
+          key: Library-${{ matrix.name }}-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}
+          restore-keys: Library-${{ matrix.name }}-
+
+      - name: Charger la licence Unity
+        env:
+          SECRET_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          # secret UNITY_LICENSE si présent, sinon le fichier .licence/Unity_lic.ulf du dépôt (même licence que Korvalune)
+          if [ -n "$SECRET_LICENSE" ]; then LIC="$SECRET_LICENSE";
+          elif [ -f .licence/Unity_lic.ulf ]; then LIC="$(cat .licence/Unity_lic.ulf)";
+          else echo "::error::Licence Unity absente (.licence/Unity_lic.ulf ou secret UNITY_LICENSE)"; exit 1; fi
+          { echo "UNITY_LICENSE<<ULF_EOF"; echo "$LIC"; echo "ULF_EOF"; } >> "$GITHUB_ENV"
+          echo "${GITHUB_RUN_NUMBER}" > ci-build-number.txt
+
+      - name: Unity — construction
+        id: unity
+        uses: game-ci/unity-builder@v4
+        continue-on-error: true
+        env:
+          UNITY_LICENSE: ${{ env.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: ${{ matrix.target }}
+          buildMethod: ${{ matrix.method }}
+          allowDirtyBuild: true
+          dockerMemoryLimit: 30g
+
+      - name: Rapport
+        if: always()
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" . || true
+          mkdir -p ci-out/${{ matrix.name }}
+          [ -f ci-out/${{ matrix.name }}/build.md ] || { echo "# Unity s'est arrêté avant la fin"; grep -rhoaE "[A-Za-z0-9_/.-]+\.cs\([0-9]+,[0-9]+\): error CS[0-9]+: [^\"\\]{0,300}" Library/Bee Logs Temp 2>/dev/null | sort -u | head -60; } > ci-out/${{ matrix.name }}/build.md || true
+          cat ci-out/${{ matrix.name }}/build.md
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.name }}
+          path: |
+            ${{ matrix.artifact }}
+            ci-out/${{ matrix.name }}/build.md
+          if-no-files-found: warn
+
+      - name: Sauver le cache Library
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: Library
+          key: Library-${{ matrix.name }}-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}-${{ github.run_id }}
+
+      - name: Résultat
+        run: test -e "${{ matrix.artifact }}"
+
+      - name: Publier (release téléchargeable depuis le téléphone)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ matrix.name }}" = "android" ]; then T=apk-derniere; F=build/Android/ArcadeEmpire.apk;
+          else T=pc-derniere; (cd build/Windows && zip -qr ../../ArcadeEmpire-Windows.zip .); F=ArcadeEmpire-Windows.zip; fi
+          gh release delete -R ${{ github.repository }} $T -y --cleanup-tag 2>/dev/null || true
+          gh release create -R ${{ github.repository }} $T "$F" --title "Arcade Empire 0.1.${GITHUB_RUN_NUMBER} (${{ matrix.name }})" --notes "Build automatique n°${GITHUB_RUN_NUMBER}" --prerelease --target ${{ github.sha }}

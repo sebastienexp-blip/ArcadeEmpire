@@ -1,45 +1,49 @@
 using ArcadeEmpire.Save;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace ArcadeEmpire.Core
 {
     /// <summary>
-    /// Choisit automatiquement le niveau de qualité : "PC" (graphismes complets) ou "Mobile"
-    /// (version allégée). Les niveaux doivent exister dans Project Settings > Quality, avec
-    /// exactement ces noms, chacun relié à son propre asset URP (voir README).
+    /// Choisit au lancement le profil graphique : "PC" (graphismes complets) ou "Mobile" (version allégée).
+    /// Les deux assets URP sont référencés ici (créés automatiquement par ProjectSetup dans l'éditeur / la CI),
+    /// ce qui les inclut dans le build.
     /// </summary>
     public class GraphicsQualityManager : MonoBehaviour
     {
-        public const string PcLevelName = "PC";
-        public const string MobileLevelName = "Mobile";
+        public enum Profile { Auto = -1, PC = 0, Mobile = 1 }
 
+        [SerializeField] private RenderPipelineAsset pcPipeline;
+        [SerializeField] private RenderPipelineAsset mobilePipeline;
         [SerializeField] private int mobileTargetFps = 60;
+
+        public Profile Current { get; private set; }
+
+        public void Configure(RenderPipelineAsset pc, RenderPipelineAsset mobile)
+        {
+            pcPipeline = pc;
+            mobilePipeline = mobile;
+        }
 
         private void Start()
         {
             int manual = SaveManager.Instance != null ? SaveManager.Instance.Data.graphicsQualityOverride : -1;
-            if (manual >= 0 && manual < QualitySettings.names.Length)
-                Apply(manual);
+            Apply(manual == 0 ? Profile.PC : manual == 1 ? Profile.Mobile : Profile.Auto);
+        }
+
+        public void Apply(Profile profile)
+        {
+            if (profile == Profile.Auto)
+                profile = Application.isMobilePlatform ? Profile.Mobile : Profile.PC;
+
+            Current = profile;
+            RenderPipelineAsset asset = profile == Profile.Mobile ? mobilePipeline : pcPipeline;
+            if (asset != null)
+                QualitySettings.renderPipeline = asset;
             else
-                ApplyAuto();
-        }
+                Debug.LogWarning($"[Graphics] Asset URP du profil {profile} non assigné.");
 
-        public void ApplyAuto()
-        {
-            string wanted = Application.isMobilePlatform ? MobileLevelName : PcLevelName;
-            int index = System.Array.IndexOf(QualitySettings.names, wanted);
-            if (index < 0)
-            {
-                Debug.LogWarning($"[Graphics] Niveau de qualité \"{wanted}\" introuvable dans Project Settings > Quality.");
-                return;
-            }
-            Apply(index);
-        }
-
-        public void Apply(int qualityIndex)
-        {
-            QualitySettings.SetQualityLevel(qualityIndex, true);
-            if (Application.isMobilePlatform)
+            if (profile == Profile.Mobile)
             {
                 QualitySettings.vSyncCount = 0;
                 Application.targetFrameRate = mobileTargetFps;

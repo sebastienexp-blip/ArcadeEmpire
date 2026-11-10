@@ -15,31 +15,31 @@ Jeu Unity 3D de gestion de salle d'arcade (machines à pinces, coin pusher, mini
 - [ ] Phase 9 : autres machines et mini-jeux
 - [ ] Phase 10 : optimisation, tests, finition
 
-## Ouvrir le projet
+## Tout se gère depuis GitHub (aucun PC requis)
 
-1. Installer Unity Hub, puis l'éditeur **2022.3 LTS** (module Android Build Support inclus pour l'APK).
-2. Cloner ce dépôt, puis dans Unity Hub : *Add > Add project from disk*.
-3. À la première ouverture, Unity télécharge les packages (URP, Input System, Cinemachine, TextMeshPro) et génère les fichiers `.meta`. Si une autre version 2022.3.x est installée, accepter la mise à niveau proposée.
+Le workflow `.github/workflows/build.yml` (onglet **Actions**) compile le jeu dans le cloud avec **Unity 6000.0.32f1**, la même version que Korvalune. La licence est lue dans le secret GitHub `UNITY_LICENSE` (Settings > Secrets and variables > Actions : y coller le contenu du fichier `Unity_lic.ulf`).
 
-> `ProjectSettings/` ne contient pour l'instant que `ProjectVersion.txt` : Unity génère le reste à l'ouverture. Vérifier ensuite que le pipeline URP est configuré (étape 2 ci-dessous).
+- À chaque modification de `Assets/`, `Packages/` ou `ProjectSettings/`, ou via *Run workflow* :
+  - **APK Android** (ARM64, profil graphique Mobile) : release `apk-derniere`
+  - **Jeu Windows** (profil graphique PC) : release `pc-derniere` (zip)
+- La CI crée automatiquement les deux assets URP (PC / Mobile) et la scène `Boot` (script `ProjectSetup`).
+- Les rapports de build sont dans les artefacts de chaque exécution (`ci-out/<plateforme>/build.md`).
+- Depuis un téléphone : onglet *Releases* du dépôt, télécharger l'APK.
 
-## Configuration initiale (une seule fois, dans l'éditeur)
+## Ouvrir le projet dans Unity (optionnel, sur PC/Mac)
 
-### 1. Scène de démarrage
-Créer `Assets/_Project/Scenes/Boot.unity`, avec un GameObject vide **Managers** portant les composants :
-`CurrencyManager`, `SaveManager`, `GraphicsQualityManager`.
-Ajouter la scène dans *File > Build Settings*.
+Unity Hub > *Add project from disk*, éditeur **6000.0.32f1**. Menu **ArcadeEmpire > Configurer le projet** pour régénérer URP et la scène Boot.
 
-### 2. URP : deux profils de qualité
-1. *Assets > Create > Rendering > URP Asset (with Universal Renderer)* deux fois : `URP_PC` et `URP_Mobile`.
-2. `URP_PC` : HDR activé, Anti-aliasing MSAA 4x, ombres temps réel (distance 50 m, cascades 4), Soft Shadows, Render Scale 1.0.
-3. `URP_Mobile` : HDR désactivé, MSAA 2x ou désactivé, ombres (distance 15 m, cascades 1), Render Scale 0.8, SRP Batcher activé.
-4. *Edit > Project Settings > Quality* : créer deux niveaux nommés exactement **PC** et **Mobile**, et assigner à chacun l'URP Asset correspondant.
-5. Le script `GraphicsQualityManager` sélectionne le bon niveau au lancement selon la plateforme.
+## Profils graphiques
 
-### 3. Créer les données de test
-- *Create > ArcadeEmpire > Reward* : créer 3 récompenses (commune, rare, épique) avec un `id` unique.
-- *Create > ArcadeEmpire > Machine* : créer la fiche de la machine à pinces (`costPerPlay` = 5).
+| | PC | Mobile |
+|---|---|---|
+| HDR | oui | non |
+| MSAA | 4x | désactivé |
+| Ombres | 50 m, 4 cascades | 15 m, 1 cascade |
+| Échelle de rendu | 100 % | 80 % |
+
+`GraphicsQualityManager` choisit le profil selon la plateforme (réglable via `SaveData.graphicsQualityOverride` : -1 auto, 0 PC, 1 Mobile).
 
 ## Structure
 
@@ -47,6 +47,7 @@ Ajouter la scène dans *File > Build Settings*.
 Assets/_Project/
   Scripts/
     Core/       GraphicsQualityManager
+    Editor/     ProjectSetup, Builder (CI)
     Economy/    CurrencyManager
     Save/       SaveData, SaveSystem, SaveManager
     Data/       RewardData, MachineData (ScriptableObjects)
