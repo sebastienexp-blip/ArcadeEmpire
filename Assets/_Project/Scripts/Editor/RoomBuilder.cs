@@ -47,6 +47,10 @@ namespace ArcadeEmpire.EditorTools
                 for (int z = 0; z < (int)D; z++)
                     Box("Tile", floor, new Vector3(x + 0.5f - W / 2, -0.05f, z + 0.5f - D / 2), new Vector3(1f, 0.1f, 1f), (x + z) % 2 == 0 ? floorA : floorB, false);
 
+            var floorCol = floor.gameObject.AddComponent<BoxCollider>();
+            floorCol.center = new Vector3(0f, -0.05f, 0f);
+            floorCol.size = new Vector3(W, 0.1f, D);
+
             // Murs et plafond
             var walls = Group("Walls", root);
             Box("Wall_Back", walls, new Vector3(0, H / 2, D / 2), new Vector3(W, H, 0.2f), wall, true);
@@ -84,16 +88,19 @@ namespace ArcadeEmpire.EditorTools
             spawn.transform.SetParent(root, false);
             spawn.transform.position = new Vector3(0, 0, -1f);
 
-            // Caméra (visite libre, remplacée par le personnage en Phase 3) + post-traitement (bloom des néons)
+            // Joueur provisoire (capsule) + caméra 3e personne + post-traitement (bloom des néons)
+            var player = BuildPlayer(spawn.transform.position);
+
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
-            camGo.transform.position = new Vector3(0, 1.7f, -4f);
-            camGo.transform.rotation = Quaternion.Euler(8f, 0f, 0f);
+            camGo.transform.position = spawn.transform.position + new Vector3(0, 3f, -4f);
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = Color.black;
             cam.nearClipPlane = 0.05f;
             camGo.AddComponent<AudioListener>();
-            camGo.AddComponent<SimpleFlyCamera>();
+            var tpc = camGo.AddComponent<ThirdPersonCamera>();
+            tpc.SetTarget(player.transform);
+            player.SetCamera(camGo.transform);
             var camData = camGo.AddComponent<UniversalAdditionalCameraData>();
             camData.renderPostProcessing = true;
 
@@ -104,6 +111,37 @@ namespace ArcadeEmpire.EditorTools
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>Personnage provisoire : capsule + tête + "nez" indiquant la direction (aucun modèle FBX à ce stade).</summary>
+        static PlayerController BuildPlayer(Vector3 pos)
+        {
+            var go = new GameObject("Player") { tag = "Player" };
+            go.transform.position = pos + new Vector3(0f, 0.05f, 0f);
+
+            var cc = go.AddComponent<CharacterController>();
+            cc.height = 1.8f;
+            cc.radius = 0.35f;
+            cc.center = new Vector3(0f, 0.9f, 0f);
+            cc.stepOffset = 0.3f;
+
+            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            body.name = "Body";
+            Object.DestroyImmediate(body.GetComponent<CapsuleCollider>());
+            body.transform.SetParent(go.transform, false);
+            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+            body.transform.localScale = new Vector3(0.7f, 0.9f, 0.7f);
+            body.GetComponent<MeshRenderer>().sharedMaterial = Mat("Player_Body", new Color(0.95f, 0.55f, 0.15f), 0.3f);
+
+            var nose = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            nose.name = "FacingMarker";
+            Object.DestroyImmediate(nose.GetComponent<BoxCollider>());
+            nose.transform.SetParent(go.transform, false);
+            nose.transform.localPosition = new Vector3(0f, 1.45f, 0.3f);
+            nose.transform.localScale = new Vector3(0.2f, 0.2f, 0.25f);
+            nose.GetComponent<MeshRenderer>().sharedMaterial = Mat("Player_Marker", new Color(1f, 1f, 1f), 0.3f);
+
+            return go.AddComponent<PlayerController>();
         }
 
         static VolumeProfile EnsureProfile()

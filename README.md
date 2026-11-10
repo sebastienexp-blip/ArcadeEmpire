@@ -6,7 +6,7 @@ Jeu Unity 3D de gestion de salle d'arcade (machines à pinces, coin pusher, mini
 
 - [x] **Phase 1** : architecture, économie de base, sauvegarde, données, classe de base des machines, qualité PC/Mobile
 - [x] Phase 2 : première salle (primitives provisoires, générée par `RoomBuilder` ; visite à la caméra libre)
-- [ ] Phase 3 : personnage et déplacements
+- [x] Phase 3 : personnage provisoire (capsule), déplacements ZQSD/WASD + Maj, caméra 3e personne (clic droit = orbite, molette = zoom)
 - [ ] Phase 4 : machine à pinces
 - [ ] Phase 5 : coin pusher
 - [ ] Phase 6 : économie et inventaire
