@@ -31,7 +31,6 @@ namespace ArcadeEmpire.EditorTools
             PlayerSettings.colorSpace = ColorSpace.Linear;
             RoomBuilder.Build();
             EnsureBootScene(pc, mobile);
-            EnableInputSystemOnly();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
         }
@@ -97,7 +96,7 @@ namespace ArcadeEmpire.EditorTools
         }
 
         /// <summary>Le jeu utilise uniquement le nouvel Input System (activeInputHandler = 1).</summary>
-        static void EnableInputSystemOnly()
+        public static void EnableInputSystemOnly()
         {
             var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
             if (assets == null || assets.Length == 0) return;
@@ -107,6 +106,7 @@ namespace ArcadeEmpire.EditorTools
             {
                 prop.intValue = 1;
                 so.ApplyModifiedPropertiesWithoutUndo();
+                AssetDatabase.SaveAssets();
             }
         }
 

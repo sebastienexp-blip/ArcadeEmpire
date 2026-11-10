@@ -16,6 +16,14 @@ namespace ArcadeEmpire.EditorTools
         public static void BuildAndroid() => Build(BuildTarget.Android, "build/Android/ArcadeEmpire.apk", "android");
         public static void BuildWindows() => Build(BuildTarget.StandaloneWindows64, "build/Windows/ArcadeEmpire.exe", "windows");
 
+        /// <summary>Étape 1 de la CI : réglages qui exigent un redémarrage de l'éditeur (Input System seul). Quitte aussitôt.</summary>
+        public static void Prepare()
+        {
+            ProjectSetup.EnableInputSystemOnly();
+            AssetDatabase.SaveAssets();
+            EditorApplication.Exit(0);
+        }
+
         static void Build(BuildTarget target, string output, string tag)
         {
             var rep = new StringBuilder($"# Construction {tag}\n\n");

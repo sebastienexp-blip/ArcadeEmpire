@@ -70,7 +70,27 @@ jobs:
           { echo "UNITY_LICENSE<<ULF_EOF"; echo "$LIC"; echo "ULF_EOF"; } >> "$GITHUB_ENV"
           echo "${GITHUB_RUN_NUMBER}" > ci-build-number.txt
 
-      - name: Unity — construction
+      - name: Unity — préparation (Input System seul, éditeur 1)
+        uses: game-ci/unity-builder@v4
+        continue-on-error: true
+        env:
+          UNITY_LICENSE: ${{ env.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          targetPlatform: ${{ matrix.target }}
+          buildMethod: ArcadeEmpire.EditorTools.Builder.Prepare
+          allowDirtyBuild: true
+
+      - name: Préparer l'éditeur suivant
+        if: always()
+        run: |
+          sudo chown -R "$(id -u):$(id -g)" . || true
+          # licence de l'éditeur précédent : sinon l'activation suivante échoue
+          sudo find "$RUNNER_TEMP/_github_home" -name "Unity_lic.ulf" -delete 2>/dev/null || true
+          docker ps -q | xargs -r docker kill || true; sudo rm -f Temp/UnityLockfile || true
+
+      - name: Unity — construction (éditeur 2)
         id: unity
         uses: game-ci/unity-builder@v4
         continue-on-error: true
@@ -109,7 +129,8 @@ jobs:
           key: Library-${{ matrix.name }}-${{ hashFiles('Packages/manifest.json', 'ProjectSettings/ProjectVersion.txt') }}-${{ github.run_id }}
 
       - name: Résultat
-        run: test -e "${{ matrix.artifact }}"
+        run: |
+          if [ "${{ matrix.name }}" = "windows" ]; then test -f build/Windows/ArcadeEmpire.exe; else test -e "${{ matrix.artifact }}"; fi
 
       - name: Publier (release téléchargeable depuis le téléphone)
         env:
