@@ -46,11 +46,11 @@ namespace ArcadeEmpire.UI
             if (interactor == null) return;
 
             // État de la machine en cours d'utilisation
-            if (interactor.Active is ClawMachine claw)
+            if (interactor.Active != null)
             {
                 GUI.Box(new Rect(w * 0.5f - 420, 640, 840, 54), GUIContent.none, box);
-                GUI.Label(new Rect(w * 0.5f - 410, 646, 820, 44), claw.StatusText, big);
-                GUI.Label(new Rect(w * 0.5f - 410, 600, 820, 36), "ZQSD / WASD / flèches : déplacer la pince      ESPACE : valider", label);
+                GUI.Label(new Rect(w * 0.5f - 410, 646, 820, 44), interactor.Active.StatusText, big);
+                GUI.Label(new Rect(w * 0.5f - 410, 600, 820, 36), interactor.Active.ControlsHint, label);
             }
             else if (interactor.Nearest != null && interactor.Nearest.Data != null)
             {

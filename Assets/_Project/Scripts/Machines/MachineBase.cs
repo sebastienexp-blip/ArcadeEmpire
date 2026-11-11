@@ -30,6 +30,12 @@ namespace ArcadeEmpire.Machines
 
         public MachineData Data => data;
         public Transform CameraAnchor => cameraAnchor;
+        /// <summary>Message d'état affiché par le HUD pendant l'utilisation.</summary>
+        public string StatusText { get; protected set; } = "";
+
+        /// <summary>Rappel des commandes affiché par le HUD pendant l'utilisation.</summary>
+        public virtual string ControlsHint => "";
+
         public bool IsInUse { get; private set; }
         public bool IsPlaying { get; private set; }
 

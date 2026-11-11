@@ -85,7 +85,11 @@ namespace ArcadeEmpire.EditorTools
             }
             ClawMachineBuilder.Build(slots, new Vector3(-1.5f, 0f, 3.6f), 0f);
             for (int i = 0; i < 2; i++)
+            {
+                if (i == 1) continue;   // emplacement 2 : vrai coin pusher (CoinPusherBuilder)
                 Cabinet($"Slot_CoinPusher_{i + 1}", slots, new Vector3(-3f + i * 6f, 0f, -3.6f), 0f, cabinet, neonPink);
+            }
+            CoinPusherBuilder.Build(slots, new Vector3(3f, 0f, -3.6f), 180f);
 
             // Point d'apparition du joueur
             var spawn = new GameObject("PlayerSpawn");

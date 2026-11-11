@@ -44,7 +44,7 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float gripStrength = 1f;
         [SerializeField] private float grabRadius = 0.16f;
 
-        public string StatusText { get; private set; } = "";
+        public override string ControlsHint => "ZQSD / WASD / flèches : déplacer la pince      ESPACE : valider";
         public float TimeLeft => timeLeft;
         public bool IsMoving => phase == Phase.Moving;
 
