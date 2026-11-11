@@ -30,6 +30,21 @@ namespace ArcadeEmpire.Data
         public int shopTicketPrice = 0;
         public long experienceValue = 5;
 
+        /// <summary>Prix de revente en pièces, selon la rareté.</summary>
+        public long SellValue
+        {
+            get
+            {
+                switch (rarity)
+                {
+                    case Rarity.Common: return 3;
+                    case Rarity.Rare: return 12;
+                    case Rarity.Epic: return 40;
+                    default: return 150;
+                }
+            }
+        }
+
         private void OnValidate()
         {
             if (string.IsNullOrWhiteSpace(id)) id = name;

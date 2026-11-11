@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System.IO;
 using ArcadeEmpire.Core;
+using ArcadeEmpire.Data;
 using ArcadeEmpire.Economy;
 using ArcadeEmpire.Save;
 using UnityEditor;
@@ -83,6 +84,7 @@ namespace ArcadeEmpire.EditorTools
             var managers = new GameObject("Managers");
             managers.AddComponent<CurrencyManager>();
             managers.AddComponent<SaveManager>();
+            managers.AddComponent<InventoryManager>().Configure(EnsureCatalog());
             managers.AddComponent<BootLoader>();
             var gfx = managers.AddComponent<GraphicsQualityManager>();
             gfx.Configure(pc, mobile);
@@ -93,6 +95,28 @@ namespace ArcadeEmpire.EditorTools
                 new EditorBuildSettingsScene(ScenePath, true),
                 new EditorBuildSettingsScene(RoomBuilder.ScenePath, true)
             };
+        }
+
+        /// <summary>Catalogue de toutes les RewardData du projet, triées par rareté puis par nom.</summary>
+        static RewardCatalog EnsureCatalog()
+        {
+            EnsureFolder("Assets/_Project/Data");
+            const string path = "Assets/_Project/Data/RewardCatalog.asset";
+            var catalog = AssetDatabase.LoadAssetAtPath<RewardCatalog>(path);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<RewardCatalog>();
+                AssetDatabase.CreateAsset(catalog, path);
+            }
+            catalog.rewards.Clear();
+            foreach (string guid in AssetDatabase.FindAssets("t:RewardData"))
+            {
+                var r = AssetDatabase.LoadAssetAtPath<RewardData>(AssetDatabase.GUIDToAssetPath(guid));
+                if (r != null) catalog.rewards.Add(r);
+            }
+            catalog.rewards.Sort((a, b) => a.rarity != b.rarity ? a.rarity.CompareTo(b.rarity) : string.CompareOrdinal(a.displayName, b.displayName));
+            EditorUtility.SetDirty(catalog);
+            return catalog;
         }
 
         /// <summary>Le jeu utilise uniquement le nouvel Input System (activeInputHandler = 1).</summary>

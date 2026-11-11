@@ -98,6 +98,11 @@ namespace ArcadeEmpire.Machines
         /// <summary>Ajoute la récompense à l'inventaire persistant (sauvegardé par SaveManager).</summary>
         private static void AddToInventory(RewardData reward)
         {
+            if (InventoryManager.Instance != null)
+            {
+                InventoryManager.Instance.Add(reward, 1);
+                return;
+            }
             if (SaveManager.Instance == null) return;
             var inv = SaveManager.Instance.Data.inventory;
             var entry = inv.Find(e => e.rewardId == reward.id);

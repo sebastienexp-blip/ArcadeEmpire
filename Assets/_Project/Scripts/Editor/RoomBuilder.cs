@@ -99,7 +99,9 @@ namespace ArcadeEmpire.EditorTools
             // Joueur provisoire (capsule) + caméra 3e personne + post-traitement (bloom des néons)
             var player = BuildPlayer(spawn.transform.position);
             player.gameObject.AddComponent<MachineInteractor>();
-            new GameObject("HUD").AddComponent<ArcadeEmpire.UI.GameHud>();
+            var hud = new GameObject("HUD");
+            hud.AddComponent<ArcadeEmpire.UI.GameHud>();
+            hud.AddComponent<ArcadeEmpire.UI.InventoryPanel>();
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             camGo.transform.position = spawn.transform.position + new Vector3(0, 3f, -4f);
