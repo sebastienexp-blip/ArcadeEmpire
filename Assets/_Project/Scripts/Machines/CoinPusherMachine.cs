@@ -192,6 +192,7 @@ namespace ArcadeEmpire.Machines
                 CurrencyManager.Instance.Add(CurrencyType.Experience, 1);
             }
             wonThisSession++;
+            RaiseCoinsWon(this, 1);
             if (Time.time - lastSfx > 0.08f)
             {
                 lastSfx = Time.time;

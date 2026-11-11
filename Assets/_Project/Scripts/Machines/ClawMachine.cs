@@ -1,6 +1,7 @@
 using System.Collections;
 using ArcadeEmpire.Core;
 using ArcadeEmpire.Data;
+using ArcadeEmpire.Economy;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -45,6 +46,8 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float grabRadius = 0.16f;
 
         public override string ControlsHint => "ZQSD / WASD / flèches : déplacer la pince      ESPACE : valider";
+        /// <summary>Force réelle de la pince : réglage de base x bonus des améliorations achetées (+10 % par niveau).</summary>
+        public float EffectiveGrip => gripStrength * (1f + 0.1f * UpgradeManager.GetLevel(data != null ? data.id : ""));
         public float TimeLeft => timeLeft;
         public bool IsMoving => phase == Phase.Moving;
 
@@ -293,7 +296,7 @@ namespace ArcadeEmpire.Machines
                 return;
             }
 
-            float chance = Mathf.Clamp(GrabBase(best.reward) * gripStrength, 0.05f, 0.97f);
+            float chance = Mathf.Clamp(GrabBase(best.reward) * EffectiveGrip, 0.05f, 0.97f);
             if (Random.value <= chance)
             {
                 best.Attach(holdPoint);
@@ -311,7 +314,7 @@ namespace ArcadeEmpire.Machines
         private void MaybeSlip(string message)
         {
             if (held == null) return;
-            float chance = Mathf.Clamp01(0.14f * RarityFactor(held.reward) * Mathf.Max(0.1f, 1.6f - gripStrength));
+            float chance = Mathf.Clamp01(0.14f * RarityFactor(held.reward) * Mathf.Max(0.1f, 1.6f - EffectiveGrip));
             if (Random.value < chance)
             {
                 held.Release();

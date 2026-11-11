@@ -25,6 +25,17 @@ namespace ArcadeEmpire.Machines
         /// <summary>Déclenché pour toute récompense gagnée sur n'importe quelle machine (HUD, succès, missions).</summary>
         public static event Action<MachineBase, RewardData> AnyRewardWon;
 
+        /// <summary>Déclenché à chaque partie payée (missions, statistiques).</summary>
+        public static event Action<MachineBase> AnyPlayStarted;
+
+        /// <summary>Déclenché quand des pièces sont gagnées (coin pusher) : (machine, nombre).</summary>
+        public static event Action<MachineBase, int> AnyCoinsWon;
+
+        protected static void RaiseCoinsWon(MachineBase machine, int amount) => AnyCoinsWon?.Invoke(machine, amount);
+
+        /// <summary>Vrai si le niveau du joueur permet d'utiliser cette machine.</summary>
+        public bool IsUnlocked => data == null || ProgressionManager.Instance == null || ProgressionManager.Instance.Level >= data.unlockLevel;
+
         protected virtual void OnEnable() { if (!All.Contains(this)) All.Add(this); }
         protected virtual void OnDisable() { All.Remove(this); }
 
@@ -46,7 +57,7 @@ namespace ArcadeEmpire.Machines
         /// <summary>Le joueur s'installe devant la machine.</summary>
         public bool Enter()
         {
-            if (IsInUse) return false;
+            if (IsInUse || !IsUnlocked) return false;
             IsInUse = true;
             OnPlayerEntered();
             OnEntered?.Invoke(this);
@@ -70,6 +81,7 @@ namespace ArcadeEmpire.Machines
             if (!CurrencyManager.Instance.TrySpend(CurrencyType.Coins, data.costPerPlay)) return false;
             IsPlaying = true;
             OnPlayStarted();
+            AnyPlayStarted?.Invoke(this);
             return true;
         }
 

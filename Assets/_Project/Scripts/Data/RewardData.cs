@@ -45,6 +45,21 @@ namespace ArcadeEmpire.Data
             }
         }
 
+        /// <summary>Niveau du joueur requis pour acheter ce lot en boutique, selon la rareté.</summary>
+        public int ShopMinLevel
+        {
+            get
+            {
+                switch (rarity)
+                {
+                    case Rarity.Common: return 1;
+                    case Rarity.Rare: return 3;
+                    case Rarity.Epic: return 8;
+                    default: return 15;
+                }
+            }
+        }
+
         private void OnValidate()
         {
             if (string.IsNullOrWhiteSpace(id)) id = name;

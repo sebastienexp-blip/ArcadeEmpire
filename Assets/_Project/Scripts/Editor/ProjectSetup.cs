@@ -85,6 +85,8 @@ namespace ArcadeEmpire.EditorTools
             managers.AddComponent<CurrencyManager>();
             managers.AddComponent<SaveManager>();
             managers.AddComponent<InventoryManager>().Configure(EnsureCatalog());
+            managers.AddComponent<ProgressionManager>();
+            managers.AddComponent<MissionManager>();
             managers.AddComponent<BootLoader>();
             var gfx = managers.AddComponent<GraphicsQualityManager>();
             gfx.Configure(pc, mobile);

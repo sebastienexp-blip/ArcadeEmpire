@@ -7,8 +7,8 @@ using UnityEngine;
 namespace ArcadeEmpire.UI
 {
     /// <summary>
-    /// Interface minimale (IMGUI) : monnaies, invite d'interaction, état de la machine, notification de gain.
-    /// Provisoire : remplacée par l'interface Canvas/TextMeshPro en Phase 6-7.
+    /// Interface minimale (IMGUI) : monnaies, niveau et barre d'XP, invite d'interaction, état de la machine,
+    /// notifications (gain, niveau, mission). Provisoire : remplacée par un Canvas en phase de finition.
     /// </summary>
     public class GameHud : MonoBehaviour
     {
@@ -18,50 +18,83 @@ namespace ArcadeEmpire.UI
         private GUIStyle label, big, box;
 
         private void OnEnable() => MachineBase.AnyRewardWon += OnReward;
-        private void OnDisable() => MachineBase.AnyRewardWon -= OnReward;
-
-        private void Start() => interactor = FindFirstObjectByType<MachineInteractor>();
-
-        private void OnReward(MachineBase machine, RewardData reward)
+        private void OnDisable()
         {
-            toast = $"★ {reward.displayName} — {ClawMachine.RarityName(reward.rarity)} ★";
-            toastUntil = Time.time + 3.5f;
+            MachineBase.AnyRewardWon -= OnReward;
+            if (ProgressionManager.Instance != null) ProgressionManager.Instance.OnLevelUp -= OnLevelUp;
+            if (MissionManager.Instance != null) MissionManager.Instance.OnMissionCompleted -= OnMission;
         }
+
+        private void Start()
+        {
+            interactor = FindFirstObjectByType<MachineInteractor>();
+            if (ProgressionManager.Instance != null) ProgressionManager.Instance.OnLevelUp += OnLevelUp;
+            if (MissionManager.Instance != null) MissionManager.Instance.OnMissionCompleted += OnMission;
+        }
+
+        private void Show(string text, float seconds = 3.5f)
+        {
+            toast = text;
+            toastUntil = Time.time + seconds;
+        }
+
+        private void OnReward(MachineBase machine, RewardData reward) =>
+            Show($"★ {reward.displayName} — {ClawMachine.RarityName(reward.rarity)} ★");
+
+        private void OnLevelUp(int level, long coins, int tokens) =>
+            Show($"NIVEAU {level} !   +{coins} pièces" + (tokens > 0 ? $"   +{tokens} jeton premium" : ""), 4.5f);
+
+        private void OnMission(string title, long coins, long xp) =>
+            Show($"Mission accomplie : {title}   +{coins} pièces, +{xp} XP", 4.5f);
 
         private void OnGUI()
         {
+            if (UIState.PanelOpen) return;
             float scale = Screen.height / 720f;
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             float w = Screen.width / scale;
             Styles();
 
-            // Monnaies
+            // Monnaies et niveau
             var cm = CurrencyManager.Instance;
+            var pm = ProgressionManager.Instance;
             string coins = cm != null ? cm.Get(CurrencyType.Coins).ToString() : "—";
             string tickets = cm != null ? cm.Get(CurrencyType.Tickets).ToString() : "—";
-            string xp = cm != null ? cm.Get(CurrencyType.Experience).ToString() : "—";
-            GUI.Box(new Rect(12, 12, 330, 40), GUIContent.none, box);
-            GUI.Label(new Rect(22, 16, 320, 32), $"Pièces {coins}    Tickets {tickets}    XP {xp}", label);
-
-            if (interactor == null) return;
-
-            // État de la machine en cours d'utilisation
-            if (interactor.Active != null)
+            GUI.Box(new Rect(12, 12, 360, 78), GUIContent.none, box);
+            GUI.Label(new Rect(22, 14, 340, 30), $"Pièces {coins}     Tickets {tickets}", label);
+            if (pm != null)
             {
-                GUI.Box(new Rect(w * 0.5f - 420, 640, 840, 54), GUIContent.none, box);
-                GUI.Label(new Rect(w * 0.5f - 410, 646, 820, 44), interactor.Active.StatusText, big);
-                GUI.Label(new Rect(w * 0.5f - 410, 600, 820, 36), interactor.Active.ControlsHint, label);
-            }
-            else if (interactor.Nearest != null && interactor.Nearest.Data != null)
-            {
-                var d = interactor.Nearest.Data;
-                GUI.Box(new Rect(w * 0.5f - 300, 640, 600, 54), GUIContent.none, box);
-                GUI.Label(new Rect(w * 0.5f - 290, 646, 580, 44), $"E : jouer — {d.displayName} ({d.costPerPlay} pièces)", big);
+                string xpText = pm.Level >= ProgressionManager.MaxLevel ? "MAX" : $"{pm.XpIntoLevel} / {pm.XpForNext} XP";
+                GUI.Label(new Rect(22, 42, 340, 28), $"Niveau {pm.Level}     {xpText}", label);
+                Color old = GUI.color;
+                GUI.color = new Color(0.1f, 0.1f, 0.2f, 0.9f);
+                GUI.DrawTexture(new Rect(22, 72, 336, 8), Texture2D.whiteTexture);
+                GUI.color = new Color(0.2f, 0.9f, 1f);
+                GUI.DrawTexture(new Rect(22, 72, 336 * pm.Progress01, 8), Texture2D.whiteTexture);
+                GUI.color = old;
             }
 
-            // Notification de gain
+            if (interactor != null)
+            {
+                if (interactor.Active != null)
+                {
+                    GUI.Box(new Rect(w * 0.5f - 420, 640, 840, 54), GUIContent.none, box);
+                    GUI.Label(new Rect(w * 0.5f - 410, 646, 820, 44), interactor.Active.StatusText, big);
+                    GUI.Label(new Rect(w * 0.5f - 410, 600, 820, 36), interactor.Active.ControlsHint, label);
+                }
+                else if (interactor.Nearest != null && interactor.Nearest.Data != null)
+                {
+                    var d = interactor.Nearest.Data;
+                    GUI.Box(new Rect(w * 0.5f - 300, 640, 600, 54), GUIContent.none, box);
+                    string prompt = interactor.Nearest.IsUnlocked
+                        ? $"E : jouer — {d.displayName} ({d.costPerPlay} pièces)"
+                        : $"{d.displayName} — niveau {d.unlockLevel} requis";
+                    GUI.Label(new Rect(w * 0.5f - 290, 646, 580, 44), prompt, big);
+                }
+            }
+
             if (Time.time < toastUntil)
-                GUI.Label(new Rect(w * 0.5f - 400, 110, 800, 60), toast, big);
+                GUI.Label(new Rect(w * 0.5f - 450, 110, 900, 60), toast, big);
         }
 
         private void Styles()

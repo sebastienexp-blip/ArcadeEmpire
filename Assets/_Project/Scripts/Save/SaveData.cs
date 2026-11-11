@@ -21,6 +21,13 @@ namespace ArcadeEmpire.Save
     }
 
     [Serializable]
+    public class UpgradeEntry
+    {
+        public string machineId;
+        public int level;
+    }
+
+    [Serializable]
     public class MissionProgress
     {
         public string missionId;
@@ -52,6 +59,8 @@ namespace ArcadeEmpire.Save
         public List<PlacedMachineData> placedMachines = new List<PlacedMachineData>();
         public List<MissionProgress> missions = new List<MissionProgress>();
         public List<string> unlockedRoomIds = new List<string>();
+        public List<UpgradeEntry> upgrades = new List<UpgradeEntry>();
+        public string missionsDate;   // jour (UTC) des missions en cours, pour le renouvellement quotidien
 
         // Réglages
         public int graphicsQualityOverride = -1; // -1 = automatique selon la plateforme

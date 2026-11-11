@@ -102,6 +102,7 @@ namespace ArcadeEmpire.EditorTools
             var hud = new GameObject("HUD");
             hud.AddComponent<ArcadeEmpire.UI.GameHud>();
             hud.AddComponent<ArcadeEmpire.UI.InventoryPanel>();
+            hud.AddComponent<ArcadeEmpire.UI.ShopPanel>();
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             camGo.transform.position = spawn.transform.position + new Vector3(0, 3f, -4f);

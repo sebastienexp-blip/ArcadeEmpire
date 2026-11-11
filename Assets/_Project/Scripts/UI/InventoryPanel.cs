@@ -33,13 +33,14 @@ namespace ArcadeEmpire.UI
             if (kb == null) return;
             bool inMachine = interactor != null && interactor.Active != null;
 
-            if (!open && kb.iKey.wasPressedThisFrame && !inMachine) SetOpen(true);
+            if (!open && kb.iKey.wasPressedThisFrame && !inMachine && !UIState.PanelOpen) SetOpen(true);
             else if (open && (kb.iKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame)) SetOpen(false);
         }
 
         private void SetOpen(bool value)
         {
             open = value;
+            UIState.PanelOpen = value;
             message = "";
             if (player != null) player.ControlEnabled = !value;
         }
@@ -54,7 +55,7 @@ namespace ArcadeEmpire.UI
             if (!open)
             {
                 if (interactor == null || interactor.Active == null)
-                    GUI.Label(new Rect(12, 690, 300, 24), "I : inventaire", small);
+                    GUI.Label(new Rect(12, 690, 420, 24), "I : inventaire     B : boutique et missions", small);
                 return;
             }
 
