@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using ArcadeEmpire.Data;
 using ArcadeEmpire.Economy;
+using ArcadeEmpire.Save;
 using UnityEngine;
 
 namespace ArcadeEmpire.Machines
@@ -16,6 +18,15 @@ namespace ArcadeEmpire.Machines
 
         [Tooltip("Point où la caméra rapprochée se place (Cinemachine) pendant l'utilisation.")]
         [SerializeField] protected Transform cameraAnchor;
+
+        /// <summary>Toutes les machines actives de la scène (utilisé par l'interaction du joueur).</summary>
+        public static readonly List<MachineBase> All = new List<MachineBase>();
+
+        /// <summary>Déclenché pour toute récompense gagnée sur n'importe quelle machine (HUD, succès, missions).</summary>
+        public static event Action<MachineBase, RewardData> AnyRewardWon;
+
+        protected virtual void OnEnable() { if (!All.Contains(this)) All.Add(this); }
+        protected virtual void OnDisable() { All.Remove(this); }
 
         public MachineData Data => data;
         public Transform CameraAnchor => cameraAnchor;
@@ -73,7 +84,19 @@ namespace ArcadeEmpire.Machines
             if (reward == null || CurrencyManager.Instance == null) return;
             CurrencyManager.Instance.Add(CurrencyType.Tickets, reward.ticketValue);
             CurrencyManager.Instance.Add(CurrencyType.Experience, reward.experienceValue);
+            AddToInventory(reward);
             OnRewardWon?.Invoke(this, reward);
+            AnyRewardWon?.Invoke(this, reward);
+        }
+
+        /// <summary>Ajoute la récompense à l'inventaire persistant (sauvegardé par SaveManager).</summary>
+        private static void AddToInventory(RewardData reward)
+        {
+            if (SaveManager.Instance == null) return;
+            var inv = SaveManager.Instance.Data.inventory;
+            var entry = inv.Find(e => e.rewardId == reward.id);
+            if (entry == null) inv.Add(new InventoryEntry { rewardId = reward.id, count = 1 });
+            else entry.count++;
         }
 
         protected virtual void OnPlayerEntered() { }

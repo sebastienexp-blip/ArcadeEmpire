@@ -22,7 +22,12 @@ namespace ArcadeEmpire.Player
         private float pitch = 18f;
         private float currentDistance;
 
+        private Transform overrideAnchor;
+
         public void SetTarget(Transform t) => target = t;
+
+        /// <summary>Place la caméra sur un ancrage (machine) ; null = reprendre le suivi du joueur.</summary>
+        public void SetOverride(Transform anchor) => overrideAnchor = anchor;
 
         private void Start()
         {
@@ -32,6 +37,14 @@ namespace ArcadeEmpire.Player
 
         private void LateUpdate()
         {
+            if (overrideAnchor != null)
+            {
+                float k = 1f - Mathf.Exp(-6f * Time.deltaTime);
+                transform.SetPositionAndRotation(
+                    Vector3.Lerp(transform.position, overrideAnchor.position, k),
+                    Quaternion.Slerp(transform.rotation, overrideAnchor.rotation, k));
+                return;
+            }
             if (target == null) return;
 
             Mouse mouse = Mouse.current;

@@ -79,7 +79,11 @@ namespace ArcadeEmpire.EditorTools
             // Emplacements de machines (provisoires : bornes en primitives, remplacées par de vrais prefabs aux phases 4 et 5)
             var slots = Group("MachineSlots", root);
             for (int i = 0; i < 4; i++)
+            {
+                if (i == 1) continue;   // emplacement 2 : vraie machine à pinces (ClawMachineBuilder)
                 Cabinet($"Slot_Claw_{i + 1}", slots, new Vector3(-4.5f + i * 3f, 0f, 3.6f), 180f, cabinet, neonCyan);
+            }
+            ClawMachineBuilder.Build(slots, new Vector3(-1.5f, 0f, 3.6f), 0f);
             for (int i = 0; i < 2; i++)
                 Cabinet($"Slot_CoinPusher_{i + 1}", slots, new Vector3(-3f + i * 6f, 0f, -3.6f), 0f, cabinet, neonPink);
 
@@ -90,6 +94,8 @@ namespace ArcadeEmpire.EditorTools
 
             // Joueur provisoire (capsule) + caméra 3e personne + post-traitement (bloom des néons)
             var player = BuildPlayer(spawn.transform.position);
+            player.gameObject.AddComponent<MachineInteractor>();
+            new GameObject("HUD").AddComponent<ArcadeEmpire.UI.GameHud>();
 
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             camGo.transform.position = spawn.transform.position + new Vector3(0, 3f, -4f);
@@ -178,14 +184,14 @@ namespace ArcadeEmpire.EditorTools
             Box("Marquee", root, new Vector3(0, 1.85f, -0.3f), new Vector3(1.3f, 0.2f, 0.4f), screenGlow, false, true);
         }
 
-        static Transform Group(string name, Transform parent)
+        public static Transform Group(string name, Transform parent)
         {
             var t = new GameObject(name).transform;
             t.SetParent(parent, false);
             return t;
         }
 
-        static void Box(string name, Transform parent, Vector3 pos, Vector3 size, Material mat, bool collider, bool local = false)
+        public static void Box(string name, Transform parent, Vector3 pos, Vector3 size, Material mat, bool collider, bool local = false)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
@@ -210,7 +216,7 @@ namespace ArcadeEmpire.EditorTools
             l.shadows = LightShadows.None;
         }
 
-        static Material Mat(string name, Color color, float smoothness)
+        public static Material Mat(string name, Color color, float smoothness)
         {
             string path = $"{MatDir}/{name}.mat";
             var m = AssetDatabase.LoadAssetAtPath<Material>(path);
@@ -225,7 +231,7 @@ namespace ArcadeEmpire.EditorTools
             return m;
         }
 
-        static Material Neon(string name, Color color)
+        public static Material Neon(string name, Color color)
         {
             var m = Mat(name, color, 0.5f);
             m.EnableKeyword("_EMISSION");
