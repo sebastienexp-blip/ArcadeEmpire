@@ -124,7 +124,7 @@ namespace ArcadeEmpire.EditorTools
 
             // --- Machine + zone de récupération
             var machine = root.gameObject.AddComponent<ClawMachine>();
-            machine.Configure(data, anchor, rb, cable, pivots, hold, stickPivot, button);
+            machine.Configure(data, anchor, rb, cable.transform, pivots, hold, stickPivot, button.transform);
 
             var chute = new GameObject("ChuteZone");
             chute.transform.SetParent(root, false);
