@@ -99,6 +99,28 @@ namespace ArcadeEmpire.EditorTools
             };
         }
 
+        /// <summary>Catalogue de toutes les MachineData (machines et décorations), triées par catégorie puis par prix.</summary>
+        public static MachineCatalog EnsureMachineCatalog()
+        {
+            EnsureFolder("Assets/_Project/Data");
+            const string path = "Assets/_Project/Data/MachineCatalog.asset";
+            var catalog = AssetDatabase.LoadAssetAtPath<MachineCatalog>(path);
+            if (catalog == null)
+            {
+                catalog = ScriptableObject.CreateInstance<MachineCatalog>();
+                AssetDatabase.CreateAsset(catalog, path);
+            }
+            catalog.machines.Clear();
+            foreach (string guid in AssetDatabase.FindAssets("t:MachineData"))
+            {
+                var m = AssetDatabase.LoadAssetAtPath<MachineData>(AssetDatabase.GUIDToAssetPath(guid));
+                if (m != null) catalog.machines.Add(m);
+            }
+            catalog.machines.Sort((a, b) => a.category != b.category ? a.category.CompareTo(b.category) : a.purchasePrice.CompareTo(b.purchasePrice));
+            EditorUtility.SetDirty(catalog);
+            return catalog;
+        }
+
         /// <summary>Catalogue de toutes les RewardData du projet, triées par rareté puis par nom.</summary>
         static RewardCatalog EnsureCatalog()
         {

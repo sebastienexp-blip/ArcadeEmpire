@@ -135,6 +135,19 @@ namespace ArcadeEmpire.EditorTools
             return machine;
         }
 
+        /// <summary>Crée le prefab de la machine (placée dynamiquement par BuildingManager) et le relie à sa MachineData.</summary>
+        public static MachineData EnsurePrefab()
+        {
+            MachineData data = EnsureMachineData();
+            ProjectSetup.EnsureFolder("Assets/_Project/Prefabs");
+            var go = Build(null, Vector3.zero, 0f).gameObject;
+            foreach (var t in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, 0);
+            data.prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/_Project/Prefabs/CoinPusher_Classic.prefab");
+            Object.DestroyImmediate(go);
+            EditorUtility.SetDirty(data);
+            return data;
+        }
+
         /// <summary>Pièce ou jeton : cylindre plat, collider convexe, Rigidbody à détection continue.</summary>
         static GameObject BuildCoin(string name, Transform parent, Vector3 localPos, float yaw, Material mat, float diameter, float thickness, RewardData reward)
         {
@@ -180,8 +193,10 @@ namespace ArcadeEmpire.EditorTools
             d.displayName = "Coin Pusher";
             d.category = MachineCategory.CoinPusher;
             d.costPerPlay = 1;
-            d.purchasePrice = 0;
+            d.purchasePrice = 800;
             d.unlockLevel = 1;
+            d.footprintSize = new Vector2(1.5f, 2.8f);
+            d.footprintCenterZ = -0.45f;
             EditorUtility.SetDirty(d);
             return d;
         }

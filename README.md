@@ -11,7 +11,7 @@ Jeu Unity 3D de gestion de salle d'arcade (machines à pinces, coin pusher, mini
 - [x] Phase 5 : coin pusher (visée Q/D, ESPACE : lâcher une pièce ; pièces et jetons poussés = gains)
 - [x] Phase 6 : économie et inventaire (touche I : inventaire, collection, revente, sauvegarde manuelle)
 - [x] Phase 7 : progression (niveaux 1 à 100, XP), missions du jour, boutique en tickets, amélioration de la pince (touche B)
-- [ ] Phase 8 : construction et personnalisation
+- [x] Phase 8 : construction (touche C : vue du dessus, acheter/placer/déplacer/pivoter R/revendre Suppr, grille 0,5 m), décors, 5 ambiances de salle
 - [ ] Phase 9 : autres machines et mini-jeux
 - [ ] Phase 10 : optimisation, tests, finition
 
@@ -52,6 +52,7 @@ Assets/_Project/
     Save/       SaveData, SaveSystem, SaveManager
     Data/       RewardData, RewardCatalog, MachineData (ScriptableObjects)
     Machines/   MachineBase, ClawMachine, CoinPusherMachine, PrizeItem, ChuteZone, PusherCoin, PusherCollector (+ Minigames à venir)
+    Building/   BuildingManager, BuildMode, PlacedObject, RoomTheme(+Manager/Target)
     UI/         GameHud, InventoryPanel, ShopPanel (provisoires, IMGUI)
   (Scenes, Prefabs, Materials, Audio, Art : créés au fil des phases)
 ```

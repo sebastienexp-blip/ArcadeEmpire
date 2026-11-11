@@ -139,6 +139,19 @@ namespace ArcadeEmpire.EditorTools
             return machine;
         }
 
+        /// <summary>Crée le prefab de la machine (placée dynamiquement par BuildingManager) et le relie à sa MachineData.</summary>
+        public static MachineData EnsurePrefab()
+        {
+            MachineData data = EnsureMachineData();
+            ProjectSetup.EnsureFolder("Assets/_Project/Prefabs");
+            var go = Build(null, Vector3.zero, 0f).gameObject;
+            foreach (var t in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, 0);
+            data.prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/_Project/Prefabs/ClawMachine_Classic.prefab");
+            Object.DestroyImmediate(go);
+            EditorUtility.SetDirty(data);
+            return data;
+        }
+
         static void SpawnPrizes(Transform root, Dictionary<string, RewardData> rewards)
         {
             var group = new GameObject("Prizes").transform;
@@ -226,8 +239,10 @@ namespace ArcadeEmpire.EditorTools
             d.displayName = "Pince classique";
             d.category = MachineCategory.Claw;
             d.costPerPlay = 5;
-            d.purchasePrice = 0;
+            d.purchasePrice = 500;
             d.unlockLevel = 1;
+            d.footprintSize = new Vector2(1.5f, 2.2f);
+            d.footprintCenterZ = -0.5f;
             EditorUtility.SetDirty(d);
             return d;
         }

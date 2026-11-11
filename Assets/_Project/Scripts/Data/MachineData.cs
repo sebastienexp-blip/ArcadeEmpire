@@ -8,7 +8,8 @@ namespace ArcadeEmpire.Data
         CoinPusher,
         Skill,
         Retro,
-        Other
+        Other,
+        Decoration
     }
 
     /// <summary>
@@ -29,6 +30,15 @@ namespace ArcadeEmpire.Data
         public long purchasePrice = 500;
         [Tooltip("Niveau joueur requis pour débloquer la machine.")]
         public int unlockLevel = 1;
+
+        [Header("Construction")]
+        [Tooltip("Emprise au sol (largeur x profondeur, en mètres), espace de jeu devant la machine compris.")]
+        public Vector2 footprintSize = new Vector2(1.5f, 1.5f);
+        [Tooltip("Décalage de l'emprise le long de l'axe Z local (négatif = vers l'avant de la machine).")]
+        public float footprintCenterZ = 0f;
+
+        /// <summary>Prix de revente : la moitié du prix d'achat.</summary>
+        public long SellPrice => purchasePrice / 2;
 
         private void OnValidate()
         {

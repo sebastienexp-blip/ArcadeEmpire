@@ -1,4 +1,5 @@
 using ArcadeEmpire.Machines;
+using ArcadeEmpire.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -29,6 +30,12 @@ namespace ArcadeEmpire.Player
             if (Active != null)
             {
                 if (!Active.IsInUse) Release();
+                return;
+            }
+
+            if (UIState.PanelOpen)
+            {
+                Nearest = null;
                 return;
             }
 

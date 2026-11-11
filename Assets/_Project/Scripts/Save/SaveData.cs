@@ -60,6 +60,8 @@ namespace ArcadeEmpire.Save
         public List<MissionProgress> missions = new List<MissionProgress>();
         public List<string> unlockedRoomIds = new List<string>();
         public List<UpgradeEntry> upgrades = new List<UpgradeEntry>();
+        public bool layoutInitialized;                 // vrai une fois la disposition de départ de la salle créée
+        public string roomThemeId = "retro80";         // ambiance de la salle
         public string missionsDate;   // jour (UTC) des missions en cours, pour le renouvellement quotidien
 
         // Réglages

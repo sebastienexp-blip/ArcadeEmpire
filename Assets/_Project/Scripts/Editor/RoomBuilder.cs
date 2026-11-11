@@ -1,5 +1,6 @@
 #if UNITY_EDITOR
 using System.IO;
+using ArcadeEmpire.Building;
 using ArcadeEmpire.Player;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -45,7 +46,8 @@ namespace ArcadeEmpire.EditorTools
             var floor = Group("Floor", root);
             for (int x = 0; x < (int)W; x++)
                 for (int z = 0; z < (int)D; z++)
-                    Box("Tile", floor, new Vector3(x + 0.5f - W / 2, -0.05f, z + 0.5f - D / 2), new Vector3(1f, 0.1f, 1f), (x + z) % 2 == 0 ? floorA : floorB, false);
+                    Tag(Box("Tile", floor, new Vector3(x + 0.5f - W / 2, -0.05f, z + 0.5f - D / 2), new Vector3(1f, 0.1f, 1f), (x + z) % 2 == 0 ? floorA : floorB, false),
+                        (x + z) % 2 == 0 ? RoomThemeTarget.Role.FloorA : RoomThemeTarget.Role.FloorB);
 
             var floorCol = floor.gameObject.AddComponent<BoxCollider>();
             floorCol.center = new Vector3(0f, -0.05f, 0f);
@@ -53,43 +55,40 @@ namespace ArcadeEmpire.EditorTools
 
             // Murs et plafond
             var walls = Group("Walls", root);
-            Box("Wall_Back", walls, new Vector3(0, H / 2, D / 2), new Vector3(W, H, 0.2f), wall, true);
-            Box("Wall_Front", walls, new Vector3(0, H / 2, -D / 2), new Vector3(W, H, 0.2f), wall, true);
-            Box("Wall_Left", walls, new Vector3(-W / 2, H / 2, 0), new Vector3(0.2f, H, D), wall, true);
-            Box("Wall_Right", walls, new Vector3(W / 2, H / 2, 0), new Vector3(0.2f, H, D), wall, true);
-            Box("Ceiling", walls, new Vector3(0, H + 0.1f, 0), new Vector3(W + 0.4f, 0.2f, D + 0.4f), ceiling, false);
+            Tag(Box("Wall_Back", walls, new Vector3(0, H / 2, D / 2), new Vector3(W, H, 0.2f), wall, true), RoomThemeTarget.Role.Wall);
+            Tag(Box("Wall_Front", walls, new Vector3(0, H / 2, -D / 2), new Vector3(W, H, 0.2f), wall, true), RoomThemeTarget.Role.Wall);
+            Tag(Box("Wall_Left", walls, new Vector3(-W / 2, H / 2, 0), new Vector3(0.2f, H, D), wall, true), RoomThemeTarget.Role.Wall);
+            Tag(Box("Wall_Right", walls, new Vector3(W / 2, H / 2, 0), new Vector3(0.2f, H, D), wall, true), RoomThemeTarget.Role.Wall);
+            Tag(Box("Ceiling", walls, new Vector3(0, H + 0.1f, 0), new Vector3(W + 0.4f, 0.2f, D + 0.4f), ceiling, false), RoomThemeTarget.Role.Ceiling);
 
             // Néons : bandes le long du plafond et enseigne
             var neons = Group("Neons", root);
-            Box("Neon_Back", neons, new Vector3(0, H - 0.2f, D / 2 - 0.15f), new Vector3(W - 0.4f, 0.08f, 0.08f), neonPink, false);
-            Box("Neon_Front", neons, new Vector3(0, H - 0.2f, -D / 2 + 0.15f), new Vector3(W - 0.4f, 0.08f, 0.08f), neonCyan, false);
-            Box("Neon_Left", neons, new Vector3(-W / 2 + 0.15f, H - 0.2f, 0), new Vector3(0.08f, 0.08f, D - 0.4f), neonCyan, false);
-            Box("Neon_Right", neons, new Vector3(W / 2 - 0.15f, H - 0.2f, 0), new Vector3(0.08f, 0.08f, D - 0.4f), neonPink, false);
-            Box("Sign_Arcade", neons, new Vector3(0, 2.4f, D / 2 - 0.15f), new Vector3(4f, 0.6f, 0.1f), neonYellow, false);
+            Tag(Box("Neon_Back", neons, new Vector3(0, H - 0.2f, D / 2 - 0.15f), new Vector3(W - 0.4f, 0.08f, 0.08f), neonPink, false), RoomThemeTarget.Role.NeonA);
+            Tag(Box("Neon_Front", neons, new Vector3(0, H - 0.2f, -D / 2 + 0.15f), new Vector3(W - 0.4f, 0.08f, 0.08f), neonCyan, false), RoomThemeTarget.Role.NeonB);
+            Tag(Box("Neon_Left", neons, new Vector3(-W / 2 + 0.15f, H - 0.2f, 0), new Vector3(0.08f, 0.08f, D - 0.4f), neonCyan, false), RoomThemeTarget.Role.NeonB);
+            Tag(Box("Neon_Right", neons, new Vector3(W / 2 - 0.15f, H - 0.2f, 0), new Vector3(0.08f, 0.08f, D - 0.4f), neonPink, false), RoomThemeTarget.Role.NeonA);
+            Tag(Box("Sign_Arcade", neons, new Vector3(0, 2.4f, D / 2 - 0.15f), new Vector3(4f, 0.6f, 0.1f), neonYellow, false), RoomThemeTarget.Role.NeonAccent);
 
             // Éclairage : lumières ponctuelles colorées + faible lumière d'ambiance
             var lights = Group("Lights", root);
-            PointLight("Light_Pink", lights, new Vector3(-3.5f, 3f, 2f), new Color(1f, 0.2f, 0.65f), 6f);
-            PointLight("Light_Cyan", lights, new Vector3(3.5f, 3f, 2f), new Color(0.2f, 0.9f, 1f), 6f);
-            PointLight("Light_Pink2", lights, new Vector3(3.5f, 3f, -2.5f), new Color(1f, 0.2f, 0.65f), 6f);
-            PointLight("Light_Cyan2", lights, new Vector3(-3.5f, 3f, -2.5f), new Color(0.2f, 0.9f, 1f), 6f);
+            Tag(PointLight("Light_Pink", lights, new Vector3(-3.5f, 3f, 2f), new Color(1f, 0.2f, 0.65f), 6f), RoomThemeTarget.Role.LightA);
+            Tag(PointLight("Light_Cyan", lights, new Vector3(3.5f, 3f, 2f), new Color(0.2f, 0.9f, 1f), 6f), RoomThemeTarget.Role.LightB);
+            Tag(PointLight("Light_Pink2", lights, new Vector3(3.5f, 3f, -2.5f), new Color(1f, 0.2f, 0.65f), 6f), RoomThemeTarget.Role.LightA);
+            Tag(PointLight("Light_Cyan2", lights, new Vector3(-3.5f, 3f, -2.5f), new Color(0.2f, 0.9f, 1f), 6f), RoomThemeTarget.Role.LightB);
             RenderSettings.ambientMode = AmbientMode.Flat;
             RenderSettings.ambientLight = new Color(0.10f, 0.09f, 0.16f);
 
-            // Emplacements de machines (provisoires : bornes en primitives, remplacées par de vrais prefabs aux phases 4 et 5)
-            var slots = Group("MachineSlots", root);
-            for (int i = 0; i < 4; i++)
-            {
-                if (i == 1) continue;   // emplacement 2 : vraie machine à pinces (ClawMachineBuilder)
-                Cabinet($"Slot_Claw_{i + 1}", slots, new Vector3(-4.5f + i * 3f, 0f, 3.6f), 180f, cabinet, neonCyan);
-            }
-            ClawMachineBuilder.Build(slots, new Vector3(-1.5f, 0f, 3.6f), 0f);
-            for (int i = 0; i < 2; i++)
-            {
-                if (i == 1) continue;   // emplacement 2 : vrai coin pusher (CoinPusherBuilder)
-                Cabinet($"Slot_CoinPusher_{i + 1}", slots, new Vector3(-3f + i * 6f, 0f, -3.6f), 0f, cabinet, neonPink);
-            }
-            CoinPusherBuilder.Build(slots, new Vector3(3f, 0f, -3.6f), 180f);
+            // Machines et décorations : prefabs placés à l'exécution par BuildingManager (disposition sauvegardée)
+            ClawMachineBuilder.EnsurePrefab();
+            CoinPusherBuilder.EnsurePrefab();
+            DecorBuilder.EnsureAll();
+            AssetDatabase.SaveAssets();
+            var machineCatalog = ProjectSetup.EnsureMachineCatalog();
+
+            var building = new GameObject("Building");
+            building.AddComponent<BuildingManager>().Configure(machineCatalog);
+            building.AddComponent<RoomThemeManager>();
+            building.AddComponent<BuildMode>().Configure(GhostMaterial());
 
             // Point d'apparition du joueur
             var spawn = new GameObject("PlayerSpawn");
@@ -124,6 +123,29 @@ namespace ArcadeEmpire.EditorTools
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>Matériau transparent (asset, donc inclus dans le build) pour l'aperçu de placement.</summary>
+        static Material GhostMaterial()
+        {
+            string path = MatDir + "/BuildGhost.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.SetColor("_BaseColor", new Color(0.2f, 1f, 0.4f, 0.45f));
+            m.SetFloat("_Surface", 1f);
+            m.SetFloat("_Blend", 0f);
+            m.SetFloat("_SrcBlend", 5f);
+            m.SetFloat("_DstBlend", 10f);
+            m.SetFloat("_ZWrite", 0f);
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.renderQueue = 3000;
+            EditorUtility.SetDirty(m);
+            return m;
         }
 
         /// <summary>Personnage provisoire : capsule + tête + "nez" indiquant la direction (aucun modèle FBX à ce stade).</summary>
@@ -180,16 +202,13 @@ namespace ArcadeEmpire.EditorTools
             return profile;
         }
 
-        static void Cabinet(string name, Transform parent, Vector3 pos, float rotY, Material body, Material screenGlow)
+        static void Tag(GameObject go, RoomThemeTarget.Role role)
         {
-            var root = new GameObject(name).transform;
-            root.SetParent(parent, false);
-            root.position = pos;
-            root.rotation = Quaternion.Euler(0f, rotY, 0f);
-            Box("Body", root, new Vector3(0, 0.95f, 0), new Vector3(1.4f, 1.9f, 0.9f), body, true, true);
-            Box("Screen", root, new Vector3(0, 1.35f, -0.46f), new Vector3(1.1f, 0.7f, 0.04f), screenGlow, false, true);
-            Box("Marquee", root, new Vector3(0, 1.85f, -0.3f), new Vector3(1.3f, 0.2f, 0.4f), screenGlow, false, true);
+            GameObjectUtility.SetStaticEditorFlags(go, 0);   // un objet recoloré à l'exécution ne doit pas être en batching statique
+            go.AddComponent<RoomThemeTarget>().role = role;
         }
+
+        static void Tag(Light l, RoomThemeTarget.Role role) => l.gameObject.AddComponent<RoomThemeTarget>().role = role;
 
         public static Transform Group(string name, Transform parent)
         {
@@ -198,7 +217,7 @@ namespace ArcadeEmpire.EditorTools
             return t;
         }
 
-        public static void Box(string name, Transform parent, Vector3 pos, Vector3 size, Material mat, bool collider, bool local = false)
+        public static GameObject Box(string name, Transform parent, Vector3 pos, Vector3 size, Material mat, bool collider, bool local = false)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
@@ -208,9 +227,10 @@ namespace ArcadeEmpire.EditorTools
             go.GetComponent<MeshRenderer>().sharedMaterial = mat;
             if (!collider) Object.DestroyImmediate(go.GetComponent<BoxCollider>());
             GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.BatchingStatic);
+            return go;
         }
 
-        static void PointLight(string name, Transform parent, Vector3 pos, Color color, float range)
+        static Light PointLight(string name, Transform parent, Vector3 pos, Color color, float range)
         {
             var go = new GameObject(name);
             go.transform.SetParent(parent, false);
@@ -221,6 +241,7 @@ namespace ArcadeEmpire.EditorTools
             l.range = range;
             l.intensity = 6f;
             l.shadows = LightShadows.None;
+            return l;
         }
 
         public static Material Mat(string name, Color color, float smoothness)
