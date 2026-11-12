@@ -20,16 +20,16 @@ namespace ArcadeEmpire.EditorTools
         sealed class PrizeSpec
         {
             public string id, name; public Rarity rarity; public PrimitiveType shape;
-            public Color color; public Vector3 scale; public int count, tickets; public long xp; public bool glow;
+            public string model; public Color color; public Vector3 scale; public int count, tickets; public long xp; public bool glow;
         }
 
         static readonly PrizeSpec[] Specs =
         {
-            new PrizeSpec { id = "plush_pink", name = "Peluche rose", rarity = Rarity.Common, shape = PrimitiveType.Sphere, color = new Color(1f, 0.45f, 0.7f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
-            new PrizeSpec { id = "plush_blue", name = "Peluche bleue", rarity = Rarity.Common, shape = PrimitiveType.Sphere, color = new Color(0.35f, 0.6f, 1f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
-            new PrizeSpec { id = "mini_toy_green", name = "Mini-jouet vert", rarity = Rarity.Rare, shape = PrimitiveType.Cube, color = new Color(0.2f, 0.9f, 0.4f), scale = new Vector3(0.22f, 0.22f, 0.22f), count = 4, tickets = 5, xp = 15 },
-            new PrizeSpec { id = "capsule_purple", name = "Capsule surprise", rarity = Rarity.Epic, shape = PrimitiveType.Capsule, color = new Color(0.7f, 0.3f, 1f), scale = new Vector3(0.17f, 0.14f, 0.17f), count = 2, tickets = 15, xp = 40 },
-            new PrizeSpec { id = "figurine_gold", name = "Figurine dorée", rarity = Rarity.Legendary, shape = PrimitiveType.Cube, color = new Color(1f, 0.8f, 0.15f), scale = new Vector3(0.2f, 0.26f, 0.2f), count = 1, tickets = 50, xp = 120, glow = true },
+            new PrizeSpec { id = "plush_pink", model = "prize_bunny", name = "Peluche rose", rarity = Rarity.Common, shape = PrimitiveType.Sphere, color = new Color(1f, 0.45f, 0.7f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
+            new PrizeSpec { id = "plush_blue", model = "prize_bear", name = "Peluche bleue", rarity = Rarity.Common, shape = PrimitiveType.Sphere, color = new Color(0.35f, 0.6f, 1f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
+            new PrizeSpec { id = "mini_toy_green", model = "prize_robot", name = "Mini-jouet vert", rarity = Rarity.Rare, shape = PrimitiveType.Cube, color = new Color(0.2f, 0.9f, 0.4f), scale = new Vector3(0.22f, 0.22f, 0.22f), count = 4, tickets = 5, xp = 15 },
+            new PrizeSpec { id = "capsule_purple", model = "prize_capsule", name = "Capsule surprise", rarity = Rarity.Epic, shape = PrimitiveType.Capsule, color = new Color(0.7f, 0.3f, 1f), scale = new Vector3(0.17f, 0.14f, 0.17f), count = 2, tickets = 15, xp = 40 },
+            new PrizeSpec { id = "figurine_gold", model = "prize_cat_gold", name = "Figurine dorée", rarity = Rarity.Legendary, shape = PrimitiveType.Cube, color = new Color(1f, 0.8f, 0.15f), scale = new Vector3(0.2f, 0.26f, 0.2f), count = 1, tickets = 50, xp = 120, glow = true },
         };
 
         public static ClawMachine Build(Transform parent, Vector3 pos, float rotY)
@@ -172,13 +172,31 @@ namespace ArcadeEmpire.EditorTools
                 if (s.glow) { mat.EnableKeyword("_EMISSION"); mat.SetColor("_EmissionColor", s.color * 0.8f); }
                 for (int n = 0; n < s.count && k < slots.Count; n++, k++)
                 {
-                    var go = GameObject.CreatePrimitive(s.shape);
-                    go.name = "Prize_" + s.id + "_" + n;
-                    go.transform.SetParent(group, false);
+                    GameObject go;
+                    var visual = ModelLib.Spawn(s.model, null, ModelLib.Palette(mat));
+                    if (visual != null)
+                    {
+                        // modèle FBX : racine physique (scale uniforme) + visuel enfant + collider ajusté au modèle
+                        go = new GameObject("Prize_" + s.id + "_" + n);
+                        go.transform.SetParent(group, false);
+                        visual.transform.SetParent(go.transform, false);
+                        var raw = ModelLib.LocalBounds(go.transform);
+                        float u = s.scale.y * 1.25f / Mathf.Max(raw.size.x, raw.size.y, raw.size.z);   // plus grande dimension = 1,25 x l'ancienne hauteur
+                        go.transform.localScale = new Vector3(u, u, u);
+                        var b = ModelLib.LocalBounds(go.transform);
+                        if (s.shape == PrimitiveType.Capsule) { var sc = go.AddComponent<SphereCollider>(); sc.center = b.center; sc.radius = Mathf.Min(b.extents.x, b.extents.z); }
+                        else { var bc = go.AddComponent<BoxCollider>(); bc.center = b.center; bc.size = b.size * 0.85f; }
+                    }
+                    else
+                    {
+                        go = GameObject.CreatePrimitive(s.shape);
+                        go.name = "Prize_" + s.id + "_" + n;
+                        go.transform.SetParent(group, false);
+                        go.transform.localScale = s.scale;
+                        go.GetComponent<MeshRenderer>().sharedMaterial = mat;
+                    }
                     go.transform.localPosition = new Vector3(slots[k].x, 0.72f + (k % 3) * 0.16f, slots[k].y);
                     go.transform.localRotation = Quaternion.Euler(0, rng.Next(360), 0);
-                    go.transform.localScale = s.scale;
-                    go.GetComponent<MeshRenderer>().sharedMaterial = mat;
                     var rb = go.AddComponent<Rigidbody>();
                     rb.mass = 0.15f;
                     rb.linearDamping = 0.4f;

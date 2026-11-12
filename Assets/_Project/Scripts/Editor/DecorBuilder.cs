@@ -29,6 +29,7 @@ namespace ArcadeEmpire.EditorTools
             // Plante en pot
             Make("decor_plant", "Plante en pot", 60, 1, new Vector2(0.8f, 0.8f), "Decor_Plant", root =>
             {
+                if (UseModel("decor_plant", root, leaf)) return;
                 Prim(PrimitiveType.Cylinder, "Pot", root, new Vector3(0, 0.25f, 0), new Vector3(0.45f, 0.25f, 0.45f), pot, true);
                 Prim(PrimitiveType.Sphere, "Leaves", root, new Vector3(0, 0.8f, 0), new Vector3(0.7f, 0.8f, 0.7f), leaf, false);
             });
@@ -36,14 +37,18 @@ namespace ArcadeEmpire.EditorTools
             // Pouf
             Make("decor_pouf", "Pouf", 80, 1, new Vector2(1.0f, 1.0f), "Decor_Pouf", root =>
             {
+                if (UseModel("decor_pouf", root, pouf)) return;
                 Prim(PrimitiveType.Cylinder, "Seat", root, new Vector3(0, 0.22f, 0), new Vector3(0.8f, 0.22f, 0.8f), pouf, true);
             });
 
             // Colonne néon (émet réellement de la lumière)
             Make("decor_neon_pillar", "Colonne néon", 150, 3, new Vector2(0.6f, 0.6f), "Decor_NeonPillar", root =>
             {
+                if (!UseModel("decor_neon_pillar", root, dark, cyan))
+                {
                 Prim(PrimitiveType.Cube, "Pillar", root, new Vector3(0, 1.0f, 0), new Vector3(0.35f, 2.0f, 0.35f), dark, true);
                 Prim(PrimitiveType.Cube, "Strip", root, new Vector3(0, 1.0f, -0.19f), new Vector3(0.08f, 1.7f, 0.03f), cyan, false);
+                }
                 var l = new GameObject("Light").AddComponent<Light>();
                 l.transform.SetParent(root, false);
                 l.transform.localPosition = new Vector3(0, 1.2f, -0.5f);
@@ -57,10 +62,25 @@ namespace ArcadeEmpire.EditorTools
             // Trophée doré
             Make("decor_trophy", "Trophée doré", 250, 5, new Vector2(0.7f, 0.7f), "Decor_Trophy", root =>
             {
+                if (UseModel("decor_trophy", root, gold)) return;
                 Prim(PrimitiveType.Cube, "Base", root, new Vector3(0, 0.3f, 0), new Vector3(0.6f, 0.6f, 0.6f), dark, true);
                 Prim(PrimitiveType.Cylinder, "Stem", root, new Vector3(0, 0.75f, 0), new Vector3(0.1f, 0.15f, 0.1f), gold, false);
                 Prim(PrimitiveType.Sphere, "Cup", root, new Vector3(0, 1.05f, 0), new Vector3(0.35f, 0.35f, 0.35f), gold, false);
             });
+        }
+
+        /// <summary>Utilise le modèle FBX s'il existe (matériau Main = mat) et ajoute un collider ajusté ; sinon false (primitives de repli).</summary>
+        static bool UseModel(string modelName, Transform root, Material main, Material accent = null)
+        {
+            var palette = ModelLib.Palette(main);
+            if (accent != null) palette["Accent"] = accent;
+            var visual = ModelLib.Spawn(modelName, root, palette);
+            if (visual == null) return false;
+            var b = ModelLib.LocalBounds(root);
+            var bc = root.gameObject.AddComponent<BoxCollider>();
+            bc.center = b.center;
+            bc.size = new Vector3(b.size.x * 0.9f, b.size.y, b.size.z * 0.9f);
+            return true;
         }
 
         static void Make(string id, string displayName, long price, int level, Vector2 footprint, string prefabName, System.Action<Transform> build)

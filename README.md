@@ -57,6 +57,10 @@ Assets/_Project/
   (Scenes, Prefabs, Materials, Audio, Art : créés au fil des phases)
 ```
 
+## Modèles 3D
+
+Les modèles (peluches, robot, capsule, chat doré, décors) sont générés par code : `Tools/modelgen/make_models.py` (numpy, export FBX ASCII) vers `Assets/_Project/Art/Models`. Le script `preview.py` produit un aperçu de contrôle (rendu logiciel, pas Unity). `ModelLib` (éditeur) les charge et applique les matériaux du jeu par nom de slot. Machines, personnage et pièces restent en primitives pour l'instant.
+
 ## Principes
 
 - Un système = un script, aucune logique centrale géante.
