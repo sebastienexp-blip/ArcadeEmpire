@@ -107,6 +107,18 @@ namespace ArcadeEmpire.Machines
             AnyRewardWon?.Invoke(this, reward);
         }
 
+        /// <summary>
+        /// Gain direct sans objet (machines de jeux) : tickets, pièces (comptées pour les missions) et expérience.
+        /// </summary>
+        protected void Payout(long tickets, long coins, long xp)
+        {
+            var c = CurrencyManager.Instance;
+            if (c == null) return;
+            if (tickets > 0) c.Add(CurrencyType.Tickets, tickets);
+            if (coins > 0) { c.Add(CurrencyType.Coins, coins); RaiseCoinsWon(this, (int)coins); }
+            if (xp > 0) c.Add(CurrencyType.Experience, xp);
+        }
+
         /// <summary>Ajoute la récompense à l'inventaire persistant (sauvegardé par SaveManager).</summary>
         private static void AddToInventory(RewardData reward)
         {

@@ -166,3 +166,77 @@ def decal(name, lines):
 decal("decal_claw", [("INSERT COIN", (255, 220, 40), 54), ("5 COINS / PLAY", (255, 255, 255), 40), ("JOYSTICK + BUTTON", (30, 230, 255), 34)])
 decal("decal_pusher", [("INSERT COIN", (255, 220, 40), 54), ("AIM  < >", (255, 255, 255), 44), ("PUSH THE JACKPOT", (255, 70, 170), 34)])
 print(len(os.listdir(OUT)), "fichiers dans", OUT)
+
+
+# ================= Phase 9 : machines de jeux =================
+for nm, text, sub, a, b in (("sign_wheel", "FORTUNE", "SPIN & WIN", (255, 220, 40), (255, 70, 170)),
+                            ("sign_slots", "JACKPOT", "777", (255, 70, 90), (255, 220, 40)),
+                            ("sign_hammer", "STRENGTH", "HIT THE BELL", (60, 255, 140), (30, 230, 255)),
+                            ("sign_basket", "HOOPS", "30 SECONDS", (255, 150, 40), (255, 70, 170)),
+                            ("sign_reflex", "REFLEX", "BE QUICK", (30, 230, 255), (180, 90, 255))):
+    sign(nm, text, sub, a, b)
+
+# --- Roue de la fortune : 12 secteurs, le secteur 0 commence en haut et suit le sens horaire
+WHEEL_VALUES = [2, 5, 2, 10, 2, 5, 25, 2, 5, 2, 10, 100]
+WHEEL_COLORS = [(230, 60, 90), (40, 120, 230), (240, 190, 40), (60, 200, 120), (170, 80, 220), (240, 120, 40)]
+S = 1024
+img = Image.new("RGB", (S, S), (14, 12, 24)); d = ImageDraw.Draw(img)
+c = S / 2; R = S / 2 - 6
+for i, val in enumerate(WHEEL_VALUES):
+    a0 = -90 + i * 30; a1 = a0 + 30
+    col = (255, 215, 40) if val >= 100 else WHEEL_COLORS[i % 6]
+    d.pieslice([c - R, c - R, c + R, c + R], a0, a1, fill=col, outline=(255, 255, 255), width=5)
+    am = math.radians(-90 + (i + 0.5) * 30)
+    tx, ty = c + math.cos(am) * R * 0.72, c + math.sin(am) * R * 0.72
+    f = font(110 if val < 100 else 90); t = str(val); w = d.textlength(t, font=f)
+    tmp = Image.new("RGBA", (260, 160), (0, 0, 0, 0)); td = ImageDraw.Draw(tmp)
+    td.text((130 - w / 2, 22), t, font=f, fill=(255, 255, 255)); td.text((130 - w / 2 + 4, 26), t, font=f, fill=(0, 0, 0, 110))
+    tmp = tmp.rotate(-(math.degrees(am) + 90), expand=True, resample=Image.BICUBIC)
+    img.paste(tmp, (int(tx - tmp.width / 2), int(ty - tmp.height / 2)), tmp)
+d.ellipse([c - 70, c - 70, c + 70, c + 70], fill=(30, 28, 50), outline=(255, 215, 40), width=8)
+img.save(os.path.join(OUT, "wheel_face.png"))
+
+# --- Rouleau de machine à sous : 6 symboles empilés (v = (j+0.5)/6 pour le symbole j, image v vers le haut)
+W, H = 256, 1536; strip = Image.new("RGB", (W, H), (236, 232, 222)); d = ImageDraw.Draw(strip)
+def sym(j, cx, cy):
+    r = 80
+    if j == 0:   # cerises
+        d.ellipse([cx - 62, cy - 10, cx - 4, cy + 48], fill=(220, 30, 50)); d.ellipse([cx + 4, cy - 2, cx + 62, cy + 56], fill=(220, 30, 50))
+        d.line([(cx - 33, cy - 10), (cx, cy - 60)], fill=(40, 120, 40), width=6); d.line([(cx + 33, cy - 2), (cx, cy - 60)], fill=(40, 120, 40), width=6)
+    elif j == 1: # citron
+        d.ellipse([cx - 70, cy - 46, cx + 70, cy + 46], fill=(250, 225, 50), outline=(190, 160, 20), width=5)
+    elif j == 2: # cloche
+        d.pieslice([cx - 60, cy - 66, cx + 60, cy + 54], 180, 360, fill=(250, 200, 40)); d.rectangle([cx - 60, cy - 6, cx + 60, cy + 40], fill=(250, 200, 40)); d.ellipse([cx - 14, cy + 36, cx + 14, cy + 64], fill=(180, 120, 20))
+    elif j == 3: # BAR
+        d.rounded_rectangle([cx - 84, cy - 36, cx + 84, cy + 36], radius=10, fill=(30, 30, 40)); f = font(60); w = d.textlength("BAR", font=f); d.text((cx - w / 2, cy - 38), "BAR", font=f, fill=(255, 255, 255))
+    elif j == 4: # 7
+        f = font(150); w = d.textlength("7", font=f); d.text((cx - w / 2 + 4, cy - 86), "7", font=f, fill=(120, 0, 0)); d.text((cx - w / 2, cy - 90), "7", font=f, fill=(235, 30, 40))
+    else:        # étoile
+        pts = [(cx + (70 if k % 2 == 0 else 30) * math.sin(k * math.pi / 5), cy - (70 if k % 2 == 0 else 30) * math.cos(k * math.pi / 5)) for k in range(10)]
+        d.polygon(pts, fill=(255, 190, 30), outline=(170, 110, 10))
+cell = H / 6
+for j in range(6):
+    cy = H - (j + 0.5) * cell      # v=(j+0.5)/6 mesure depuis le bas de l'image
+    sym(j, W / 2, cy)
+    d.line([(10, cy + cell / 2), (W - 10, cy + cell / 2)], fill=(150, 145, 135), width=3)
+arr = np.array(strip, float) / 255.0
+strip.save(os.path.join(OUT, "reel_strip.png"))
+Image.fromarray((normal_from_height(arr.mean(2), 1.5) * 255).astype(np.uint8)).save(os.path.join(OUT, "reel_strip_n.png"))
+
+# --- Ballon de basket
+S = 512; img = Image.new("RGB", (S, S), (225, 110, 30)); d = ImageDraw.Draw(img)
+hh = np.array(img.convert("L"), float) / 255.0
+for k in range(0, S, 4): d.line([(0, k), (S, k)], fill=(215 + (k % 8), 100 + (k % 12), 25), width=1)
+for x0 in (0, S // 2, S): d.line([(x0, 0), (x0, S)], fill=(30, 20, 15), width=9)
+d.line([(0, S // 2), (S, S // 2)], fill=(30, 20, 15), width=9)
+img.save(os.path.join(OUT, "ball.png"))
+Image.fromarray((normal_from_height(fft_noise(512, 0.5, 21), 1.2) * 255).astype(np.uint8)).save(os.path.join(OUT, "ball_n.png"))
+
+# --- Pavés de réflexes 1..6 (chiffre sur fond coloré)
+PAD_COLORS = [(230, 60, 90), (40, 140, 255), (255, 200, 40), (60, 220, 120), (180, 90, 255), (255, 130, 40)]
+for k, col in enumerate(PAD_COLORS, 1):
+    S = 256; img = Image.new("RGB", (S, S), tuple(int(v * 0.55) for v in col)); d = ImageDraw.Draw(img)
+    d.ellipse([10, 10, S - 10, S - 10], outline=(255, 255, 255), width=10)
+    f = font(170); w = d.textlength(str(k), font=f); d.text((S / 2 - w / 2, 22), str(k), font=f, fill=(255, 255, 255))
+    img.save(os.path.join(OUT, "pad_%d.png" % k))
+print("phase 9 :", len(os.listdir(OUT)), "fichiers")

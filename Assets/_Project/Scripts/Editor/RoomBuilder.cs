@@ -86,8 +86,10 @@ namespace ArcadeEmpire.EditorTools
             ClawMachineBuilder.EnsurePrefab();
             CoinPusherBuilder.EnsurePrefab();
             DecorBuilder.EnsureAll();
+            GameMachineBuilders.EnsureAll();
             AssetDatabase.SaveAssets();
-            ModelLib.LogBounds("claw_shell");   // diagnostic d'orientation après import FBX (attendu : centre z négatif)
+            ModelLib.LogBounds("claw_shell");
+            ModelLib.LogBounds("orientation_probe");   // attendu si X inversé à l'import : x négatif ; z et y inchangés   // diagnostic d'orientation après import FBX (attendu : centre z négatif)
             var machineCatalog = ProjectSetup.EnsureMachineCatalog();
 
             var building = new GameObject("Building");
