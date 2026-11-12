@@ -138,8 +138,8 @@ namespace ArcadeEmpire.EditorTools
         /// <summary>Crée le prefab de la machine (placée dynamiquement par BuildingManager) et le relie à sa MachineData.</summary>
         public static MachineData EnsurePrefab()
         {
-            MachineData data = EnsureMachineData();
             ProjectSetup.EnsureFolder("Assets/_Project/Prefabs");
+            MachineData data = EnsureMachineData();
             var go = Build(null, Vector3.zero, 0f).gameObject;
             foreach (var t in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, 0);
             data.prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/_Project/Prefabs/CoinPusher_Classic.prefab");
@@ -182,6 +182,7 @@ namespace ArcadeEmpire.EditorTools
 
         static MachineData EnsureMachineData()
         {
+            ProjectSetup.EnsureFolder(DataDir);
             string path = DataDir + "/Machine_CoinPusher.asset";
             var d = AssetDatabase.LoadAssetAtPath<MachineData>(path);
             if (d == null)
