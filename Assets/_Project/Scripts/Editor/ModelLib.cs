@@ -117,7 +117,7 @@ namespace ArcadeEmpire.EditorTools
             return m;
         }
 
-        static Material Lit(string name, Color color, float smooth, float metallic, string tex, float tiling)
+        public static Material Lit(string name, Color color, float smooth, float metallic, string tex, float tiling)
             => Textured(RoomBuilder.Mat(name, color, smooth), tex, null, tiling, metallic, smooth);
 
         /// <summary>Tous les matériaux des modèles, par nom de slot. Main est fourni par l'appelant (couleur de l'objet).</summary>
@@ -146,6 +146,12 @@ namespace ArcadeEmpire.EditorTools
                 ["SignHammer"] = Glowing("Sign_Hammer", "sign_hammer", 1.6f),
                 ["SignBasket"] = Glowing("Sign_Basket", "sign_basket", 1.6f),
                 ["SignReflex"] = Glowing("Sign_Reflex", "sign_reflex", 1.6f),
+                ["SignHockey"] = Glowing("Sign_Hockey", "sign_hockey", 1.6f),
+                ["SignShoot"] = Glowing("Sign_Shoot", "sign_shoot", 1.6f),
+                ["SignFishing"] = Glowing("Sign_Fishing", "sign_fishing", 1.6f),
+                ["HockeySurface"] = Lit("Hockey_Surface", Color.white, 0.8f, 0f, "hockey_surface", 1f),
+                ["Water"] = Lit("Pond_Water", new Color(0.75f, 0.9f, 1f), 0.95f, 0f, "water", 1f),
+                ["Mallet"] = Lit("Hockey_Mallet", new Color(0.9f, 0.15f, 0.15f), 0.55f, 0.2f, "plastic", 1.5f),
                 ["WheelFace"] = Textured(Glowing("Wheel_Face", "wheel_face", 0.35f), "wheel_face", "paint", 1f, 0.1f, 0.5f),
                 ["Reel"] = Textured(Glowing("Slot_Reel", "reel_strip", 0.3f), "reel_strip", "reel_strip_n", 1f, 0f, 0.55f),
                 ["BallSkin"] = Lit("Ball_Skin", Color.white, 0.35f, 0f, "ball", 1f),

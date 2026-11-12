@@ -240,3 +240,49 @@ for k, col in enumerate(PAD_COLORS, 1):
     f = font(170); w = d.textlength(str(k), font=f); d.text((S / 2 - w / 2, 22), str(k), font=f, fill=(255, 255, 255))
     img.save(os.path.join(OUT, "pad_%d.png" % k))
 print("phase 9 :", len(os.listdir(OUT)), "fichiers")
+
+
+# ================= Phase 9 (2e série) : air hockey, tir, pêche =================
+for nm, text, sub, a, b in (("sign_hockey", "AIR HOCKEY", "FIRST TO 5", (30, 230, 255), (255, 70, 90)),
+                            ("sign_shoot", "SHOOTING", "AIM & FIRE", (255, 70, 90), (255, 220, 40)),
+                            ("sign_fishing", "FISHING", "CATCH THEM ALL", (60, 200, 255), (60, 255, 140))):
+    sign(nm, text, sub, a, b)
+
+# --- Surface d'air hockey (vue de dessus, x = largeur 1.1 m, v = longueur 1.3 m ; but en bas et en haut)
+W, H = 704, 832
+img = Image.new("RGB", (W, H), (18, 60, 120)); d = ImageDraw.Draw(img)
+base = np.array(img, float) / 255.0
+nz = fft_noise(512, 1.4, 31)[:H, :W] if H <= 512 else np.array(Image.fromarray((fft_noise(512, 1.4, 31) * 255).astype(np.uint8)).resize((W, H))) / 255.0
+img = Image.fromarray((np.clip(base * (0.9 + 0.2 * nz[..., None]), 0, 1) * 255).astype(np.uint8)); d = ImageDraw.Draw(img)
+red = (255, 70, 90); cy = (30, 230, 255)
+d.line([(0, H / 2), (W, H / 2)], fill=red, width=8)
+d.ellipse([W / 2 - 90, H / 2 - 90, W / 2 + 90, H / 2 + 90], outline=red, width=8)
+d.ellipse([W / 2 - 14, H / 2 - 14, W / 2 + 14, H / 2 + 14], fill=red)
+for y0, sgn in ((0, 1), (H, -1)):
+    d.arc([W / 2 - 150, y0 - 150, W / 2 + 150, y0 + 150], 0, 360, fill=cy, width=8)
+    d.rectangle([W / 2 - 100, y0 - (0 if sgn > 0 else 6), W / 2 + 100, y0 + (6 if sgn > 0 else 0)], fill=(255, 220, 40))
+d.rectangle([4, 4, W - 5, H - 5], outline=(255, 255, 255), width=5)
+img.save(os.path.join(OUT, "hockey_surface.png"))
+
+# --- Cibles : anneaux (normale), or, bombe
+def target_tex(name, c1, c2, extra=None):
+    S = 512; img = Image.new("RGB", (S, S), (20, 20, 20)); d = ImageDraw.Draw(img)
+    for k, (r, col) in enumerate(((250, c1), (205, c2), (160, c1), (115, c2), (70, c1), (28, c2))):
+        d.ellipse([S / 2 - r, S / 2 - r, S / 2 + r, S / 2 + r], fill=col, outline=(255, 255, 255), width=3)
+    if extra: extra(d, S)
+    img.save(os.path.join(OUT, name + ".png"))
+target_tex("target_normal", (245, 245, 245), (225, 40, 60))
+target_tex("target_gold", (255, 220, 70), (210, 150, 20))
+def bomb(d, S):
+    d.ellipse([S / 2 - 250, S / 2 - 250, S / 2 + 250, S / 2 + 250], fill=(25, 25, 30), outline=(255, 60, 40), width=14)
+    d.line([(S / 2 - 120, S / 2 - 120), (S / 2 + 120, S / 2 + 120)], fill=(255, 60, 40), width=40)
+    d.line([(S / 2 + 120, S / 2 - 120), (S / 2 - 120, S / 2 + 120)], fill=(255, 60, 40), width=40)
+target_tex("target_bomb", (25, 25, 30), (25, 25, 30), bomb)
+
+# --- Eau (bleu profond + rides tileables)
+r1 = fft_noise(512, 2.6, 41); r2 = fft_noise(512, 1.6, 42)
+h = 0.65 * r1 + 0.35 * r2
+cau = np.clip(1 - np.abs(np.sin((h * 9) * math.pi)) * 3, 0, 1)
+col = np.stack([0.08 + 0.25 * cau, 0.32 + 0.35 * cau + 0.1 * h, 0.55 + 0.3 * cau + 0.15 * h], -1)
+save("water", col, h, 3.0)
+print("2e serie :", len(os.listdir(OUT)), "fichiers")

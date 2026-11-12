@@ -21,6 +21,7 @@ namespace ArcadeEmpire.EditorTools
             ProjectSetup.EnsureFolder(DataDir);
             ProjectSetup.EnsureFolder(PrefabDir);
             Wheel(); Slots(); Hammer(); Basket(); Reflex();
+            AirHockey(); Shooting(); Fishing();
             AssetDatabase.SaveAssets();
         }
 
@@ -246,6 +247,120 @@ namespace ArcadeEmpire.EditorTools
             machine.Configure(data, Anchor(root, new Vector3(0, 1.8f, -2.4f), new Vector3(0, 1.0f, -0.06f)), null);
             machine.Setup(renderers, on, off, rim);
             Save(root, data, "Game_Reflex");
+        }
+
+        // ------------------------------------------------------------ Air hockey
+        static void AirHockey()
+        {
+            var data = Data("air_hockey", "Air hockey", MachineCategory.Skill, 5, 3000, 8);
+            data.footprintSize = new Vector2(1.5f, 1.7f); data.footprintCenterZ = 0f;
+            var pal = ModelLib.Palette(null);
+            var root = NewRoot("AirHockeyMachine");
+            ModelLib.Spawn("game_airhockey", root, pal);
+            var puck = ModelLib.Spawn("hockey_puck", root, pal).transform;
+            var mp = ModelLib.Spawn("hockey_mallet", root, pal).transform;
+            var malletAi = ModelLib.Spawn("hockey_mallet", root, new Dictionary<string, Material>(pal) { ["Mallet"] = ModelLib.Lit("Hockey_Mallet_AI", new Color(0.15f, 0.4f, 0.95f), 0.55f, 0.2f, "plastic", 1.5f) }).transform;
+            puck.localPosition = new Vector3(0, 0.801f, 0);
+            mp.localPosition = new Vector3(0, 0.801f, -0.47f);
+            malletAi.localPosition = new Vector3(0, 0.801f, 0.47f);
+            Col(root, "Base", new Vector3(0, 0.4f, 0), new Vector3(1.34f, 0.8f, 1.54f));
+            Col(root, "Rail", new Vector3(0, 0.9f, 0), new Vector3(1.34f, 0.12f, 1.54f));
+            Col(root, "Sign", new Vector3(0, 1.7f, 0.7f), new Vector3(1.4f, 0.9f, 0.2f));
+            var machine = root.gameObject.AddComponent<AirHockeyMachine>();
+            machine.Configure(data, Anchor(root, new Vector3(0, 1.9f, -1.7f), new Vector3(0, 0.8f, 0.1f)), null);
+            machine.Setup(puck, mp, malletAi, 0.801f);
+            Save(root, data, "Game_AirHockey");
+        }
+
+        // ------------------------------------------------------------ Stand de tir
+        static void Shooting()
+        {
+            var data = Data("shooting_gallery", "Stand de tir", MachineCategory.Skill, 4, 1800, 6);
+            data.footprintSize = new Vector2(1.6f, 2.5f); data.footprintCenterZ = 0.1f;
+            var pal = ModelLib.Palette(null);
+            var root = NewRoot("ShootingMachine");
+            ModelLib.Spawn("game_shooting", root, pal);
+
+            var faces = new Material[3];
+            faces[0] = ModelLib.Lit("Target_Normal", Color.white, 0.4f, 0f, "target_normal", 1f);
+            faces[1] = ModelLib.Lit("Target_Gold", Color.white, 0.6f, 0.3f, "target_gold", 1f);
+            faces[2] = ModelLib.Lit("Target_Bomb", Color.white, 0.4f, 0f, "target_bomb", 1f);
+            var tp = new Dictionary<string, Material>(pal) { ["TargetFace"] = faces[0] };
+
+            var pivots = new Transform[9]; var rends = new Renderer[9];
+            float[] ys = { 0.83f, 1.33f, 1.83f };
+            for (int r = 0; r < 3; r++)
+                for (int c = 0; c < 3; c++)
+                {
+                    int i = r * 3 + c;
+                    var t = new GameObject("Target_" + i).transform;
+                    t.SetParent(root, false);
+                    t.localPosition = new Vector3(-0.4f + 0.4f * c, ys[r], 1.0f);
+                    t.localRotation = Quaternion.Euler(90f, 0f, 0f);
+                    var vis = ModelLib.Spawn("shoot_target", t, tp);
+                    pivots[i] = t;
+                    rends[i] = vis != null ? vis.GetComponentInChildren<Renderer>() : null;
+                }
+            var cross = ModelLib.Spawn("shoot_crosshair", root, pal).transform;
+            cross.localPosition = new Vector3(0, 1.5f, 0.9f);
+
+            Col(root, "Counter", new Vector3(0, 0.45f, -0.75f), new Vector3(1.5f, 0.9f, 0.7f));
+            Col(root, "SideL", new Vector3(-0.7f, 1.3f, 0.25f), new Vector3(0.1f, 2.6f, 2.3f));
+            Col(root, "SideR", new Vector3(0.7f, 1.3f, 0.25f), new Vector3(0.1f, 2.6f, 2.3f));
+            Col(root, "Back", new Vector3(0, 1.3f, 1.35f), new Vector3(1.5f, 2.6f, 0.1f));
+            Col(root, "Header", new Vector3(0, 2.85f, -0.5f), new Vector3(1.5f, 0.34f, 0.5f));
+            var machine = root.gameObject.AddComponent<ShootingMachine>();
+            machine.Configure(data, Anchor(root, new Vector3(0, 1.55f, -1.9f), new Vector3(0, 1.4f, 1.0f)), null);
+            machine.Setup(cross, pivots, rends, faces);
+            Save(root, data, "Game_Shooting");
+        }
+
+        // ------------------------------------------------------------ Pêche
+        static void Fishing()
+        {
+            var data = Data("fishing_pond", "Pêche aux poissons", MachineCategory.Skill, 4, 1400, 4);
+            data.footprintSize = new Vector2(1.6f, 1.7f); data.footprintCenterZ = 0f;
+            var pal = ModelLib.Palette(null);
+            var root = NewRoot("FishingMachine");
+            ModelLib.Spawn("game_fishing", root, pal);
+
+            var carriage = ModelLib.Spawn("fishing_carriage", root, pal).transform;
+            carriage.localPosition = new Vector3(0, 1.95f, 0);
+            var hook = ModelLib.Spawn("fishing_hook", root, pal).transform;
+            hook.localPosition = new Vector3(0, 1.45f, 0);
+            var cableGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            cableGo.name = "Cable";
+            Object.DestroyImmediate(cableGo.GetComponent<Collider>());
+            cableGo.transform.SetParent(root, false);
+            cableGo.GetComponent<Renderer>().sharedMaterial = pal["Dark"];
+            cableGo.transform.localPosition = new Vector3(0, 1.7f, 0);
+            cableGo.transform.localScale = new Vector3(0.008f, 0.25f, 0.008f);
+
+            Color[] fishColors = { new Color(1f, 0.5f, 0.15f), new Color(0.95f, 0.35f, 0.2f), new Color(1f, 0.6f, 0.2f), new Color(0.9f, 0.45f, 0.25f),
+                                   new Color(0.2f, 0.55f, 0.95f), new Color(0.15f, 0.7f, 0.85f), new Color(1f, 0.8f, 0.1f), new Color(0.95f, 0.55f, 0.3f) };
+            int n = FishingMachine.FishCount;
+            var fishes = new Transform[n];
+            for (int i = 0; i < n; i++)
+            {
+                bool big = FishingMachine.ValueOf(i) >= 5;
+                var fp = new Dictionary<string, Material>(pal)
+                {
+                    ["Main"] = ModelLib.Lit("Fish_" + i, fishColors[i % fishColors.Length], 0.6f, big ? 0.6f : 0.1f, "plastic", 2f)
+                };
+                var f = ModelLib.Spawn(big ? "fish_big" : "fish_small", root, fp).transform;
+                f.name = "Fish_" + i;
+                f.localPosition = new Vector3(0, 0.76f, 0);
+                fishes[i] = f;
+            }
+
+            Col(root, "Base", new Vector3(0, 0.4f, 0), new Vector3(1.5f, 0.8f, 1.5f));
+            Col(root, "Rim", new Vector3(0, 0.84f, 0), new Vector3(1.5f, 0.12f, 1.5f));
+            Col(root, "Roof", new Vector3(0, 2.05f, 0), new Vector3(1.5f, 0.1f, 1.5f));
+            Col(root, "Header", new Vector3(0, 2.34f, -0.5f), new Vector3(1.5f, 0.34f, 0.5f));
+            var machine = root.gameObject.AddComponent<FishingMachine>();
+            machine.Configure(data, Anchor(root, new Vector3(0, 1.8f, -1.9f), new Vector3(0, 0.9f, 0f)), null);
+            machine.Setup(carriage, hook, cableGo.transform, fishes);
+            Save(root, data, "Game_Fishing");
         }
     }
 }
