@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using ArcadeEmpire.Data;
 using ArcadeEmpire.Machines;
 using UnityEditor;
@@ -114,6 +115,25 @@ namespace ArcadeEmpire.EditorTools
                         BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.02f, null);
                 }
 
+            // --- Habillage détaillé : coque FBX texturée ; les primitives restent comme volumes physiques invisibles
+            var pal = ModelLib.Palette(null);
+            ModelLib.Textured(tray, "felt", null, 3f, 0f, 0.15f);
+            var shell = ModelLib.Spawn("pusher_shell", root, pal);
+            if (shell != null)
+            {
+                var hide = new HashSet<string> { "BaseLower", "Bin_L", "Bin_R", "Bin_Front", "Wall_Back", "Top", "Marquee", "FrontPillar_L", "FrontPillar_R", "Podium", "Deck" };
+                var toHide = new List<Transform>();
+                foreach (Transform c in root) if (hide.Contains(c.name)) toHide.Add(c);
+                foreach (var c in toHide)
+                {
+                    if (c.GetComponent<Collider>() == null) Object.DestroyImmediate(c.gameObject);
+                    else c.GetComponent<Renderer>().enabled = false;
+                }
+            }
+            if (ModelLib.Dress(pusherGo.transform, "pusher_plate", pal, 1f, false)) pvis.GetComponent<Renderer>().enabled = false;
+            ModelLib.Dress(aim.transform, "pusher_aim", pal);
+            ModelLib.Dress(button.transform, "arcade_button", ModelLib.WithButtonColor(pal, new Color(0.1f, 0.9f, 1f)), 0.65f);
+
             // --- Ancrage caméra
             var anchor = new GameObject("CameraAnchor").transform;
             anchor.SetParent(root, false);
@@ -159,7 +179,20 @@ namespace ArcadeEmpire.EditorTools
             go.transform.localScale = new Vector3(diameter, thickness * 0.5f, diameter);
             go.GetComponent<MeshRenderer>().sharedMaterial = mat;
             Object.DestroyImmediate(go.GetComponent<CapsuleCollider>());
-            go.AddComponent<MeshCollider>().convex = true;
+            var meshCol = go.AddComponent<MeshCollider>();
+            meshCol.sharedMesh = go.GetComponent<MeshFilter>().sharedMesh;   // collider simple (cylindre), le visuel détaillé est séparé
+            meshCol.convex = true;
+            var detail = ModelLib.Spawn("coin_unit", null, ModelLib.CoinPalette(mat.name, mat.GetColor("_BaseColor")));
+            if (detail != null)
+            {
+                var dmf = detail.GetComponentInChildren<MeshFilter>(); var dr = detail.GetComponentInChildren<MeshRenderer>();
+                if (dmf != null && dr != null)
+                {
+                    go.GetComponent<MeshFilter>().sharedMesh = dmf.sharedMesh;
+                    go.GetComponent<MeshRenderer>().sharedMaterials = dr.sharedMaterials;
+                }
+                Object.DestroyImmediate(detail);
+            }
 
             var rb = go.AddComponent<Rigidbody>();
             rb.mass = reward == null ? 0.03f : 0.06f;

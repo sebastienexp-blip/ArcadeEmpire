@@ -116,6 +116,34 @@ namespace ArcadeEmpire.EditorTools
 
             var cable = Prim(PrimitiveType.Cylinder, "Cable", root, new Vector3(-0.4f, 1.64f, -0.3f), new Vector3(0.012f, 0.08f, 0.012f), metal, false);
 
+            // --- Habillage détaillé : coque FBX texturée ; les primitives de la coque restent comme volumes physiques invisibles
+            var pal = ModelLib.Palette(null);
+            ModelLib.Textured(floorMat, "felt", null, 2f, 0f, 0.15f);
+            ModelLib.Textured(metal, "metal", null, 1.5f, 0.9f, 0.7f);
+            var shell = ModelLib.Spawn("claw_shell", root, pal);
+            if (shell != null)
+            {
+                var hide = new HashSet<string> { "BaseLower", "Shell_L", "Shell_R", "Shell_B", "Shell_F", "Post", "Top", "Marquee", "Rail", "Podium", "Deck" };
+                var toHide = new List<Transform>();
+                foreach (Transform c in root) if (hide.Contains(c.name)) toHide.Add(c);
+                foreach (var c in toHide)
+                {
+                    if (c.GetComponent<Collider>() == null) Object.DestroyImmediate(c.gameObject);
+                    else c.GetComponent<Renderer>().enabled = false;
+                }
+            }
+            var stickModel = ModelLib.Spawn("arcade_stick", stickPivot, pal);
+            if (stickModel != null)
+            {
+                stick.GetComponent<Renderer>().enabled = false;
+                var ball = stickPivot.Find("StickBall");
+                if (ball != null) ball.GetComponent<Renderer>().enabled = false;
+            }
+            ModelLib.Dress(button.transform, "arcade_button", pal, 0.65f);
+            if (ModelLib.Dress(headGo.transform, "claw_head", pal, 1f, false)) headGo.transform.Find("Housing").GetComponent<Renderer>().enabled = false;
+            foreach (var pv in pivots)
+                if (ModelLib.Dress(pv, "claw_prong", pal, 1f, false)) pv.Find("Prong").GetComponent<Renderer>().enabled = false;
+
             // --- Ancrage caméra devant la machine
             var anchor = new GameObject("CameraAnchor").transform;
             anchor.SetParent(root, false);
@@ -169,6 +197,12 @@ namespace ArcadeEmpire.EditorTools
             foreach (var s in Specs)
             {
                 var mat = RoomBuilder.Mat("Prize_" + s.id, s.color, 0.35f);
+                switch (s.id)
+                {
+                    case "plush_pink": case "plush_blue": ModelLib.Textured(mat, "fabric", null, 1f, 0f, 0.2f); break;
+                    case "figurine_gold": ModelLib.Textured(mat, "gold", null, 1f, 0.9f, 0.65f); break;
+                    default: ModelLib.Textured(mat, "plastic", null, 1f, 0f, 0.6f); break;
+                }
                 if (s.glow) { mat.EnableKeyword("_EMISSION"); mat.SetColor("_EmissionColor", s.color * 0.8f); }
                 for (int n = 0; n < s.count && k < slots.Count; n++, k++)
                 {

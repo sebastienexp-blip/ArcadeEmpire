@@ -25,6 +25,10 @@ namespace ArcadeEmpire.EditorTools
             var dark = RoomBuilder.Mat("Decor_Dark", new Color(0.08f, 0.08f, 0.12f), 0.5f);
             var cyan = RoomBuilder.Neon("Neon_Cyan", new Color(0.1f, 0.9f, 1f));
             var gold = RoomBuilder.Mat("Decor_Gold", new Color(1f, 0.8f, 0.2f), 0.85f);
+            ModelLib.Textured(pouf, "fabric", null, 1f, 0f, 0.2f);
+            ModelLib.Textured(gold, "gold", null, 1f, 0.9f, 0.65f);
+            ModelLib.Textured(dark, "paint", null, 1f, 0.1f, 0.5f);
+            ModelLib.Textured(leaf, "fabric", null, 1f, 0f, 0.3f);
 
             // Plante en pot
             Make("decor_plant", "Plante en pot", 60, 1, new Vector2(0.8f, 0.8f), "Decor_Plant", root =>

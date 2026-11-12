@@ -19,7 +19,7 @@ def eyes(m, y, z, dx, r=0.04):
 
 @model
 def prize_bunny():
-    m = Model("prize_bunny")
+    m = Model("prize_bunny", uv=3)
     m.add(superellipsoid((0.34, 0.36, 0.3), 0.85))                      # corps
     m.add(superellipsoid((0.28, 0.26, 0.26), 0.9), (0, 0.55, 0.03))     # tête
     for s in (-1, 1):
@@ -36,7 +36,7 @@ def prize_bunny():
 
 @model
 def prize_bear():
-    m = Model("prize_bear")
+    m = Model("prize_bear", uv=3)
     m.add(superellipsoid((0.36, 0.38, 0.32), 0.9))
     m.add(superellipsoid((0.31, 0.28, 0.28), 0.9), (0, 0.5, 0.02))
     for s in (-1, 1):
@@ -52,7 +52,7 @@ def prize_bear():
 
 @model
 def prize_robot():
-    m = Model("prize_robot")
+    m = Model("prize_robot", uv=2)
     m.add(superellipsoid((0.34, 0.32, 0.26), 0.3))                       # torse
     m.add(superellipsoid((0.28, 0.22, 0.24), 0.3), (0, 0.52, 0))         # tête
     m.add(box((0.3, 0.07, 0.02), "Accent"), (0, 0.0, 0.265))             # plaque sur le torse
@@ -67,7 +67,7 @@ def prize_robot():
 
 @model
 def prize_capsule():
-    m = Model("prize_capsule")
+    m = Model("prize_capsule", uv=2)
     m.add(superellipsoid((0.42, 0.5, 0.42), 1.0, t0=0, t1=math.pi / 2, mat="Main"), (0, 0.02, 0))
     m.add(superellipsoid((0.42, 0.5, 0.42), 1.0, t0=math.pi / 2, t1=math.pi, mat="Light"), (0, 0.02, 0))
     m.add(torus(0.42, 0.035, seg=18, tube=6, mat="Dark"), (0, 0.02, 0))
@@ -77,7 +77,7 @@ def prize_capsule():
 
 @model
 def prize_cat_gold():
-    m = Model("prize_cat_gold")
+    m = Model("prize_cat_gold", uv=2)
     m.add(box((0.7, 0.16, 0.55), "Dark"), (0, -0.52, 0))                 # socle
     m.add(superellipsoid((0.3, 0.34, 0.26), 0.85), (0, -0.2, 0))         # corps
     m.add(superellipsoid((0.27, 0.23, 0.23), 0.85), (0, 0.27, 0.02))     # tête
@@ -93,7 +93,7 @@ def prize_cat_gold():
 
 @model
 def decor_plant():
-    m = Model("decor_plant")
+    m = Model("decor_plant", uv=1.5)
     m.add(cylinder(0.2, 0.28, 0.42, seg=14, mat="Pot"), (0, 0, 0))
     m.add(cylinder(0.27, 0.27, 0.02, seg=14, mat="Soil"), (0, 0.425, 0))
     for k in range(9):
@@ -105,7 +105,7 @@ def decor_plant():
 
 @model
 def decor_pouf():
-    m = Model("decor_pouf")
+    m = Model("decor_pouf", uv=2)
     m.add(superellipsoid((0.45, 0.24, 0.45), 0.55), (0, 0.24, 0))
     m.add(sphere(0.06, seg=8, rings=6, mat="Light"), (0, 0.47, 0))
     m.add(torus(0.4, 0.025, seg=18, tube=6, mat="Dark"), (0, 0.26, 0))
@@ -125,7 +125,7 @@ def decor_neon_pillar():
 
 @model
 def decor_trophy():
-    m = Model("decor_trophy")
+    m = Model("decor_trophy", uv=1.5)
     m.add(box((0.6, 0.2, 0.6), "Dark"), (0, 0.1, 0))
     m.add(cylinder(0.18, 0.1, 0.1, seg=12, mat="Dark"), (0, 0.2, 0))
     m.add(cylinder(0.05, 0.05, 0.3, seg=10, mat="Main"), (0, 0.3, 0))
@@ -136,10 +136,3 @@ def decor_trophy():
     return m.finish(ground=True)
 
 
-if __name__ == "__main__":
-    for name, fn in MODELS.items():
-        m = fn()
-        path = os.path.join(OUT, name + ".fbx")
-        write_fbx(m, path)
-        nv, nt, nm = read_fbx_counts(path)
-        print("%-18s %5d sommets %5d triangles %d matériaux  taille %s" % (name, nv, nt, nm, np.round(m.size, 2)))

@@ -35,6 +35,10 @@ namespace ArcadeEmpire.EditorTools
             var floorB = Mat("Floor_B", new Color(0.16f, 0.12f, 0.22f), 0.7f);
             var wall = Mat("Wall", new Color(0.12f, 0.08f, 0.20f), 0.2f);
             var ceiling = Mat("Ceiling", new Color(0.05f, 0.05f, 0.08f), 0.1f);
+            ModelLib.Textured(floorA, "tile", null, 1f, 0f, 0.7f);
+            ModelLib.Textured(floorB, "tile", null, 1f, 0f, 0.7f);
+            ModelLib.Textured(wall, "wall", null, 3f, 0f, 0.2f);
+            ModelLib.Textured(ceiling, "paint", null, 4f, 0f, 0.1f);
             var cabinet = Mat("Cabinet", new Color(0.08f, 0.08f, 0.10f), 0.5f);
             var neonPink = Neon("Neon_Pink", new Color(1f, 0.1f, 0.6f));
             var neonCyan = Neon("Neon_Cyan", new Color(0.1f, 0.9f, 1f));
@@ -83,6 +87,7 @@ namespace ArcadeEmpire.EditorTools
             CoinPusherBuilder.EnsurePrefab();
             DecorBuilder.EnsureAll();
             AssetDatabase.SaveAssets();
+            ModelLib.LogBounds("claw_shell");   // diagnostic d'orientation après import FBX (attendu : centre z négatif)
             var machineCatalog = ProjectSetup.EnsureMachineCatalog();
 
             var building = new GameObject("Building");
@@ -160,21 +165,40 @@ namespace ArcadeEmpire.EditorTools
             cc.center = new Vector3(0f, 0.9f, 0f);
             cc.stepOffset = 0.3f;
 
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Body";
-            Object.DestroyImmediate(body.GetComponent<CapsuleCollider>());
-            body.transform.SetParent(go.transform, false);
-            body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
-            body.transform.localScale = new Vector3(0.7f, 0.9f, 0.7f);
-            body.GetComponent<MeshRenderer>().sharedMaterial = Mat("Player_Body", new Color(0.95f, 0.55f, 0.15f), 0.3f);
-
-            var nose = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            nose.name = "FacingMarker";
-            Object.DestroyImmediate(nose.GetComponent<BoxCollider>());
-            nose.transform.SetParent(go.transform, false);
-            nose.transform.localPosition = new Vector3(0f, 1.45f, 0.3f);
-            nose.transform.localScale = new Vector3(0.2f, 0.2f, 0.25f);
-            nose.GetComponent<MeshRenderer>().sharedMaterial = Mat("Player_Marker", new Color(1f, 1f, 1f), 0.3f);
+            // Personnage détaillé : torse, tête, bras et jambes (FBX texturés) ; les membres pivotent à l'épaule / à la hanche
+            var pal = ModelLib.Palette(null);
+            var visual = new GameObject("Visual").transform;
+            visual.SetParent(go.transform, false);
+            bool ok = ModelLib.Spawn("player_torso", visual, pal) != null;
+            Transform Part(string model, string name, Vector3 pos, float scaleX = 1f)
+            {
+                var pivot = new GameObject(name).transform;
+                pivot.SetParent(visual, false);
+                pivot.localPosition = pos;
+                pivot.localScale = new Vector3(scaleX, 1f, 1f);
+                ModelLib.Spawn(model, pivot, pal);
+                return pivot;
+            }
+            if (ok)
+            {
+                Part("player_head", "Head", new Vector3(0f, 1.64f, 0f));
+                var armL = Part("player_arm", "ArmL", new Vector3(-0.29f, 1.45f, 0f), -1f);
+                var armR = Part("player_arm", "ArmR", new Vector3(0.29f, 1.45f, 0f));
+                var legL = Part("player_leg", "LegL", new Vector3(-0.11f, 0.92f, 0f), -1f);
+                var legR = Part("player_leg", "LegR", new Vector3(0.11f, 0.92f, 0f));
+                go.AddComponent<PlayerVisualAnimator>().Configure(armL, armR, legL, legR, visual);
+            }
+            else
+            {
+                // repli : capsule provisoire si les modèles sont absents
+                var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+                body.name = "Body";
+                Object.DestroyImmediate(body.GetComponent<CapsuleCollider>());
+                body.transform.SetParent(go.transform, false);
+                body.transform.localPosition = new Vector3(0f, 0.9f, 0f);
+                body.transform.localScale = new Vector3(0.7f, 0.9f, 0.7f);
+                body.GetComponent<MeshRenderer>().sharedMaterial = Mat("Player_Body", new Color(0.95f, 0.55f, 0.15f), 0.3f);
+            }
 
             return go.AddComponent<PlayerController>();
         }

@@ -1,0 +1,112 @@
+; FBX 7.4.0 project file
+FBXHeaderExtension:  {
+	FBXHeaderVersion: 1003
+	FBXVersion: 7400
+	Creator: "ArcadeEmpire modelgen"
+}
+
+GlobalSettings:  {
+	Version: 1000
+	Properties70:  {
+		P: "UpAxis", "int", "Integer", "",1
+		P: "UpAxisSign", "int", "Integer", "",1
+		P: "FrontAxis", "int", "Integer", "",2
+		P: "FrontAxisSign", "int", "Integer", "",1
+		P: "CoordAxis", "int", "Integer", "",0
+		P: "CoordAxisSign", "int", "Integer", "",1
+		P: "UnitScaleFactor", "double", "Number", "",100
+	}
+}
+
+Definitions:  {
+	Version: 100
+	Count: 4
+	ObjectType: "Model" {
+		Count: 1
+	}
+	ObjectType: "Geometry" {
+		Count: 1
+	}
+	ObjectType: "Material" {
+		Count: 1
+	}
+}
+
+Objects:  {
+	Geometry: 1000001, "Geometry::pusher_aim", "Mesh" {
+		Vertices: *45 {
+			a: 0.05303,-0.05,-0.05303,-0.05303,-0.05,-0.05303,-0.05303,-0.05,0.05303,0.05303,-0.05,0.05303,0.05303,-0.05,-0.05303,0.0,-0.15,0.0,0.0,-0.15,0.0,0.0,-0.15,0.0,0.0,-0.15,0.0,0.0,-0.15,0.0,0.0,-0.05,0.0,0.05303,-0.05,-0.05303,-0.05303,-0.05,-0.05303,-0.05303,-0.05,0.05303,0.05303,-0.05,0.05303
+		}
+		PolygonVertexIndex: *24 {
+			a: 0,1,-7,1,2,-8,2,3,-9,3,4,-10,10,11,-13,10,12,-14,10,13,-15,10,14,-12
+		}
+		GeometryVersion: 124
+		LayerElementNormal: 0 {
+			Version: 101
+			Name: ""
+			MappingInformationType: "ByPolygonVertex"
+			ReferenceInformationType: "Direct"
+			Normals: *72 {
+				a: -0.56569,0.6,0.56569,0.56569,0.6,0.56569,-0.0,1.0,-0.0,0.56569,0.6,0.56569,0.56569,0.6,-0.56569,-0.0,1.0,-0.0,0.56569,0.6,-0.56569,-0.56569,0.6,-0.56569,-0.0,1.0,-0.0,-0.56569,0.6,-0.56569,-0.56569,0.6,0.56569,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0,-0.0,1.0,-0.0
+			}
+		}
+		LayerElementUV: 0 {
+			Version: 101
+			Name: "UVMap"
+			MappingInformationType: "ByPolygonVertex"
+			ReferenceInformationType: "IndexToDirect"
+			UV: *30 {
+				a: 0.0,0.0,0.10607,0.0,0.21213,0.0,0.3182,0.0,0.42426,0.0,0.0,0.125,0.0,0.125,0.0,0.125,0.0,0.125,0.0,0.125,0.0,0.0,0.075,0.0,0.0,0.075,-0.075,0.0,-0.0,-0.075
+			}
+			UVIndex: *24 {
+				a: 0,1,6,1,2,7,2,3,8,3,4,9,10,11,12,10,12,13,10,13,14,10,14,11
+			}
+		}
+		LayerElementMaterial: 0 {
+			Version: 101
+			Name: ""
+			MappingInformationType: "ByPolygon"
+			ReferenceInformationType: "IndexToDirect"
+			Materials: *8 {
+				a: 0,0,0,0,0,0,0,0
+			}
+		}
+		Layer: 0 {
+			Version: 100
+			LayerElement:  {
+				Type: "LayerElementNormal"
+				TypedIndex: 0
+			}
+			LayerElement:  {
+				Type: "LayerElementUV"
+				TypedIndex: 0
+			}
+			LayerElement:  {
+				Type: "LayerElementMaterial"
+				TypedIndex: 0
+			}
+		}
+	}
+	Model: 1000002, "Model::pusher_aim", "Mesh" {
+		Version: 232
+		Properties70:  {
+			P: "Lcl Translation", "Lcl Translation", "", "A",0,0,0
+		}
+		Shading: T
+		Culling: "CullingOff"
+	}
+	Material: 2000001, "Material::NeonYellow", "" {
+		Version: 102
+		ShadingModel: "lambert"
+		MultiLayer: 0
+		Properties70:  {
+			P: "DiffuseColor", "Color", "", "A",0.8,0.8,0.8
+		}
+	}
+}
+
+Connections:  {
+	C: "OO",1000002,0
+	C: "OO",1000001,1000002
+	C: "OO",2000001,1000002
+}

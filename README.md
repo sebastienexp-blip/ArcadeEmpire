@@ -57,9 +57,13 @@ Assets/_Project/
   (Scenes, Prefabs, Materials, Audio, Art : créés au fil des phases)
 ```
 
-## Modèles 3D
+## Modèles 3D et textures (générés par code)
 
-Les modèles (peluches, robot, capsule, chat doré, décors) sont générés par code : `Tools/modelgen/make_models.py` (numpy, export FBX ASCII) vers `Assets/_Project/Art/Models`. Le script `preview.py` produit un aperçu de contrôle (rendu logiciel, pas Unity). `ModelLib` (éditeur) les charge et applique les matériaux du jeu par nom de slot. Machines, personnage et pièces restent en primitives pour l'instant.
+- `Tools/modelgen/build_all.py` : 22 modèles FBX avec UV (peluches, robot, capsule, chat doré, décors, coque de la pince et du coin pusher, tête et doigts de pince, joystick, bouton, plateau, pièces, personnage en 5 pièces articulées) vers `Assets/_Project/Art/Models`.
+- `Tools/modelgen/make_textures.py` : textures procédurales tileables (albedo + normales) vers `Assets/_Project/Art/Textures`.
+- `preview.py` / `preview2.py` : aperçus de contrôle (rendu logiciel, pas Unity).
+- Côté Unity : `ModelLib` (palette de matériaux URP par nom de slot), `TextureImportSettings` (normales automatiques), `PlayerVisualAnimator` (marche procédurale).
+- Les primitives restent comme volumes physiques (collisions) sous la coque détaillée.
 
 ## Principes
 
