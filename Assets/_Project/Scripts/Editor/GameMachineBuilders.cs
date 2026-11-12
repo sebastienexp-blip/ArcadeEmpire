@@ -22,6 +22,7 @@ namespace ArcadeEmpire.EditorTools
             ProjectSetup.EnsureFolder(PrefabDir);
             Wheel(); Slots(); Hammer(); Basket(); Reflex();
             AirHockey(); Shooting(); Fishing();
+            Race(); Stacker();
             AssetDatabase.SaveAssets();
         }
 
@@ -361,6 +362,71 @@ namespace ArcadeEmpire.EditorTools
             machine.Configure(data, Anchor(root, new Vector3(0, 1.8f, -1.9f), new Vector3(0, 0.9f, 0f)), null);
             machine.Setup(carriage, hook, cableGo.transform, fishes);
             Save(root, data, "Game_Fishing");
+        }
+
+        // ------------------------------------------------------------ Course d'arcade
+        static void Race()
+        {
+            var data = Data("race_arcade", "Course d'arcade", MachineCategory.Skill, 4, 2200, 10);
+            data.footprintSize = new Vector2(1.2f, 1.3f); data.footprintCenterZ = -0.1f;
+            var pal = ModelLib.Palette(null);
+            var root = NewRoot("RaceMachine");
+            var cab = ModelLib.Spawn("game_race", root, pal);
+            Renderer screen = null;
+            foreach (var r in cab.GetComponentsInChildren<Renderer>(true))
+                foreach (var m in r.sharedMaterials) if (m == pal["RaceScreen"]) screen = r;
+
+            Color[] cols = { new Color(0.1f, 0.4f, 0.95f), new Color(0.2f, 0.8f, 0.3f), new Color(0.95f, 0.8f, 0.1f), new Color(0.7f, 0.2f, 0.9f), new Color(1f, 0.5f, 0.1f), new Color(0.9f, 0.9f, 0.95f) };
+            var player = ModelLib.Spawn("race_car", root, new Dictionary<string, Material>(pal) { ["Main"] = ModelLib.Lit("Race_Player", new Color(0.9f, 0.1f, 0.15f), 0.7f, 0.4f, "paint", 1f) }).transform;
+            var rivals = new Transform[6];
+            for (int i = 0; i < rivals.Length; i++)
+            {
+                var p = new Dictionary<string, Material>(pal) { ["Main"] = ModelLib.Lit("Race_Rival_" + i, cols[i], 0.7f, 0.4f, "paint", 1f) };
+                rivals[i] = ModelLib.Spawn("race_car", root, p).transform;
+                rivals[i].name = "Rival_" + i;
+                rivals[i].gameObject.SetActive(false);
+            }
+            Col(root, "Lower", new Vector3(0, 0.475f, 0), new Vector3(0.95f, 0.95f, 0.9f));
+            Col(root, "Upper", new Vector3(0, 1.65f, 0), new Vector3(0.9f, 1.4f, 0.6f));
+            Col(root, "Header", new Vector3(0, 2.55f, 0.05f), new Vector3(1f, 0.3f, 0.5f));
+            var machine = root.gameObject.AddComponent<RaceMachine>();
+            machine.Configure(data, Anchor(root, new Vector3(0, 1.6f, -1.8f), new Vector3(0, 1.6f, 0f)), null);
+            machine.Setup(screen, player, rivals);
+            Save(root, data, "Game_Race");
+        }
+
+        // ------------------------------------------------------------ Stacker rétro
+        static void Stacker()
+        {
+            var data = Data("stacker_retro", "Stacker rétro", MachineCategory.Skill, 5, 2600, 12);
+            data.footprintSize = new Vector2(1.2f, 1.3f); data.footprintCenterZ = -0.1f;
+            var pal = ModelLib.Palette(null);
+            var root = NewRoot("StackerMachine");
+            ModelLib.Spawn("game_stacker", root, pal);
+            Color[] rowCols = { new Color(0.2f, 0.9f, 0.4f), new Color(0.2f, 0.9f, 0.4f), new Color(0.3f, 0.85f, 0.7f), new Color(0.2f, 0.8f, 1f),
+                                new Color(0.2f, 0.5f, 1f), new Color(0.5f, 0.35f, 1f), new Color(0.8f, 0.3f, 0.95f), new Color(1f, 0.2f, 0.7f),
+                                new Color(1f, 0.3f, 0.35f), new Color(1f, 0.55f, 0.15f), new Color(1f, 0.85f, 0.15f), new Color(1f, 0.95f, 0.5f) };
+            var cells = new Transform[StackerMachine.Rows * StackerMachine.Cols];
+            for (int r = 0; r < StackerMachine.Rows; r++)
+            {
+                var p = new Dictionary<string, Material>(pal) { ["Main"] = RoomBuilder.Neon("Stack_Row_" + r, rowCols[r]) };
+                for (int c = 0; c < StackerMachine.Cols; c++)
+                {
+                    var cell = ModelLib.Spawn("stack_block", root, p).transform;
+                    cell.name = $"Cell_{r}_{c}";
+                    cell.localPosition = new Vector3((c - 3) * 0.1f, 1.75f - 0.55f + r * 0.1f, -0.30f);
+                    cells[r * StackerMachine.Cols + c] = cell;
+                    cell.gameObject.SetActive(false);
+                }
+            }
+            var button = Button(root, new Vector3(0, 0.975f, -0.35f), pal, 1.0f);
+            Col(root, "Lower", new Vector3(0, 0.45f, -0.05f), new Vector3(0.95f, 0.9f, 0.9f));
+            Col(root, "Upper", new Vector3(0, 1.75f, 0.05f), new Vector3(0.9f, 1.7f, 0.6f));
+            Col(root, "Header", new Vector3(0, 2.75f, 0f), new Vector3(1f, 0.3f, 0.5f));
+            var machine = root.gameObject.AddComponent<StackerMachine>();
+            machine.Configure(data, Anchor(root, new Vector3(0, 1.8f, -2.0f), new Vector3(0, 1.75f, 0f)), button);
+            machine.Setup(cells);
+            Save(root, data, "Game_Stacker");
         }
     }
 }

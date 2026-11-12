@@ -286,3 +286,26 @@ cau = np.clip(1 - np.abs(np.sin((h * 9) * math.pi)) * 3, 0, 1)
 col = np.stack([0.08 + 0.25 * cau, 0.32 + 0.35 * cau + 0.1 * h, 0.55 + 0.3 * cau + 0.15 * h], -1)
 save("water", col, h, 3.0)
 print("2e serie :", len(os.listdir(OUT)), "fichiers")
+
+
+# ================= Phase 9 : 3e série (course, stacker) =================
+for nm, text, sub, a, b in (("sign_race", "RACING", "DODGE & WIN", (255, 70, 90), (255, 220, 40)),
+                            ("sign_stacker", "STACKER", "REACH THE TOP", (180, 90, 255), (60, 255, 140))):
+    sign(nm, text, sub, a, b)
+
+# --- Route de l'écran de course : 512 x 1024, répétable verticalement (voies : 3 entre les bordures)
+W, H = 512, 1024
+yy, xx = np.mgrid[0:H, 0:W]
+road = 0.2 + 0.05 * np.random.RandomState(5).rand(H, W)
+img = np.stack([road, road, road * 1.05], -1)
+curb = int(W * 0.08)
+for side in (0, 1):
+    xs = slice(0, curb) if side == 0 else slice(W - curb, W)
+    stripe = ((yy[:, xs] // 64) % 2 == 0)
+    img[:, xs] = np.where(stripe[..., None], [0.9, 0.1, 0.1], [0.95, 0.95, 0.95])
+lane_w = (W - 2 * curb) / 3
+for k in (1, 2):
+    cx = int(curb + k * lane_w)
+    dash = ((yy[:, cx - 4:cx + 4] // 64) % 2 == 0)
+    img[:, cx - 4:cx + 4] = np.where(dash[..., None], [0.92, 0.92, 0.85], img[:, cx - 4:cx + 4])
+Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8)).save(os.path.join(OUT, "road_screen.png"))
