@@ -52,6 +52,7 @@ namespace ArcadeEmpire.EditorTools
                     PlayerSettings.Android.bundleVersionCode = build;
                     PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
                     EditorUserBuildSettings.buildAppBundle = false;
+                    EditorUserBuildSettings.androidCreateSymbols = AndroidCreateSymbols.Disabled;   // pas de fichiers de débogage : économise le disque du serveur de build
                     EditorUserBuildSettings.androidBuildSystem = AndroidBuildSystem.Gradle;
                 }
 

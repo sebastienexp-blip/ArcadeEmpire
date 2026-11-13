@@ -39,9 +39,10 @@ jobs:
       - name: Libérer de l'espace disque
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
-          tool-cache: false
+          tool-cache: ${{ matrix.name == 'android' }}
           android: true   # le SDK Android est déjà dans l'image Unity (docker) : inutile de garder celui du runner
           dotnet: true
+          swap-storage: false
           haskell: true
           large-packages: ${{ matrix.name == 'android' }}
 
