@@ -3,19 +3,24 @@ using UnityEngine;
 namespace ArcadeEmpire.Player
 {
     /// <summary>
-    /// Animation procédurale du personnage : balancement des bras et des jambes selon la vitesse réelle
-    /// du CharacterController, léger rebond du buste. Aucune animation importée n'est nécessaire.
+    /// Animation procédurale du personnage, pilotée par la vitesse réelle : cycle de marche dont la longueur de pas suit la vitesse
+    /// (pas de glissement), levée du pied, bascule du bassin, torsion du buste compensée par la tête, inclinaison dans les
+    /// accélérations et les virages, respiration et déhanchement à l'arrêt. Devant une machine, le personnage se tourne vers elle
+    /// et lève les bras vers les commandes.
     /// </summary>
     public class PlayerVisualAnimator : MonoBehaviour
     {
         [SerializeField] private Transform armLeft, armRight, legLeft, legRight, body;
-        [SerializeField] private float swingDegrees = 38f;
-        [SerializeField] private float stepsPerMeter = 2.4f;
+        private Transform head;
+        private PlayerController pc;
+        private MachineInteractor interactor;
 
-        private CharacterController controller;
-        private float phase;
-        private float amount;
-        private Vector3 bodyBase;
+        private static readonly Vector3 Hip = new Vector3(0f, 0.92f, 0f);
+        private float phase, amount, run01;
+        private float lean, roll, twist;
+        private float armRaise;
+        private Vector3 prevVelocity, accel;
+        private Vector3 legLBase, legRBase;
 
         public void Configure(Transform aL, Transform aR, Transform lL, Transform lR, Transform bodyRoot)
         {
@@ -24,26 +29,85 @@ namespace ArcadeEmpire.Player
 
         private void Awake()
         {
-            controller = GetComponent<CharacterController>();
-            if (body != null) bodyBase = body.localPosition;
+            pc = GetComponent<PlayerController>();
+            if (body != null) head = body.Find("Head");
+            if (legLeft != null) legLBase = legLeft.localPosition;
+            if (legRight != null) legRBase = legRight.localPosition;
         }
+
+        private void Start() => interactor = FindFirstObjectByType<MachineInteractor>();
 
         private void Update()
         {
-            if (controller == null) return;
-            Vector3 v = controller.velocity; v.y = 0f;
+            float dt = Time.deltaTime;
+            if (pc == null || dt <= 0f) return;
+
+            Vector3 v = pc.PlanarVelocity;
             float speed = v.magnitude;
-            amount = Mathf.MoveTowards(amount, Mathf.Clamp01(speed / 2.5f), Time.deltaTime * 6f);
-            phase += speed * stepsPerMeter * Time.deltaTime;
-            float s = Mathf.Sin(phase) * swingDegrees * amount;
+            Vector3 a = (v - prevVelocity) / dt;
+            prevVelocity = v;
+            accel = Vector3.Lerp(accel, a, 1f - Mathf.Exp(-10f * dt));
+            float accelForward = Vector3.Dot(accel, transform.forward);
+
+            amount = Mathf.MoveTowards(amount, Mathf.Clamp01(speed / 1.5f), dt * 7f);
+            run01 = Mathf.Clamp01((speed - 3.2f) / Mathf.Max(0.1f, pc.RunSpeed - 3.2f));
+
+            // Longueur de pas : 0,62 m en marchant, 0,95 m en courant -> la fréquence suit la vitesse, les pieds ne glissent pas
+            float step = Mathf.Lerp(0.62f, 0.95f, run01);
+            phase += Mathf.PI * speed / step * dt;
+            if (phase > 1000f) phase -= 1000f * 1f;
+
+            float swing = Mathf.Lerp(24f, 48f, run01) * amount;
+            float s = Mathf.Sin(phase) * swing;
+
+            // Machine : on se tourne vers elle et on lève les bras
+            bool using_ = interactor != null && interactor.Active != null;
+            if (using_)
+            {
+                Vector3 to = interactor.Active.transform.position - transform.position; to.y = 0f;
+                if (to.sqrMagnitude > 0.01f && speed < 0.3f)
+                    transform.rotation = Quaternion.RotateTowards(transform.rotation, Quaternion.LookRotation(to, Vector3.up), 360f * dt);
+            }
+            armRaise = Mathf.MoveTowards(armRaise, using_ ? 1f : 0f, dt * 3f);
+            float t = Time.time;
+            float idle = 1f - amount;
+
+            // Jambes : balancement + levée du pied quand la jambe passe vers l'avant
             Swing(legLeft, s); Swing(legRight, -s);
-            Swing(armLeft, -s * 0.8f); Swing(armRight, s * 0.8f);
-            if (body != null) body.localPosition = bodyBase + Vector3.up * (Mathf.Abs(Mathf.Sin(phase)) * 0.025f * amount);
+            if (legLeft != null) legLeft.localPosition = legLBase + Vector3.up * (Mathf.Max(0f, Mathf.Cos(phase)) * 0.035f * amount);
+            if (legRight != null) legRight.localPosition = legRBase + Vector3.up * (Mathf.Max(0f, -Mathf.Cos(phase)) * 0.035f * amount);
+
+            // Bras : balancement opposé aux jambes, plus mou à l'arrêt, levés vers la machine
+            float armSwing = -s * 0.85f + Mathf.Sin(t * 1.3f) * 1.5f * idle;
+            float raised = -68f + Mathf.Sin(t * 2.1f) * 2f;
+            Swing(armLeft, Mathf.Lerp(armSwing, raised, armRaise));
+            Swing(armRight, Mathf.Lerp(-armSwing, raised, armRaise));
+
+            // Buste : inclinaison selon l'accélération et la vitesse, roulis dans les virages, torsion du bassin
+            float targetLean = Mathf.Clamp(accelForward * 0.35f, -5f, 7f) + run01 * 6f + amount * 2f;
+            float targetRoll = Mathf.Clamp(-pc.YawRate * 0.03f * Mathf.Clamp01(speed / 3f), -7f, 7f);
+            float targetTwist = Mathf.Sin(phase) * 5f * amount;
+            float k = 1f - Mathf.Exp(-10f * dt);
+            lean = Mathf.Lerp(lean, targetLean, k); roll = Mathf.Lerp(roll, targetRoll, k); twist = Mathf.Lerp(twist, targetTwist, k);
+
+            if (body != null)
+            {
+                Quaternion q = Quaternion.Euler(lean, twist, roll);
+                float bob = Mathf.Abs(Mathf.Sin(phase)) * Mathf.Lerp(0.025f, 0.045f, run01) * amount;
+                float sway = Mathf.Sin(phase) * 0.015f * amount + Mathf.Sin(t * 0.45f) * 0.008f * idle;
+                float breathe = 1f + Mathf.Sin(t * 1.7f) * 0.006f * idle;
+                body.localRotation = q;
+                // rotation autour des hanches (et non des pieds) pour que le corps se penche naturellement
+                body.localPosition = Hip - q * Hip + new Vector3(sway, bob, 0f);
+                body.localScale = new Vector3(1f, breathe, 1f);
+                if (head != null)
+                    head.localRotation = Quaternion.Euler(-lean * 0.6f + Mathf.Sin(t * 0.7f) * 1.2f * idle, -twist * 0.8f + Mathf.Sin(t * 0.33f) * 3f * idle, -roll * 0.7f);
+            }
         }
 
-        private static void Swing(Transform t, float degrees)
+        private static void Swing(Transform tr, float degrees)
         {
-            if (t != null) t.localRotation = Quaternion.Euler(degrees, 0f, 0f);
+            if (tr != null) tr.localRotation = Quaternion.Euler(degrees, 0f, 0f);
         }
     }
 }
