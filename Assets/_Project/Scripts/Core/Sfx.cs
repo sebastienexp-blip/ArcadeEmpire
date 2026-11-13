@@ -5,7 +5,7 @@ namespace ArcadeEmpire.Core
 {
     /// <summary>
     /// Effets sonores générés par le code (aucun fichier audio importé à ce stade) : pièce, prise, chute, victoire.
-    /// Servent de sons provisoires, à remplacer par de vrais enregistrements en Phase 10.
+    /// Volume réglé par GameAudio (touches - et + pour le volume général).
     /// </summary>
     public static class Sfx
     {
@@ -17,7 +17,7 @@ namespace ArcadeEmpire.Core
         public static void Play(Kind kind, Vector3 position, float volume = 0.7f)
         {
             AudioClip clip = Get(kind);
-            if (clip != null) AudioSource.PlayClipAtPoint(clip, position, volume);
+            if (clip != null) AudioSource.PlayClipAtPoint(clip, position, volume * GameAudio.EffectiveSfx);
         }
 
         private static AudioClip Get(Kind kind)

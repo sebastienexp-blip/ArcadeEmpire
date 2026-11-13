@@ -15,6 +15,7 @@ Jeu Unity 3D de gestion de salle d'arcade (machines à pinces, coin pusher, mini
 - [x] Phase 9 (1re série) : roue de la fortune, machine à sous, testeur de force, basket, réflexes (achat dans le mode construction, touche C)
 - [x] Phase 9 (2e série) : air hockey (contre IA), stand de tir, pêche aux poissons
 - [x] Phase 9 (3e série) : course d'arcade, stacker rétro
+- [ ] Phase 10 (en cours) : sauvegarde validée à la lecture, musique d'ambiance générée (M musique on/off, - et + volume)
 - [ ] Phase 10 : optimisation, tests, finition
 
 ## Tout se gère depuis GitHub (aucun PC requis)
