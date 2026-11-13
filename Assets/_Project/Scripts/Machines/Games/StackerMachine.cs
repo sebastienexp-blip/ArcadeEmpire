@@ -113,7 +113,7 @@ namespace ArcadeEmpire.Machines.Games
                     if (i >= cells.Length || cells[i] == null) continue;
                     bool on = placed != null && placed[r, c];
                     if (!on && IsPlaying && !over && r == row && c >= pos && c < pos + width) on = true;
-                    cells[i].gameObject.SetActive(on);
+                    if (cells[i].gameObject.activeSelf != on) cells[i].gameObject.SetActive(on);
                 }
         }
     }

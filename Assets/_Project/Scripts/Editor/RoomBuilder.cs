@@ -281,6 +281,7 @@ namespace ArcadeEmpire.EditorTools
             }
             m.SetColor("_BaseColor", color);
             m.SetFloat("_Smoothness", smoothness);
+            m.enableInstancing = true;   // regroupe les objets identiques (pièces, cubes, poissons...)
             EditorUtility.SetDirty(m);
             return m;
         }

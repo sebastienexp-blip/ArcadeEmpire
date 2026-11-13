@@ -43,6 +43,9 @@ namespace ArcadeEmpire.Core
             else
                 Debug.LogWarning($"[Graphics] Asset URP du profil {profile} non assigné.");
 
+            if (profile == Profile.PC && QualitySettings.vSyncCount == 0)
+                QualitySettings.vSyncCount = 1;   // évite de faire tourner le GPU à fond inutilement
+
             if (profile == Profile.Mobile)
             {
                 QualitySettings.vSyncCount = 0;
