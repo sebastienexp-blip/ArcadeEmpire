@@ -40,10 +40,10 @@ jobs:
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: false
-          android: ${{ matrix.name != 'android' }}
+          android: true   # le SDK Android est déjà dans l'image Unity (docker) : inutile de garder celui du runner
           dotnet: true
           haskell: true
-          large-packages: false
+          large-packages: ${{ matrix.name == 'android' }}
 
       - name: Mémoire d'échange (16 Go)
         run: |
