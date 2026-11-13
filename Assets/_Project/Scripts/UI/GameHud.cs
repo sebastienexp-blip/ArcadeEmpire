@@ -54,6 +54,7 @@ namespace ArcadeEmpire.UI
 
         // ---- Interface Canvas (créée par le code, sans prefab) ----
         private Canvas canvas;
+        private Text keysText;
         private Text coinsText, levelText, statusText, hintText, promptText, toastText;
         private Image xpFill;
         private GameObject statusBox, promptBox, toastBox, root;
@@ -95,6 +96,10 @@ namespace ArcadeEmpire.UI
             // Invite « E : jouer » (bas)
             promptBox = Panel("Prompt", go.transform, new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 26), new Vector2(660, 56), null, true);
             promptText = Label("PromptText", promptBox.transform, 24, TextAnchor.MiddleCenter, Vector2.zero, Vector2.zero, new Color(1f, 0.9f, 0.3f), true);
+
+            keysText = Label("Keys", go.transform, 15, TextAnchor.MiddleLeft, Vector2.zero, new Vector2(520, 24), new Color(0.7f, 0.75f, 0.9f));
+            var kr = keysText.rectTransform; kr.anchorMin = kr.anchorMax = new Vector2(0, 0); kr.pivot = new Vector2(0, 0); kr.anchoredPosition = new Vector2(12, 8);
+            keysText.text = "I : inventaire   B : boutique, missions et succès   C : construire   M : musique   - / + : volume";
 
             // Message temporaire (haut centre)
             toastBox = Panel("Toast", go.transform, new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -110), new Vector2(920, 56), null, true);
@@ -150,6 +155,7 @@ namespace ArcadeEmpire.UI
 
             bool active = interactor != null && interactor.Active != null;
             bool near = interactor != null && !active && interactor.Nearest != null && interactor.Nearest.Data != null;
+            keysText.gameObject.SetActive(!active);
             statusBox.SetActive(active);
             hintText.gameObject.SetActive(active);
             promptBox.SetActive(near);
