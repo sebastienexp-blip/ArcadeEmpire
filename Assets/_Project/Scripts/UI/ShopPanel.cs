@@ -151,6 +151,21 @@ namespace ArcadeEmpire.UI
                 GUILayout.Label($"+{MissionManager.RewardCoins(m.missionId)} pièces, +{MissionManager.RewardXp(m.missionId)} XP", small, GUILayout.Width(200));
                 GUILayout.EndHorizontal();
             }
+
+            var am = AchievementManager.Instance;
+            if (am == null) return;
+            GUILayout.Space(14);
+            GUILayout.Label("Succès", title);
+            foreach (var a in AchievementManager.All)
+            {
+                bool done = am.IsUnlocked(a.id);
+                GUILayout.BeginHorizontal();
+                GUILayout.Label((done ? "✔ " : "• ") + a.title, label, GUILayout.Width(260));
+                GUILayout.Label(a.desc, small, GUILayout.Width(300));
+                GUILayout.Label(done ? "obtenu" : $"{Mathf.Min(am.Get(a.stat), a.target)} / {a.target}", label, GUILayout.Width(110));
+                GUILayout.Label($"+{a.reward} pièces", small, GUILayout.Width(110));
+                GUILayout.EndHorizontal();
+            }
         }
 
         private void Styles()

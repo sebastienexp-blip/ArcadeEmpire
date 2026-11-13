@@ -28,6 +28,13 @@ namespace ArcadeEmpire.Save
     }
 
     [Serializable]
+    public class StatEntry
+    {
+        public string key;
+        public int value;
+    }
+
+    [Serializable]
     public class MissionProgress
     {
         public string missionId;
@@ -62,6 +69,8 @@ namespace ArcadeEmpire.Save
         public List<UpgradeEntry> upgrades = new List<UpgradeEntry>();
         public bool layoutInitialized;                 // vrai une fois la disposition de départ de la salle créée
         public string roomThemeId = "retro80";         // ambiance de la salle
+        public List<StatEntry> stats = new List<StatEntry>();       // compteurs des succès
+        public List<string> achievements = new List<string>();      // succès débloqués (et machines déjà essayées : « played:<id> »)
         public string missionsDate;   // jour (UTC) des missions en cours, pour le renouvellement quotidien
 
         // Réglages

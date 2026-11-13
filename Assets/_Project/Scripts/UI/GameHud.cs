@@ -17,10 +17,11 @@ namespace ArcadeEmpire.UI
         private float toastUntil;
         private GUIStyle label, big, box;
 
-        private void OnEnable() => MachineBase.AnyRewardWon += OnReward;
+        private void OnEnable() { MachineBase.AnyRewardWon += OnReward; AchievementManager.Unlocked += OnAchievement; }
         private void OnDisable()
         {
             MachineBase.AnyRewardWon -= OnReward;
+            AchievementManager.Unlocked -= OnAchievement;
             if (ProgressionManager.Instance != null) ProgressionManager.Instance.OnLevelUp -= OnLevelUp;
             if (MissionManager.Instance != null) MissionManager.Instance.OnMissionCompleted -= OnMission;
         }
@@ -43,6 +44,9 @@ namespace ArcadeEmpire.UI
 
         private void OnLevelUp(int level, long coins, int tokens) =>
             Show($"NIVEAU {level} !   +{coins} pièces" + (tokens > 0 ? $"   +{tokens} jeton premium" : ""), 4.5f);
+
+        private void OnAchievement(string title, long coins) =>
+            Show($"Succès débloqué : {title}   +{coins} pièces", 5f);
 
         private void OnMission(string title, long coins, long xp) =>
             Show($"Mission accomplie : {title}   +{coins} pièces, +{xp} XP", 4.5f);
