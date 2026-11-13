@@ -59,7 +59,19 @@ namespace ArcadeEmpire.Save
             if (!File.Exists(path)) return null;
             try
             {
-                return JsonUtility.FromJson<SaveData>(File.ReadAllText(path));
+                string text = File.ReadAllText(path);
+                if (string.IsNullOrWhiteSpace(text) || !text.TrimEnd().EndsWith("}"))
+                {
+                    Debug.LogWarning($"[SaveSystem] {path} est tronqué ou vide, ignoré.");
+                    return null;
+                }
+                var data = JsonUtility.FromJson<SaveData>(text);
+                if (data == null || data.version <= 0 || string.IsNullOrEmpty(data.lastSavedUtc))
+                {
+                    Debug.LogWarning($"[SaveSystem] {path} ne ressemble pas à une sauvegarde valide, ignoré.");
+                    return null;
+                }
+                return data;
             }
             catch (Exception e)
             {
