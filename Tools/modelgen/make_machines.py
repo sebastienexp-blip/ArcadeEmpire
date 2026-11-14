@@ -74,6 +74,32 @@ def claw_prong():
 
 
 @model
+def claw_bridge():
+    """Pont mobile (axe X) du portique : poutre, chariots d'extrémité et galets. Centré en X, symétrique."""
+    m = Model("claw_bridge", uv=1.0)
+    m.add(rbox((1.28, 0.05, 0.05), 0.2, mat="Metal"), (0, 0.0, 0))
+    m.add(box((1.24, 0.012, 0.012), "NeonCyan"), (0, 0.032, -0.027))
+    for s in (-1, 1):
+        m.add(rbox((0.1, 0.09, 0.12), 0.2, mat="Paint"), (s * 0.6, 0.0, 0))
+        for z in (-0.045, 0.045):
+            m.add(cylinder(0.022, 0.022, 0.02, seg=14, mat="Rubber"), (s * 0.6, 0.05, z), R=rot(0, 0, 90))
+    return m.finish(keep=True)
+
+
+@model
+def claw_carriage():
+    """Chariot qui roule sur le pont et porte le câble. Centré sur le câble."""
+    m = Model("claw_carriage", uv=1.0)
+    m.add(rbox((0.14, 0.05, 0.1), 0.25, mat="Paint"), (0, 0.0, 0))
+    m.add(cylinder(0.035, 0.035, 0.03, seg=16, mat="Metal"), (0, -0.04, 0))
+    m.add(torus(0.045, 0.006, seg=18, tube=6, mat="NeonYellow"), (0, 0.027, 0), R=rot(90, 0, 0))
+    for s in (-1, 1):
+        for z in (-0.03, 0.03):
+            m.add(cylinder(0.018, 0.018, 0.012, seg=12, mat="Rubber"), (s * 0.075, 0.0, z), R=rot(0, 0, 90))
+    return m.finish(keep=True)
+
+
+@model
 def arcade_stick():
     m = Model("arcade_stick", uv=1.0)
     m.add(lathe([(0.055, 0.0), (0.05, 0.012), (0.03, 0.03), (0.012, 0.05)], seg=18, mat="Rubber", smooth=True))

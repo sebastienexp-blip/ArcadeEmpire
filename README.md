@@ -7,7 +7,7 @@ Jeu Unity 3D de gestion de salle d'arcade (machines à pinces, coin pusher, mini
 - [x] **Phase 1** : architecture, économie de base, sauvegarde, données, classe de base des machines, qualité PC/Mobile
 - [x] Phase 2 : première salle (primitives provisoires, générée par `RoomBuilder` ; visite à la caméra libre)
 - [x] Phase 3 : personnage provisoire (capsule), déplacements ZQSD/WASD + Maj, caméra 3e personne (clic droit = orbite, molette = zoom)
-- [x] Phase 4 : machine à pinces jouable (E : s'installer, ESPACE : payer / descendre, ZQSD : déplacer la pince, Échap : quitter)
+- [x] Phase 4 : machine à pinces jouable (E : s'installer, ESPACE : insérer la pièce puis descendre, ZQSD : joystick, Échap : quitter). Refonte réaliste : portique (pont + chariot) mobile, joystick avec inertie et câble qui se balance, prise dépendant du centrage, du poids et de la rareté du lot (puis usée par le transport), pièce animée dans le monnayeur, afficheur numérique, LED, sons dédiés
 - [x] Phase 5 : coin pusher (visée Q/D, ESPACE : lâcher une pièce ; pièces et jetons poussés = gains)
 - [x] Phase 6 : économie et inventaire (touche I : inventaire, collection, revente, sauvegarde manuelle)
 - [x] Phase 7 : progression (niveaux 1 à 100, XP), missions du jour, boutique en tickets, amélioration de la pince (touche B)

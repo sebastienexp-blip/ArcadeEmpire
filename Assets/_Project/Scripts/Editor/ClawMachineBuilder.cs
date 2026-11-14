@@ -20,16 +20,16 @@ namespace ArcadeEmpire.EditorTools
         sealed class PrizeSpec
         {
             public string id, name; public Rarity rarity; public PrimitiveType shape;
-            public string model; public Color color; public Vector3 scale; public int count, tickets; public long xp; public bool glow;
+            public string model; public float mass; public Color color; public Vector3 scale; public int count, tickets; public long xp; public bool glow;
         }
 
         static readonly PrizeSpec[] Specs =
         {
-            new PrizeSpec { id = "plush_pink", model = "prize_bunny", name = "Peluche rose", rarity = Rarity.Common, shape = PrimitiveType.Sphere, color = new Color(1f, 0.45f, 0.7f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
-            new PrizeSpec { id = "plush_blue", model = "prize_bear", name = "Peluche bleue", rarity = Rarity.Common, shape = PrimitiveType.Sphere, color = new Color(0.35f, 0.6f, 1f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
-            new PrizeSpec { id = "mini_toy_green", model = "prize_robot", name = "Mini-jouet vert", rarity = Rarity.Rare, shape = PrimitiveType.Cube, color = new Color(0.2f, 0.9f, 0.4f), scale = new Vector3(0.22f, 0.22f, 0.22f), count = 4, tickets = 5, xp = 15 },
-            new PrizeSpec { id = "capsule_purple", model = "prize_capsule", name = "Capsule surprise", rarity = Rarity.Epic, shape = PrimitiveType.Capsule, color = new Color(0.7f, 0.3f, 1f), scale = new Vector3(0.17f, 0.14f, 0.17f), count = 2, tickets = 15, xp = 40 },
-            new PrizeSpec { id = "figurine_gold", model = "prize_cat_gold", name = "Figurine dorée", rarity = Rarity.Legendary, shape = PrimitiveType.Cube, color = new Color(1f, 0.8f, 0.15f), scale = new Vector3(0.2f, 0.26f, 0.2f), count = 1, tickets = 50, xp = 120, glow = true },
+            new PrizeSpec { id = "plush_pink", model = "prize_bunny", name = "Peluche rose", rarity = Rarity.Common, mass = 0.12f, shape = PrimitiveType.Sphere, color = new Color(1f, 0.45f, 0.7f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
+            new PrizeSpec { id = "plush_blue", model = "prize_bear", name = "Peluche bleue", rarity = Rarity.Common, mass = 0.12f, shape = PrimitiveType.Sphere, color = new Color(0.35f, 0.6f, 1f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
+            new PrizeSpec { id = "mini_toy_green", model = "prize_robot", name = "Mini-jouet vert", rarity = Rarity.Rare, mass = 0.17f, shape = PrimitiveType.Cube, color = new Color(0.2f, 0.9f, 0.4f), scale = new Vector3(0.22f, 0.22f, 0.22f), count = 4, tickets = 5, xp = 15 },
+            new PrizeSpec { id = "capsule_purple", model = "prize_capsule", name = "Capsule surprise", rarity = Rarity.Epic, mass = 0.24f, shape = PrimitiveType.Capsule, color = new Color(0.7f, 0.3f, 1f), scale = new Vector3(0.17f, 0.14f, 0.17f), count = 2, tickets = 15, xp = 40 },
+            new PrizeSpec { id = "figurine_gold", model = "prize_cat_gold", name = "Figurine dorée", rarity = Rarity.Legendary, mass = 0.34f, shape = PrimitiveType.Cube, color = new Color(1f, 0.8f, 0.15f), scale = new Vector3(0.2f, 0.26f, 0.2f), count = 1, tickets = 50, xp = 120, glow = true },
         };
 
         public static ClawMachine Build(Transform parent, Vector3 pos, float rotY)
@@ -37,6 +37,9 @@ namespace ArcadeEmpire.EditorTools
             ProjectSetup.EnsureFolder(DataDir + "/Rewards");
             ProjectSetup.EnsureFolder(MatDir);
 
+            plushPhys = EnsurePhysicsMaterial("Plush_Physics", 0.85f, 0.7f, 0.08f);
+            hardPhys = EnsurePhysicsMaterial("Hard_Physics", 0.5f, 0.4f, 0.2f);
+            var feltPhys = EnsurePhysicsMaterial("Felt_Physics", 0.7f, 0.6f, 0.05f);
             MachineData data = EnsureMachineData();
             var rewards = new Dictionary<string, RewardData>();
             foreach (var s in Specs) rewards[s.id] = EnsureReward(s);
@@ -151,8 +154,51 @@ namespace ArcadeEmpire.EditorTools
             anchor.localRotation = Quaternion.LookRotation(new Vector3(0, 1.0f, 0) - anchor.localPosition);
 
             // --- Machine + zone de récupération
+            foreach (string fl in new[] { "PlayFloor_A", "PlayFloor_B" })
+            {
+                var ft = root.Find(fl);
+                if (ft != null && ft.GetComponent<Collider>() != null) ft.GetComponent<Collider>().sharedMaterial = feltPhys;
+            }
+
+            // --- Portique : pont (axe X) et chariot qui se déplacent réellement
+            var bridgeT = new GameObject("Bridge").transform;
+            bridgeT.SetParent(root, false);
+            bridgeT.localPosition = new Vector3(0f, 1.72f, -0.3f);
+            ModelLib.Spawn("claw_bridge", bridgeT, pal);
+            var carriageT = new GameObject("Carriage").transform;
+            carriageT.SetParent(root, false);
+            carriageT.localPosition = new Vector3(-0.4f, 1.665f, -0.3f);
+            ModelLib.Spawn("claw_carriage", carriageT, pal);
+
+            // --- Monnayeur : pièce animée à l'insertion
+            var coinMat = RoomBuilder.Mat("Claw_Coin", new Color(1f, 0.8f, 0.15f), 0.8f);
+            ModelLib.Textured(coinMat, "metal", null, 1f, 0.9f, 0.8f);
+            var coinVis = Prim(PrimitiveType.Cylinder, "InsertCoin", root, new Vector3(0f, 0.4f, -1.14f), new Vector3(0.06f, 0.004f, 0.06f), coinMat, false);
+            coinVis.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            coinVis.SetActive(false);
+
+            // --- Afficheur numérique sous le plafond, face au joueur (derrière la vitre)
+            var frame = Prim(PrimitiveType.Cube, "DisplayFrame", root, new Vector3(0f, 1.665f, -0.507f), new Vector3(1.0f, 0.17f, 0.012f), body, false);
+            var display = new GameObject("Display").transform;
+            display.SetParent(root, false);
+            display.localPosition = new Vector3(0f, 1.665f, -0.516f);
+
+            // --- LED du plafond animées par le script
+            var leds = new Light[4];
+            var lpos = new[] { new Vector3(-0.5f, 1.68f, -0.35f), new Vector3(0.5f, 1.68f, -0.35f), new Vector3(-0.5f, 1.68f, 0.35f), new Vector3(0.5f, 1.68f, 0.35f) };
+            for (int i = 0; i < 4; i++)
+            {
+                var lg = new GameObject("Light_" + i);
+                lg.transform.SetParent(root, false);
+                lg.transform.localPosition = lpos[i];
+                var l = lg.AddComponent<Light>();
+                l.type = LightType.Point; l.range = 1.4f; l.intensity = 1f; l.shadows = LightShadows.None; l.color = new Color(1f, 0.3f, 0.7f);
+                leds[i] = l;
+            }
+
             var machine = root.gameObject.AddComponent<ClawMachine>();
             machine.Configure(data, anchor, rb, cable.transform, pivots, hold, stickPivot, button.transform);
+            machine.SetupExtras(bridgeT, carriageT, coinVis.transform, display, leds);
 
             var chute = new GameObject("ChuteZone");
             chute.transform.SetParent(root, false);
@@ -232,12 +278,33 @@ namespace ArcadeEmpire.EditorTools
                     go.transform.localPosition = new Vector3(slots[k].x, 0.72f + (k % 3) * 0.16f, slots[k].y);
                     go.transform.localRotation = Quaternion.Euler(0, rng.Next(360), 0);
                     var rb = go.AddComponent<Rigidbody>();
-                    rb.mass = 0.15f;
-                    rb.linearDamping = 0.4f;
+                    rb.mass = s.mass;
+                    rb.linearDamping = 0.35f;
                     rb.angularDamping = 0.6f;
+                    var pcol = go.GetComponent<Collider>();
+                    if (pcol != null) pcol.sharedMaterial = (s.rarity == Rarity.Common) ? plushPhys : hardPhys;
                     go.AddComponent<PrizeItem>().reward = rewards[s.id];
                 }
             }
+        }
+
+        static PhysicsMaterial plushPhys, hardPhys;
+
+        static PhysicsMaterial EnsurePhysicsMaterial(string name, float staticF, float dynamicF, float bounce)
+        {
+            ProjectSetup.EnsureFolder("Assets/_Project/Physics");
+            string path = "Assets/_Project/Physics/" + name + ".asset";
+            var m = AssetDatabase.LoadAssetAtPath<PhysicsMaterial>(path);
+            if (m == null)
+            {
+                m = new PhysicsMaterial(name);
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.staticFriction = staticF; m.dynamicFriction = dynamicF; m.bounciness = bounce;
+            m.frictionCombine = PhysicsMaterialCombine.Average;
+            m.bounceCombine = PhysicsMaterialCombine.Average;
+            EditorUtility.SetDirty(m);
+            return m;
         }
 
         static GameObject Prim(PrimitiveType type, string name, Transform parent, Vector3 localPos, Vector3 scale, Material mat, bool collider = true)
