@@ -105,7 +105,7 @@ namespace ArcadeEmpire.EditorTools
             button.GetComponent<MeshRenderer>().sharedMaterial = cyan;
 
             // --- Modèle de pièce (désactivé, copié par le pool) + pièces et lots posés sur le plateau
-            var template = BuildCoin("CoinTemplate", root, new Vector3(0, 2.5f, 0), 0f, coinMat, 0.1f, 0.02f, null);
+            var template = BuildCoin("CoinTemplate", root, new Vector3(0, 2.5f, 0), 0f, coinMat, 0.1f, 0.011f, null);
             template.SetActive(false);
 
             var coins = new GameObject("Coins").transform;
@@ -114,48 +114,50 @@ namespace ArcadeEmpire.EditorTools
             var rnd = new System.Random(2024);
 
             // plateau inférieur : tas de 2 couches devant la plaque
-            for (int layer = 0; layer < 2; layer++)
+            for (int layer = 0; layer < 3; layer++)
                 for (float z = -0.47f; z <= 0.27f; z += 0.105f)
                     for (float x = -0.55f; x <= 0.56f; x += 0.11f)
                     {
-                        if (layer == 1 && rnd.NextDouble() < 0.4) continue;
+                        if (layer == 1 && rnd.NextDouble() < 0.2) continue;
+                        if (layer == 2 && rnd.NextDouble() < 0.5) continue;
                         index++;
                         float jx = (float)(rnd.NextDouble() - 0.5) * 0.03f, jz = (float)(rnd.NextDouble() - 0.5) * 0.03f;
-                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.04f : 0f), 0.912f + layer * 0.0235f, z + jz);
+                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.04f : 0f), 0.907f + layer * 0.0125f, z + jz);
                         float yaw = (float)(rnd.NextDouble() * 360.0);
-                        BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.02f, null);
+                        BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.011f, null);
                     }
 
             // plaque supérieure : gros tas de pièces (3 couches), comme sur une vraie machine
             float tanT = Mathf.Tan(PlateTilt * Mathf.Deg2Rad);
             float plateTop = 0.995f + 0.06f;
-            for (int layer = 0; layer < 3; layer++)
+            for (int layer = 0; layer < 4; layer++)
                 for (float z = 0.38f; z <= 0.91f; z += 0.105f)
                     for (float x = -0.55f; x <= 0.56f; x += 0.11f)
                     {
-                        if (layer == 1 && rnd.NextDouble() < 0.25) continue;
-                        if (layer == 2 && rnd.NextDouble() < 0.55) continue;
+                        if (layer == 1 && rnd.NextDouble() < 0.15) continue;
+                        if (layer == 2 && rnd.NextDouble() < 0.35) continue;
+                        if (layer == 3 && rnd.NextDouble() < 0.6) continue;
                         index++;
                         float jx = (float)(rnd.NextDouble() - 0.5) * 0.03f, jz = (float)(rnd.NextDouble() - 0.5) * 0.03f;
                         float zz = z + jz;
-                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.04f : 0f), plateTop + (zz - 0.64f) * tanT + 0.012f + layer * 0.0235f, zz);
+                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.04f : 0f), plateTop + (zz - 0.64f) * tanT + 0.007f + layer * 0.0125f, zz);
                         float yaw = (float)(rnd.NextDouble() * 360.0);
-                        var c = BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.02f, null);
+                        var c = BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.011f, null);
                         c.transform.localRotation = Quaternion.Euler(-PlateTilt, 0f, 0f) * Quaternion.Euler(0f, yaw, 0f);
                     }
 
             // jetons de tickets et jackpot enfouis dans les tas
-            BuildCoin("Token_a", coins, new Vector3(-0.3f, 0.936f, -0.2f), 20f, tokenMat, 0.14f, 0.03f, tokenSmall);
-            BuildCoin("Token_b", coins, new Vector3(0.35f, 0.936f, -0.05f), 70f, tokenMat, 0.14f, 0.03f, tokenSmall);
-            BuildCoin("Token_c", coins, new Vector3(0.0f, 0.936f, -0.35f), 140f, tokenMat, 0.14f, 0.03f, tokenSmall);
-            BuildCoin("Jackpot_a", coins, new Vector3(0.1f, 0.936f, 0.1f), 300f, jackpotMat, 0.16f, 0.035f, tokenJackpot);
+            BuildCoin("Token_a", coins, new Vector3(-0.3f, 0.915f, -0.2f), 20f, tokenMat, 0.14f, 0.017f, tokenSmall);
+            BuildCoin("Token_b", coins, new Vector3(0.35f, 0.915f, -0.05f), 70f, tokenMat, 0.14f, 0.017f, tokenSmall);
+            BuildCoin("Token_c", coins, new Vector3(0.0f, 0.915f, -0.35f), 140f, tokenMat, 0.14f, 0.017f, tokenSmall);
+            BuildCoin("Jackpot_a", coins, new Vector3(0.1f, 0.915f, 0.1f), 300f, jackpotMat, 0.16f, 0.019f, tokenJackpot);
 
             // jetons bonus (effet à la chute dans le bac) : sur la plaque, donc ils descendent peu à peu vers l'avant
             BonusAt(coins, "Bonus_rain_a", new Vector3(-0.35f, plateTop + (0.6f - 0.64f) * tanT + 0.07f, 0.6f), PusherBonus.Kind.CoinRain, new Color(0.2f, 0.9f, 1f));
             BonusAt(coins, "Bonus_rain_b", new Vector3(0.4f, plateTop + (0.75f - 0.64f) * tanT + 0.07f, 0.75f), PusherBonus.Kind.CoinRain, new Color(0.2f, 0.9f, 1f));
             BonusAt(coins, "Bonus_x2", new Vector3(0.0f, plateTop + (0.5f - 0.64f) * tanT + 0.07f, 0.5f), PusherBonus.Kind.DoubleGains, new Color(1f, 0.5f, 0.1f));
             BonusAt(coins, "Bonus_tickets", new Vector3(-0.1f, plateTop + (0.8f - 0.64f) * tanT + 0.07f, 0.8f), PusherBonus.Kind.TicketBurst, new Color(1f, 0.25f, 0.65f));
-            BonusAt(coins, "Bonus_gem", new Vector3(0.2f, 0.936f, 0.2f), PusherBonus.Kind.Gem, new Color(0.35f, 0.7f, 1f));
+            BonusAt(coins, "Bonus_gem", new Vector3(0.2f, 0.915f, 0.2f), PusherBonus.Kind.Gem, new Color(0.35f, 0.7f, 1f));
 
             // lots à gagner (mêmes lots que la pince) posés dans les tas
             PrizeAt(coins, "capsule_purple", new Vector3(-0.45f, plateTop + (0.55f - 0.64f) * tanT + 0.08f, 0.55f), 0.13f);
@@ -242,7 +244,7 @@ namespace ArcadeEmpire.EditorTools
         static void BonusAt(Transform parent, string name, Vector3 pos, PusherBonus.Kind kind, Color color)
         {
             var mat = RoomBuilder.Mat("Pusher_Bonus_" + kind, color, 0.7f);
-            var go = BuildCoin(name, parent, pos, 0f, mat, 0.17f, 0.04f, null, kind);
+            var go = BuildCoin(name, parent, pos, 0f, mat, 0.17f, 0.02f, null, kind);
             go.transform.localRotation = Quaternion.Euler(-PlateTilt, 0f, 0f);
         }
 
@@ -297,7 +299,7 @@ namespace ArcadeEmpire.EditorTools
             }
 
             var rb = go.AddComponent<Rigidbody>();
-            rb.mass = (reward == null && bonus == null) ? 0.05f : 0.09f;
+            rb.mass = (reward == null && bonus == null) ? 0.03f : 0.07f;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             rb.angularDamping = 0.35f;
             rb.linearDamping = 0.02f;
