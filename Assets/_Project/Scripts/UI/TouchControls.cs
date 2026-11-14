@@ -1,3 +1,4 @@
+using ArcadeEmpire.Core;
 using UnityEngine;
 using UnityEngine.InputSystem.OnScreen;
 using UnityEngine.UI;
@@ -30,22 +31,32 @@ namespace ArcadeEmpire.UI
             var canvas = UiKit.NewCanvas(transform, "TouchCanvas", 30);
 
             // Croix directionnelle (bas gauche)
-            Button(canvas.transform, "▲", "<Keyboard>/w", new Vector2(0, 0), new Vector2(150, 170), 84);
-            Button(canvas.transform, "▼", "<Keyboard>/s", new Vector2(0, 0), new Vector2(150, 40), 84);
-            Button(canvas.transform, "◀", "<Keyboard>/a", new Vector2(0, 0), new Vector2(50, 105), 84);
-            Button(canvas.transform, "▶", "<Keyboard>/d", new Vector2(0, 0), new Vector2(250, 105), 84);
+            Button(canvas.transform, "icon:up", "<Keyboard>/w", new Vector2(0, 0), new Vector2(150, 170), 84);
+            Button(canvas.transform, "icon:down", "<Keyboard>/s", new Vector2(0, 0), new Vector2(150, 40), 84);
+            Button(canvas.transform, "icon:left", "<Keyboard>/a", new Vector2(0, 0), new Vector2(50, 105), 84);
+            Button(canvas.transform, "icon:right", "<Keyboard>/d", new Vector2(0, 0), new Vector2(250, 105), 84);
 
             // Actions (bas droite)
             Button(canvas.transform, "ACTION", "<Keyboard>/space", new Vector2(1, 0), new Vector2(-110, 120), 130);
             Button(canvas.transform, "E\njouer", "<Keyboard>/e", new Vector2(1, 0), new Vector2(-260, 70), 92);
             Button(canvas.transform, "R\ngains", "<Keyboard>/r", new Vector2(1, 0), new Vector2(-380, 70), 80);
-            Button(canvas.transform, "Retour", "<Keyboard>/escape", new Vector2(1, 0), new Vector2(-260, 180), 80);
+            Button(canvas.transform, "icon:close", "<Keyboard>/escape", new Vector2(1, 0), new Vector2(-260, 180), 80);
 
-            // Menus (haut droite)
-            Button(canvas.transform, "I", "<Keyboard>/i", new Vector2(1, 1), new Vector2(-250, -40), 56);
-            Button(canvas.transform, "B", "<Keyboard>/b", new Vector2(1, 1), new Vector2(-185, -40), 56);
-            Button(canvas.transform, "C", "<Keyboard>/c", new Vector2(1, 1), new Vector2(-120, -40), 56);
-            Button(canvas.transform, "M", "<Keyboard>/m", new Vector2(1, 1), new Vector2(-55, -40), 56);
+        }
+
+        /// <summary>Applique la taille et l'opacité choisies dans les options.</summary>
+        private sealed class TouchStyle : MonoBehaviour
+        {
+            private Vector2 baseSize; private Vector2 basePos; private bool init;
+            private void OnEnable() { GameSettings.Changed += Apply; Apply(); }
+            private void OnDisable() => GameSettings.Changed -= Apply;
+            private void Apply()
+            {
+                var r = (RectTransform)transform;
+                if (!init) { baseSize = r.sizeDelta; basePos = r.anchoredPosition; init = true; }
+                r.sizeDelta = baseSize * GameSettings.TouchScale; r.anchoredPosition = basePos * GameSettings.TouchScale;
+                var img = GetComponent<Image>(); var c = img.color; c.a = GameSettings.TouchOpacity; img.color = c;
+            }
         }
 
         private static void Button(Transform parent, string label, string path, Vector2 anchor, Vector2 pos, float size)
@@ -54,11 +65,21 @@ namespace ArcadeEmpire.UI
             go.SetActive(false);   // le chemin de la touche doit être réglé avant l'activation
             go.transform.SetParent(parent, false);
             var img = go.GetComponent<Image>();
-            img.color = new Color(0.1f, 0.12f, 0.3f, 0.55f);
+            img.sprite = UiTheme.Circle; img.color = new Color(0.1f, 0.12f, 0.3f, 0.55f);
             var r = go.GetComponent<RectTransform>();
             r.anchorMin = r.anchorMax = anchor; r.pivot = new Vector2(0.5f, 0.5f);
             r.anchoredPosition = pos; r.sizeDelta = new Vector2(size, size);
 
+            go.AddComponent<TouchStyle>();
+            if (label.StartsWith("icon:"))
+            {
+                var ig = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                ig.transform.SetParent(go.transform, false);
+                var ii = ig.GetComponent<Image>(); ii.sprite = UiTheme.Icon(label.Substring(5)); ii.raycastTarget = false;
+                var ir = ig.GetComponent<RectTransform>(); ir.anchorMin = new Vector2(0.2f, 0.2f); ir.anchorMax = new Vector2(0.8f, 0.8f); ir.offsetMin = ir.offsetMax = Vector2.zero;
+                var o = go.AddComponent<OnScreenButton>(); o.controlPath = path; go.SetActive(true);
+                return;
+            }
             var t = new GameObject("Label", typeof(RectTransform), typeof(Text));
             t.transform.SetParent(go.transform, false);
             var tx = t.GetComponent<Text>();

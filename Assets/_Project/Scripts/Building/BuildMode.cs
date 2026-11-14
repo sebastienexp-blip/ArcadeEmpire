@@ -75,7 +75,7 @@ namespace ArcadeEmpire.Building
             if (!active)
             {
                 bool inMachine = interactor != null && interactor.Active != null;
-                if (kb.cKey.wasPressedThisFrame && !inMachine && !UIState.PanelOpen) SetActive(true);
+                if ((kb.cKey.wasPressedThisFrame || UIState.Consume("build")) && !inMachine && !UIState.PanelOpen) SetActive(true);
                 return;
             }
 

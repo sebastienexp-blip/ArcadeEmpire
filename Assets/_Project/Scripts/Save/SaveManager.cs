@@ -1,4 +1,5 @@
 using System.Collections;
+using ArcadeEmpire.Core;
 using ArcadeEmpire.Economy;
 using UnityEngine;
 
@@ -57,13 +58,25 @@ namespace ArcadeEmpire.Save
             return SaveSystem.Save(Data);
         }
 
+        /// <summary>Efface la partie (fichier + mémoire) ; l'appelant recharge ensuite la scène.</summary>
+        public void ResetAll()
+        {
+            StopAllCoroutines();
+            SaveSystem.DeleteSave();
+            Data = SaveSystem.Load();
+            if (CurrencyManager.Instance != null)
+                CurrencyManager.Instance.LoadBalances(Data.coins, Data.tickets, Data.premiumTokens, Data.experience);
+            SaveSystem.Save(Data);
+            StartCoroutine(AutoSaveRoutine());
+        }
+
         private IEnumerator AutoSaveRoutine()
         {
             var wait = new WaitForSecondsRealtime(Mathf.Max(10f, autoSaveIntervalSeconds));
             while (true)
             {
                 yield return wait;
-                SaveNow();
+                if (GameSettings.AutoSave) SaveNow();
             }
         }
 

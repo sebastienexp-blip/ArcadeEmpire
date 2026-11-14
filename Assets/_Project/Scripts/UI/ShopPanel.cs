@@ -58,10 +58,10 @@ namespace ArcadeEmpire.UI
         private void Update()
         {
             Keyboard kb = Keyboard.current;
-            if (kb == null) return;
+            if (kb == null) { if (!open && UIState.Consume("shop") && !UIState.PanelOpen) SetOpen(true); return; }
             bool inMachine = interactor != null && interactor.Active != null;
 
-            if (!open && kb.bKey.wasPressedThisFrame && !inMachine && !UIState.PanelOpen) SetOpen(true);
+            if (!open && (kb.bKey.wasPressedThisFrame || UIState.Consume("shop")) && !inMachine && !UIState.PanelOpen) SetOpen(true);
             else if (open && (kb.bKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame)) SetOpen(false);
             if (open) RefreshHeader();
         }

@@ -56,7 +56,7 @@ namespace ArcadeEmpire.UI
             if (kb == null) return;
             bool inMachine = interactor != null && interactor.Active != null;
 
-            if (!open && kb.iKey.wasPressedThisFrame && !inMachine && !UIState.PanelOpen) SetOpen(true);
+            if (!open && (kb.iKey.wasPressedThisFrame || UIState.Consume("inventory")) && !inMachine && !UIState.PanelOpen) SetOpen(true);
             else if (open && (kb.iKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame)) SetOpen(false);
             if (open) RefreshHeader();
         }

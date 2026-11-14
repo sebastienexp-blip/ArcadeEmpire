@@ -44,6 +44,7 @@ namespace ArcadeEmpire.Player
             if (Nearest != null && kb != null && kb.eKey.wasPressedThisFrame && Nearest.Enter())
             {
                 Active = Nearest;
+                SetPlayerVisible(false);
                 if (player != null) player.ControlEnabled = false;
                 if (cam != null) cam.SetOverride(Active.CameraAnchor);
             }
@@ -72,8 +73,16 @@ namespace ArcadeEmpire.Player
         private void Release()
         {
             Active = null;
+            UIState.MarkClosed();
+            SetPlayerVisible(true);
             if (player != null) player.ControlEnabled = true;
             if (cam != null) cam.SetOverride(null);
+        }
+
+        // Vue à la première personne : on cache le personnage pendant qu'on joue (la caméra est à la place de ses yeux)
+        private void SetPlayerVisible(bool visible)
+        {
+            foreach (Renderer r in GetComponentsInChildren<Renderer>(true)) r.enabled = visible;
         }
     }
 }
