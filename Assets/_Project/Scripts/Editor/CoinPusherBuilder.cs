@@ -36,6 +36,11 @@ namespace ArcadeEmpire.EditorTools
             var tokenMat = RoomBuilder.Mat("Pusher_Token", new Color(0.2f, 0.9f, 0.5f), 0.6f);
             var jackpotMat = RoomBuilder.Mat("Pusher_Jackpot", new Color(0.8f, 0.3f, 1f), 0.6f);
 
+            coinPhys = EnsurePhysicsMaterial("Coin_Physics", 0.32f, 0.26f, 0.12f);
+            var platePhys = EnsurePhysicsMaterial("Plate_Physics", 0.22f, 0.18f, 0.05f);
+            var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.35f, 0.3f, 0.08f);
+            coinHull = EnsureCoinHull();
+
             var root = new GameObject("CoinPusher_Classic").transform;
             root.SetParent(parent, false);
             root.position = pos;
@@ -44,6 +49,7 @@ namespace ArcadeEmpire.EditorTools
             // --- Caisson et plateau
             B("BaseLower", root, new Vector3(0, 0.25f, 0.025f), new Vector3(1.5f, 0.5f, 1.85f), body, true);
             B("Tray", root, new Vector3(0, 0.7f, 0.2f), new Vector3(1.3f, 0.4f, 1.5f), tray, true);
+            root.Find("Tray").GetComponent<Collider>().sharedMaterial = trayPhys;
             B("Bin_L", root, new Vector3(-0.7f, 0.7f, -0.725f), new Vector3(0.1f, 0.4f, 0.35f), body, true);
             B("Bin_R", root, new Vector3(0.7f, 0.7f, -0.725f), new Vector3(0.1f, 0.4f, 0.35f), body, true);
             B("Bin_Front", root, new Vector3(0, 0.7f, -0.925f), new Vector3(1.5f, 0.4f, 0.05f), body, true);
@@ -68,6 +74,7 @@ namespace ArcadeEmpire.EditorTools
             prb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             var pcol = pusherGo.AddComponent<BoxCollider>();
             pcol.size = new Vector3(1.28f, 0.12f, 0.5f);
+            pcol.sharedMaterial = platePhys;
             var pvis = GameObject.CreatePrimitive(PrimitiveType.Cube);
             pvis.name = "PlateVisual";
             Object.DestroyImmediate(pvis.GetComponent<BoxCollider>());
@@ -101,19 +108,23 @@ namespace ArcadeEmpire.EditorTools
             var coins = new GameObject("Coins").transform;
             coins.SetParent(root, false);
             int index = 0;
-            for (float z = -0.45f; z <= -0.1f; z += 0.13f)
-                for (float x = -0.52f; x <= 0.53f; x += 0.13f)
-                {
-                    index++;
-                    Vector3 p = new Vector3(x, 0.92f, z);
-                    float yaw = (index * 47) % 360;
-                    if (index == 6 || index == 15 || index == 22)
-                        BuildCoin("Token_" + index, coins, p, yaw, tokenMat, 0.14f, 0.03f, tokenSmall);
-                    else if (index == 12)
-                        BuildCoin("Jackpot_" + index, coins, p, yaw, jackpotMat, 0.16f, 0.035f, tokenJackpot);
-                    else
-                        BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.02f, null);
-                }
+            var rnd = new System.Random(2024);
+            for (int layer = 0; layer < 2; layer++)
+                for (float z = -0.46f; z <= 0.36f; z += 0.115f)
+                    for (float x = -0.54f; x <= 0.55f; x += 0.12f)
+                    {
+                        if (layer == 1 && rnd.NextDouble() < 0.45) continue;           // la 2e couche est incomplète : tas naturel
+                        index++;
+                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.03f, jz = (float)(rnd.NextDouble() - 0.5) * 0.03f;
+                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.04f : 0f), 0.912f + layer * 0.0235f, z + jz);
+                        float yaw = (float)(rnd.NextDouble() * 360.0);
+                        if (layer == 0 && (index == 14 || index == 31 || index == 50))
+                            BuildCoin("Token_" + index, coins, p, yaw, tokenMat, 0.14f, 0.03f, tokenSmall);
+                        else if (layer == 0 && index == 38)
+                            BuildCoin("Jackpot_" + index, coins, p, yaw, jackpotMat, 0.16f, 0.035f, tokenJackpot);
+                        else
+                            BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.02f, null);
+                    }
 
             // --- Habillage détaillé : coque FBX texturée ; les primitives restent comme volumes physiques invisibles
             var pal = ModelLib.Palette(null);
@@ -134,6 +145,28 @@ namespace ArcadeEmpire.EditorTools
             ModelLib.Dress(aim.transform, "pusher_aim", pal);
             ModelLib.Dress(button.transform, "arcade_button", ModelLib.WithButtonColor(pal, new Color(0.1f, 0.9f, 1f)), 0.65f);
 
+            // --- Vitre avant (visuelle seulement : les pièces tombent par-dessous), rail d'insertion et fente
+            B("Glass_Front", root, new Vector3(0, 1.2f, -0.575f), new Vector3(1.3f, 0.55f, 0.02f), glass, false);
+            B("InsertRail", root, new Vector3(0, 1.49f, 0.25f), new Vector3(1.1f, 0.02f, 0.12f), body, false);
+            B("InsertSlot", root, new Vector3(0, 1.488f, 0.25f), new Vector3(1.0f, 0.005f, 0.03f), yellow, false);
+
+            // --- Afficheur numérique (canvas monde, face au joueur) et éclairages LED animés
+            var display = new GameObject("Display").transform;
+            display.SetParent(root, false);
+            display.localPosition = new Vector3(0, 1.62f, -0.612f);
+            B("DisplayFrame", root, new Vector3(0, 1.62f, -0.604f), new Vector3(1.04f, 0.2f, 0.012f), body, false);
+            var leds = new Light[4];
+            Vector3[] ledPos = { new Vector3(-0.62f, 1.45f, -0.45f), new Vector3(0.62f, 1.45f, -0.45f), new Vector3(-0.62f, 1.4f, 0.7f), new Vector3(0.62f, 1.4f, 0.7f) };
+            for (int i = 0; i < leds.Length; i++)
+            {
+                var lg = new GameObject("Led_" + i);
+                lg.transform.SetParent(root, false);
+                lg.transform.localPosition = ledPos[i];
+                var l = lg.AddComponent<Light>();
+                l.type = LightType.Point; l.range = 1.6f; l.intensity = 1f; l.shadows = LightShadows.None;
+                leds[i] = l;
+            }
+
             // --- Ancrage caméra
             var anchor = new GameObject("CameraAnchor").transform;
             anchor.SetParent(root, false);
@@ -142,6 +175,7 @@ namespace ArcadeEmpire.EditorTools
 
             var machine = root.gameObject.AddComponent<CoinPusherMachine>();
             machine.Configure(data, anchor, prb, aim.transform, button.transform, template.transform, coins);
+            machine.SetupExtras(display, leds);
 
             // --- Zone de récupération sous le bord avant
             var zone = new GameObject("Collector");
@@ -180,8 +214,9 @@ namespace ArcadeEmpire.EditorTools
             go.GetComponent<MeshRenderer>().sharedMaterial = mat;
             Object.DestroyImmediate(go.GetComponent<CapsuleCollider>());
             var meshCol = go.AddComponent<MeshCollider>();
-            meshCol.sharedMesh = go.GetComponent<MeshFilter>().sharedMesh;   // collider simple (cylindre), le visuel détaillé est séparé
+            meshCol.sharedMesh = coinHull;      // enveloppe convexe à 12 pans (bien plus légère que le cylindre visuel)
             meshCol.convex = true;
+            meshCol.sharedMaterial = coinPhys;
             var detail = ModelLib.Spawn("coin_unit", null, ModelLib.CoinPalette(mat.name, mat.GetColor("_BaseColor")));
             if (detail != null)
             {
@@ -195,13 +230,69 @@ namespace ArcadeEmpire.EditorTools
             }
 
             var rb = go.AddComponent<Rigidbody>();
-            rb.mass = reward == null ? 0.03f : 0.06f;
-            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-            rb.angularDamping = 0.3f;
+            rb.mass = reward == null ? 0.05f : 0.09f;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            rb.angularDamping = 0.35f;
+            rb.linearDamping = 0.02f;
+            rb.sleepThreshold = 0.03f;          // les pièces au repos s'endorment : peu de CPU, elles se réveillent au contact
+            rb.solverIterations = 8;
+            rb.solverVelocityIterations = 2;
+            rb.interpolation = RigidbodyInterpolation.None;
 
             if (reward == null) go.AddComponent<PusherCoin>();
             else go.AddComponent<PrizeItem>().reward = reward;
             return go;
+        }
+
+        static PhysicsMaterial coinPhys;
+        static Mesh coinHull;
+
+        static PhysicsMaterial EnsurePhysicsMaterial(string name, float staticF, float dynamicF, float bounce)
+        {
+            string path = MatDir + "/" + name + ".asset";
+            var m = AssetDatabase.LoadAssetAtPath<PhysicsMaterial>(path);
+            if (m == null)
+            {
+                m = new PhysicsMaterial(name);
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.staticFriction = staticF; m.dynamicFriction = dynamicF; m.bounciness = bounce;
+            m.frictionCombine = PhysicsMaterialCombine.Average;
+            m.bounceCombine = PhysicsMaterialCombine.Average;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        /// <summary>Cylindre à 12 pans (rayon 0,5, hauteur 2 : mêmes proportions que la primitive Unity) pour le collider des pièces.</summary>
+        static Mesh EnsureCoinHull()
+        {
+            ProjectSetup.EnsureFolder("Assets/_Project/Meshes");
+            string path = "Assets/_Project/Meshes/CoinCollider12.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<Mesh>(path);
+            if (existing != null) return existing;
+            const int n = 12;
+            var v = new List<Vector3>(); var t = new List<int>();
+            for (int i = 0; i < n; i++)
+            {
+                float a = i * Mathf.PI * 2f / n;
+                v.Add(new Vector3(Mathf.Cos(a) * 0.5f, 1f, Mathf.Sin(a) * 0.5f));
+                v.Add(new Vector3(Mathf.Cos(a) * 0.5f, -1f, Mathf.Sin(a) * 0.5f));
+            }
+            v.Add(new Vector3(0, 1, 0)); v.Add(new Vector3(0, -1, 0));
+            int top = 2 * n, bottom = 2 * n + 1;
+            for (int i = 0; i < n; i++)
+            {
+                int j = (i + 1) % n;
+                int a0 = 2 * i, a1 = 2 * i + 1, b0 = 2 * j, b1 = 2 * j + 1;
+                t.AddRange(new[] { a0, b0, a1, b0, b1, a1 });
+                t.AddRange(new[] { top, b0, a0 });
+                t.AddRange(new[] { bottom, a1, b1 });
+            }
+            var mesh = new Mesh { name = "CoinCollider12" };
+            mesh.SetVertices(v); mesh.SetTriangles(t, 0);
+            mesh.RecalculateNormals(); mesh.RecalculateBounds();
+            AssetDatabase.CreateAsset(mesh, path);
+            return mesh;
         }
 
         static void B(string name, Transform parent, Vector3 pos, Vector3 size, Material mat, bool collider)

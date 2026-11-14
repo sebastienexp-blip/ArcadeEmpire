@@ -38,6 +38,7 @@ namespace ArcadeEmpire.UI
             // Actions (bas droite)
             Button(canvas.transform, "ACTION", "<Keyboard>/space", new Vector2(1, 0), new Vector2(-110, 120), 130);
             Button(canvas.transform, "E\njouer", "<Keyboard>/e", new Vector2(1, 0), new Vector2(-260, 70), 92);
+            Button(canvas.transform, "R\ngains", "<Keyboard>/r", new Vector2(1, 0), new Vector2(-380, 70), 80);
             Button(canvas.transform, "Retour", "<Keyboard>/escape", new Vector2(1, 0), new Vector2(-260, 180), 80);
 
             // Menus (haut droite)

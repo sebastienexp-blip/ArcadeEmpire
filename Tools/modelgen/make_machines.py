@@ -120,6 +120,18 @@ def pusher_shell():
     m.add(rbox((0.22, 0.28, 0.04), 0.2, mat="Metal"), (0, 0.33, -1.36))
     m.add(box((0.05, 0.1, 0.01), "Dark"), (0, 0.4, -1.382)); m.add(box((0.14, 0.07, 0.01), "Dark"), (0, 0.24, -1.382))
     m.add(torus(0.05, 0.008, seg=18, tube=6, mat="NeonYellow"), (0, 0.4, -1.383), R=rot(90, 0, 0))
+    # visserie, charnières et rebords
+    for s in (-1, 1):
+        for y in (0.95, 1.2, 1.45):
+            m.add(cylinder(0.014, 0.014, 0.008, seg=8, mat="Metal"), (s * 0.7, y, -0.604), R=rot(90, 0, 0))      # vis des montants avant
+            m.add(cylinder(0.02, 0.02, 0.1, seg=10, mat="Metal"), (s * 0.71, y, 0.955))                          # charnières des portes
+        for x, z in ((0.46, -1.0), (0.46, -1.3)):
+            m.add(cylinder(0.014, 0.014, 0.006, seg=8, mat="Metal"), (s * x, 0.657, z))                          # vis du pupitre
+        m.add(rbox((0.05, 0.03, 0.4), 0.3, mat="Metal"), (s * 0.78, 0.52, -0.2))                                 # rebords latéraux du bac
+    m.add(rbox((1.0, 0.025, 0.05), 0.4, mat="Metal"), (0, 0.515, -0.89))                                         # lèvre de la zone de récupération
+    m.add(rbox((1.1, 0.03, 0.14), 0.3, mat="Dark"), (0, 1.505, 0.25))                                            # rail d'insertion (sous le plafond)
+    for x in (-0.5, -0.25, 0.0, 0.25, 0.5):
+        m.add(cylinder(0.012, 0.012, 0.006, seg=8, mat="Metal"), (x, 1.746, -0.54), R=rot(0, 0, 0))             # vis du plafond
     return m.finish(keep=True)
 
 

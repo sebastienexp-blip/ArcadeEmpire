@@ -4,15 +4,16 @@ using ArcadeEmpire.Data;
 using ArcadeEmpire.Economy;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace ArcadeEmpire.Machines
 {
     /// <summary>
-    /// Coin pusher. Le joueur vise (gauche/droite) et lâche des pièces (ESPACE, 1 pièce chacune) sur un plateau
-    /// où un poussoir cinématique avance et recule. Les pièces et lots poussés par-dessus le bord avant tombent
-    /// dans la zone de récupération : chaque pièce rapporte 1 pièce, chaque lot donne sa récompense.
-    /// Physique réelle (Rigidbody, collisions) ; les pièces sont recyclées via un pool.
-    /// Le poussoir ne bouge que pendant l'utilisation, pour qu'on ne gagne rien sans jouer.
+    /// Coin pusher. Le joueur vise (gauche/droite) et insère des pièces (ESPACE, 1 pièce chacune) : la pièce glisse hors du rail,
+    /// tombe sur le plateau et c'est la physique Unity qui fait tout. Une plaque pousseuse cinématique (déplacée en FixedUpdate,
+    /// profil à vitesse quasi constante avec accélérations aux extrémités) pousse les pièces ; celles qui franchissent le bord
+    /// tombent dans le bac. Les gains s'accumulent dans le bac (compteur animé) et se récupèrent avec R (ou en quittant la machine).
+    /// Les pièces sont recyclées via un pool ; le plateau est limité en nombre de pièces. Bruitages liés aux vrais chocs.
     /// </summary>
     public class CoinPusherMachine : MachineBase
     {
@@ -22,6 +23,8 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private Transform dropButton;
         [SerializeField] private Transform coinTemplate;
         [SerializeField] private Transform coinRoot;
+        [SerializeField] private Transform displayAnchor;
+        [SerializeField] private Light[] ledLights;
 
         [Header("Géométrie (repère local)")]
         [SerializeField] private float aimMinX = -0.5f;
@@ -37,21 +40,33 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float aimSpeed = 0.6f;
         [SerializeField] private float pushPeriod = 3.2f;
         [SerializeField] private float dropCooldown = 0.3f;
+        [SerializeField] private int maxCoinsOnTray = 240;
 
-        public override string ControlsHint => "Q/D ou ←/→ : viser      ESPACE : lâcher une pièce (1 pièce)";
+        public override string ControlsHint => "Q/D ou ←/→ : viser      ESPACE : insérer une pièce      R : récupérer les gains      Échap : quitter";
+
+        private struct Pending { public PusherCoin coin; public float time; }
 
         private readonly List<PusherCoin> active = new List<PusherCoin>();
         private readonly Stack<PusherCoin> pool = new Stack<PusherCoin>();
-        private float aimX;
-        private float pushTime;
-        private float nextDropTime;
-        private float lastSfx;
-        private float buttonPress;
-        private int enterFrame;
-        private int wonThisSession;
-        private float killTimer;
+        private readonly List<Pending> inserting = new List<Pending>();   // pièces qui glissent hors du rail
+        private readonly List<Pending> inBin = new List<Pending>();       // pièces tombées dans le bac, recyclées peu après
+
+        private float aimX, pushPhase, nextDropTime, lastSfx, buttonPress, killTimer, flash, lastImpact;
+        private int enterFrame, lastHalf, pending, inserted;
+        private float displayedPending;
+        private float prevPusherZ;
+        private long lastCredit = -1;
+        private int lastPendingShown = -1, lastInserted = -1;
+
+        private AudioSource[] voices; private int nextVoice;
+        private AudioSource motor;
+        private Text creditText, insertedText, gainsText;
+
+        private const float InsertSlide = 0.16f;
+        private const float BinDelay = 0.7f;
 
         public int CoinsOnTray => active.Count;
+        public int PendingWinnings => pending;
 
         public void Configure(MachineData machineData, Transform anchor, Rigidbody pusherBody, Transform aim,
             Transform button, Transform template, Transform root)
@@ -65,35 +80,157 @@ namespace ArcadeEmpire.Machines
             coinRoot = root;
         }
 
-        private void Awake()
+        /// <summary>Affichage numérique (ancrage) et éclairages LED animés, assignés par le builder.</summary>
+        public void SetupExtras(Transform display, Light[] leds)
         {
-            if (coinRoot != null)
-                foreach (PusherCoin c in coinRoot.GetComponentsInChildren<PusherCoin>(false))
-                    active.Add(c);
-            if (pusher != null) pusher.transform.position = transform.TransformPoint(0f, plateY, plateRetractedZ);
+            displayAnchor = display;
+            ledLights = leds;
         }
 
+        private void Awake()
+        {
+            Physics.defaultSolverIterations = Mathf.Max(Physics.defaultSolverIterations, 8);
+            if (coinRoot != null)
+                foreach (PusherCoin c in coinRoot.GetComponentsInChildren<PusherCoin>(false))
+                {
+                    c.Machine = this;
+                    active.Add(c);
+                    var rb = c.GetComponent<Rigidbody>();
+                    if (rb != null) rb.Sleep();   // les pièces posées au départ ne s'agitent pas avant la première poussée
+                }
+            if (pusher != null)
+            {
+                pusher.transform.position = transform.TransformPoint(0f, plateY, plateRetractedZ);
+                prevPusherZ = plateRetractedZ;
+            }
+            BuildAudio();
+            if (displayAnchor != null) BuildDisplay();
+        }
+
+        // ------------------------------------------------------------------ son
+        private void BuildAudio()
+        {
+            voices = new AudioSource[8];
+            for (int i = 0; i < voices.Length; i++)
+            {
+                var go = new GameObject("Voice" + i);
+                go.transform.SetParent(transform, false);
+                var s = go.AddComponent<AudioSource>();
+                s.playOnAwake = false; s.spatialBlend = 0.85f; s.minDistance = 0.8f; s.maxDistance = 12f;
+                s.rolloffMode = AudioRolloffMode.Linear; s.dopplerLevel = 0f;
+                voices[i] = s;
+            }
+            var mgo = new GameObject("Motor");
+            mgo.transform.SetParent(transform, false);
+            motor = mgo.AddComponent<AudioSource>();
+            motor.clip = PusherAudio.Get(PusherAudio.Id.Motor);
+            motor.loop = true; motor.playOnAwake = false; motor.spatialBlend = 0.9f; motor.minDistance = 0.8f; motor.maxDistance = 10f;
+            motor.rolloffMode = AudioRolloffMode.Linear; motor.volume = 0f; motor.dopplerLevel = 0f;
+            motor.Play();
+        }
+
+        private void PlayVoice(PusherAudio.Id id, Vector3 worldPos, float volume, float pitch = 1f)
+        {
+            if (voices == null) return;
+            var s = voices[nextVoice]; nextVoice = (nextVoice + 1) % voices.Length;
+            s.transform.position = worldPos;
+            s.pitch = pitch;
+            s.PlayOneShot(PusherAudio.Get(id), volume * GameAudio.EffectiveSfx);
+        }
+
+        /// <summary>Choc réel entre une pièce et autre chose (appelé par PusherCoin) : cliquetis métallique ou bruit sourd.</summary>
+        public void OnCoinImpact(float speed, Vector3 point, bool onAnotherBody)
+        {
+            if (Time.time - lastImpact < 0.035f) return;
+            lastImpact = Time.time;
+            float vol = Mathf.Clamp01(speed * 0.45f) * 0.35f;
+            PlayVoice(onAnotherBody ? PusherAudio.Id.Clink : PusherAudio.Id.Thud, point, vol, Random.Range(0.88f, 1.18f));
+        }
+
+        // ------------------------------------------------------------------ affichage numérique
+        private void BuildDisplay()
+        {
+            var cgo = new GameObject("DisplayCanvas", typeof(RectTransform), typeof(Canvas));
+            cgo.transform.SetParent(displayAnchor, false);
+            var canvas = cgo.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.WorldSpace;
+            var rt = cgo.GetComponent<RectTransform>();
+            rt.sizeDelta = new Vector2(640f, 110f);
+            rt.localScale = Vector3.one * 0.0015f;
+            var bg = new GameObject("Bg", typeof(RectTransform), typeof(Image));
+            bg.transform.SetParent(cgo.transform, false);
+            bg.GetComponent<Image>().color = new Color(0.02f, 0.03f, 0.05f, 1f);
+            var br = bg.GetComponent<RectTransform>(); br.anchorMin = Vector2.zero; br.anchorMax = Vector2.one; br.offsetMin = br.offsetMax = Vector2.zero;
+            creditText = DisplayLabel(cgo.transform, 0, new Color(1f, 0.75f, 0.15f));
+            insertedText = DisplayLabel(cgo.transform, 1, new Color(0.3f, 0.95f, 1f));
+            gainsText = DisplayLabel(cgo.transform, 2, new Color(0.4f, 1f, 0.45f));
+        }
+
+        private static Text DisplayLabel(Transform parent, int column, Color color)
+        {
+            var go = new GameObject("Label" + column, typeof(RectTransform), typeof(Text));
+            go.transform.SetParent(parent, false);
+            var t = go.GetComponent<Text>();
+            t.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            t.fontSize = 34; t.fontStyle = FontStyle.Bold; t.alignment = TextAnchor.MiddleCenter; t.color = color;
+            t.horizontalOverflow = HorizontalWrapMode.Overflow; t.verticalOverflow = VerticalWrapMode.Overflow;
+            var r = go.GetComponent<RectTransform>();
+            r.anchorMin = new Vector2(column / 3f, 0f); r.anchorMax = new Vector2((column + 1) / 3f, 1f);
+            r.offsetMin = r.offsetMax = Vector2.zero;
+            return t;
+        }
+
+        private void UpdateDisplay()
+        {
+            if (creditText == null) return;
+            displayedPending = Mathf.MoveTowards(displayedPending, pending, Mathf.Max(6f, Mathf.Abs(pending - displayedPending) * 5f) * Time.deltaTime);
+            int shown = Mathf.RoundToInt(displayedPending);
+            long credit = CurrencyManager.Instance != null ? CurrencyManager.Instance.Get(CurrencyType.Coins) : 0;
+            if (credit != lastCredit) { lastCredit = credit; creditText.text = "CRÉDIT\n" + credit; }
+            if (inserted != lastInserted) { lastInserted = inserted; insertedText.text = "INSÉRÉES\n" + inserted; }
+            if (shown != lastPendingShown) { lastPendingShown = shown; gainsText.text = "GAINS\n" + shown; }
+        }
+
+        private void UpdateLeds()
+        {
+            if (ledLights == null) return;
+            flash = Mathf.MoveTowards(flash, 0f, Time.deltaTime * 1.6f);
+            float speed = IsInUse ? 0.35f : 0.08f;
+            for (int i = 0; i < ledLights.Length; i++)
+            {
+                if (ledLights[i] == null) continue;
+                Color c = Color.HSVToRGB((Time.time * speed + i * 0.22f) % 1f, 0.85f, 1f);
+                ledLights[i].color = Color.Lerp(c, new Color(1f, 0.85f, 0.2f), flash);
+                ledLights[i].intensity = Mathf.Lerp(0.8f, 3.5f, flash) * (IsInUse ? 1f : 0.6f);
+            }
+        }
+
+        // ------------------------------------------------------------------ cycle de la machine
         protected override void OnPlayerEntered()
         {
             enterFrame = Time.frameCount;
-            wonThisSession = 0;
             RefreshStatus();
         }
 
-        protected override void OnPlayerExited() => StatusText = "";
+        protected override void OnPlayerExited()
+        {
+            CollectWinnings();   // les gains du bac sont toujours récupérés en quittant
+            StatusText = "";
+        }
 
         protected override void OnPlayStarted()
         {
             SpawnCoin();
-            Sfx.Play(Sfx.Kind.Coin, transform.position, 0.5f);
-            EndPlay();   // chaque pièce lâchée est une « partie » instantanée
+            inserted++;
+            PlayVoice(PusherAudio.Id.Insert, transform.TransformPoint(aimX, dropY, dropZ), 0.55f);
+            flash = Mathf.Max(flash, 0.25f);
+            EndPlay();   // chaque pièce insérée est une « partie » instantanée
         }
 
         private void Update()
         {
             if (IsInUse) HandleInput();
 
-            // visuels : indicateur de visée, bouton
             if (aimIndicator != null)
             {
                 Vector3 p = aimIndicator.localPosition;
@@ -108,7 +245,10 @@ namespace ArcadeEmpire.Machines
                 dropButton.localPosition = p;
             }
 
-            if (IsInUse) pushTime += Time.deltaTime;
+            UpdateInserting();
+            UpdateBin();
+            UpdateDisplay();
+            UpdateLeds();
 
             // filet de sécurité : une pièce tombée hors de la machine est recyclée sans gain
             killTimer += Time.deltaTime;
@@ -131,46 +271,109 @@ namespace ArcadeEmpire.Machines
             aimX = Mathf.Clamp(aimX + ((right ? 1f : 0f) - (left ? 1f : 0f)) * aimSpeed * Time.deltaTime, aimMinX, aimMaxX);
 
             bool exit = kb.escapeKey.wasPressedThisFrame || (kb.eKey.wasPressedThisFrame && Time.frameCount != enterFrame);
-            if (exit)
-            {
-                Exit();
-                return;
-            }
+            if (exit) { Exit(); return; }
+
+            if (kb.rKey.wasPressedThisFrame) { CollectWinnings(); return; }
 
             if (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame)
             {
                 buttonPress = 0.2f;
                 if (Time.time < nextDropTime) return;
+                if (active.Count + inserting.Count >= maxCoinsOnTray) { StatusText = "Plateau plein : attends que des pièces tombent."; return; }
                 if (TryStartPlay()) nextDropTime = Time.time + dropCooldown;
                 else StatusText = "Plus de pièces !";
             }
         }
 
+        // ------------------------------------------------------------------ plaque pousseuse (physique, FixedUpdate)
         private void FixedUpdate()
         {
             if (pusher == null) return;
-            float k = (1f - Mathf.Cos(2f * Mathf.PI * pushTime / pushPeriod)) * 0.5f;   // 0 = rentré, 1 = sorti
+            float dt = Time.fixedDeltaTime;
+            float prev = pushPhase;
+            if (IsInUse) pushPhase += dt / pushPeriod;
+            else if (pushPhase % 1f > 0.0001f)
+            {
+                // à l'arrêt, la plaque termine sa course et s'immobilise rentrée (comme une vraie machine)
+                pushPhase += dt / pushPeriod;
+                if (Mathf.Floor(pushPhase) > Mathf.Floor(prev)) pushPhase = Mathf.Floor(pushPhase);
+            }
+
+            float t = pushPhase % 1f;
+            float tri = t < 0.5f ? t * 2f : 2f - 2f * t;                       // 0 -> 1 -> 0
+            float k = Mathf.Lerp(tri, tri * tri * (3f - 2f * tri), 0.65f);    // vitesse quasi constante, douce aux extrémités
             float z = Mathf.Lerp(plateRetractedZ, plateExtendedZ, k);
             pusher.MovePosition(transform.TransformPoint(0f, plateY, z));
             pusher.MoveRotation(transform.rotation);
+
+            // bruit sec aux inversions de course, ronronnement du moteur selon la vitesse
+            int half = Mathf.FloorToInt(pushPhase * 2f);
+            if (half != lastHalf) { lastHalf = half; if (IsInUse) PlayVoice(PusherAudio.Id.Clank, transform.TransformPoint(0f, plateY, z), 0.5f); }
+            float speed = Mathf.Abs(z - prevPusherZ) / dt;
+            prevPusherZ = z;
+            if (motor != null)
+            {
+                motor.volume = Mathf.Lerp(motor.volume, Mathf.Clamp01(speed * 0.5f) * 0.12f * GameAudio.EffectiveSfx, 0.2f);
+                motor.pitch = 0.8f + Mathf.Clamp01(speed * 0.6f) * 0.4f;
+            }
         }
 
+        // ------------------------------------------------------------------ pièces
         private void SpawnCoin()
         {
             PusherCoin coin;
             if (pool.Count > 0) coin = pool.Pop();
-            else coin = Instantiate(coinTemplate.gameObject, coinRoot).GetComponent<PusherCoin>();
+            else
+            {
+                coin = Instantiate(coinTemplate.gameObject, coinRoot).GetComponent<PusherCoin>();
+                coin.Machine = this;
+            }
 
             coin.Collected = false;
-            coin.transform.SetPositionAndRotation(
-                transform.TransformPoint(aimX, dropY, dropZ),
-                transform.rotation * Quaternion.Euler(0f, Random.Range(0f, 360f), 0f));
             var rb = coin.GetComponent<Rigidbody>();
+            rb.isKinematic = true;   // tenue dans la fente pendant l'animation d'insertion
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            coin.transform.SetPositionAndRotation(
+                transform.TransformPoint(aimX, dropY + 0.07f, dropZ),
+                transform.rotation * Quaternion.Euler(90f + Random.Range(-8f, 8f), Random.Range(-15f, 15f), Random.Range(-8f, 8f)));
             coin.gameObject.SetActive(true);
             active.Add(coin);
+            inserting.Add(new Pending { coin = coin, time = Time.time });
             RefreshStatus();
+        }
+
+        private void UpdateInserting()
+        {
+            for (int i = inserting.Count - 1; i >= 0; i--)
+            {
+                Pending p = inserting[i];
+                if (p.coin == null) { inserting.RemoveAt(i); continue; }
+                float u = Mathf.Clamp01((Time.time - p.time) / InsertSlide);
+                Vector3 pos = p.coin.transform.position;
+                Vector3 target = transform.TransformPoint(0f, dropY, 0f);
+                // glisse verticalement hors de la fente (ne touche pas à x et z : la visée reste respectée)
+                float y = Mathf.Lerp(transform.TransformPoint(0f, dropY + 0.07f, 0f).y, target.y, u * u);
+                p.coin.transform.position = new Vector3(pos.x, y, pos.z);
+                if (u >= 1f)
+                {
+                    var rb = p.coin.Body != null ? p.coin.Body : p.coin.GetComponent<Rigidbody>();
+                    rb.isKinematic = false;
+                    rb.linearVelocity = transform.forward * Random.Range(-0.05f, 0.1f);
+                    rb.angularVelocity = new Vector3(Random.Range(-2f, 2f), Random.Range(-2f, 2f), Random.Range(-2f, 2f));
+                    inserting.RemoveAt(i);
+                }
+            }
+        }
+
+        private void UpdateBin()
+        {
+            for (int i = inBin.Count - 1; i >= 0; i--)
+            {
+                if (Time.time - inBin[i].time < BinDelay) continue;
+                if (inBin[i].coin != null) Recycle(inBin[i].coin);
+                inBin.RemoveAt(i);
+            }
         }
 
         private void Recycle(PusherCoin coin)
@@ -180,24 +383,36 @@ namespace ArcadeEmpire.Machines
             pool.Push(coin);
         }
 
-        /// <summary>Une pièce est tombée dans la zone de récupération : +1 pièce et +1 XP.</summary>
+        /// <summary>Une pièce est tombée dans le bac : +1 gain à récupérer. La pièce reste visible dans le bac un instant.</summary>
         public void OnCoinCollected(PusherCoin coin)
         {
             if (coin == null || coin.Collected) return;
             coin.Collected = true;
-            Recycle(coin);
-            if (CurrencyManager.Instance != null)
-            {
-                CurrencyManager.Instance.Add(CurrencyType.Coins, 1);
-                CurrencyManager.Instance.Add(CurrencyType.Experience, 1);
-            }
-            wonThisSession++;
-            RaiseCoinsWon(this, 1);
-            if (Time.time - lastSfx > 0.08f)
+            inBin.Add(new Pending { coin = coin, time = Time.time });
+            pending++;
+            flash = Mathf.Max(flash, 0.7f);
+            if (Time.time - lastSfx > 0.07f)
             {
                 lastSfx = Time.time;
-                Sfx.Play(Sfx.Kind.Coin, transform.position, 0.4f);
+                PlayVoice(PusherAudio.Id.Collect, coin.transform.position, 0.5f, Random.Range(0.95f, 1.1f));
             }
+            RefreshStatus();
+        }
+
+        /// <summary>Verse les gains du bac dans le solde du joueur (R, ou automatiquement en quittant la machine).</summary>
+        public void CollectWinnings()
+        {
+            if (pending <= 0) return;
+            int n = pending;
+            pending = 0;
+            if (CurrencyManager.Instance != null)
+            {
+                CurrencyManager.Instance.Add(CurrencyType.Coins, n);
+                CurrencyManager.Instance.Add(CurrencyType.Experience, n);
+            }
+            RaiseCoinsWon(this, n);
+            PlayVoice(PusherAudio.Id.Payout, transform.TransformPoint(0f, 0.7f, -0.8f), Mathf.Clamp(0.4f + n * 0.03f, 0.4f, 0.9f));
+            flash = 1f;
             RefreshStatus();
         }
 
@@ -208,6 +423,7 @@ namespace ArcadeEmpire.Machines
             prize.Collected = true;
             GrantReward(prize.reward);
             Sfx.Play(Sfx.Kind.Win, transform.position);
+            flash = 1f;
             StatusText = $"GAGNÉ : {prize.reward.displayName} ({ClawMachine.RarityName(prize.reward.rarity)}) !   +{prize.reward.ticketValue} tickets";
             Destroy(prize.gameObject);
         }
@@ -215,7 +431,7 @@ namespace ArcadeEmpire.Machines
         private void RefreshStatus()
         {
             if (IsInUse)
-                StatusText = $"Pièces gagnées : {wonThisSession}   —   sur le plateau : {active.Count}   —   Échap : quitter";
+                StatusText = $"Gains dans le bac : {pending} (R pour récupérer)   —   sur le plateau : {active.Count}";
         }
     }
 }
