@@ -77,10 +77,8 @@ namespace ArcadeEmpire.Core
                 urp.renderScale = RenderScale;
                 int[] msaa = { 1, 2, 4, 8 };
                 urp.msaaSampleCount = msaa[Mathf.Clamp(Antialiasing, 0, 3)];
-                urp.supportsMainLightShadows = Shadows > 0;
-                urp.supportsAdditionalLightShadows = Shadows > 1;
                 float[] dist = { 0f, 18f, 35f, 60f };
-                urp.shadowDistance = Mathf.Max(1f, dist[Mathf.Clamp(Shadows, 0, 3)]);
+                urp.shadowDistance = Mathf.Max(0.1f, dist[Mathf.Clamp(Shadows, 0, 3)]);
             }
         }
 

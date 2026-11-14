@@ -86,10 +86,10 @@ namespace ArcadeEmpire.UI
             // ---- carte du joueur (haut gauche)
             RectTransform card = Box(r, "PlayerCard", new Vector2(0, 1), new Vector2(0, 1), new Vector2(12, -12), new Vector2(330, 92), UiTheme.Panel);
             var badge = Image(card, "Badge", UiTheme.Circle, new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(50, 0), new Vector2(76, 76), new Color(0.12f, 0.12f, 0.3f));
-            xpRing = Image(badge, "Ring", UiTheme.Ring, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(84, 84), UiTheme.Cyan);
+            xpRing = Image(badge.transform, "Ring", UiTheme.Ring, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(84, 84), UiTheme.Cyan);
             xpRing.type = UnityEngine.UI.Image.Type.Filled; xpRing.fillMethod = UnityEngine.UI.Image.FillMethod.Radial360; xpRing.fillOrigin = 2; xpRing.fillClockwise = true;
-            Image(badge, "Star", UiTheme.Icon("star"), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0, 2), new Vector2(26, 26), Color.white);
-            levelNum = Text(badge, "Lvl", 30, TextAnchor.MiddleCenter, Vector2.zero, Vector2.zero, Color.white, true);
+            Image(badge.transform, "Star", UiTheme.Icon("star"), new Vector2(0.5f, 1f), new Vector2(0.5f, 0.5f), new Vector2(0, 2), new Vector2(26, 26), Color.white);
+            levelNum = Text(badge.transform, "Lvl", 30, TextAnchor.MiddleCenter, Vector2.zero, Vector2.zero, Color.white, true);
             nameText = TextAt(card, "Name", 20, TextAnchor.MiddleLeft, new Vector2(100, -10), new Vector2(220, 28), UiTheme.Text);
             nameText.text = "Directeur de la salle";
             var barBack = Box(card, "XpBack", new Vector2(0, 1), new Vector2(0, 1), new Vector2(100, -46), new Vector2(214, 16), new Color(0.04f, 0.04f, 0.14f, 1f));
