@@ -32,6 +32,23 @@ namespace ArcadeEmpire.EditorTools
             new PrizeSpec { id = "figurine_gold", model = "prize_cat_gold", name = "Figurine dorée", rarity = Rarity.Legendary, mass = 0.34f, shape = PrimitiveType.Cube, color = new Color(1f, 0.8f, 0.15f), scale = new Vector3(0.2f, 0.26f, 0.2f), count = 1, tickets = 50, xp = 120, glow = true },
         };
 
+        /// <summary>Données d'un lot de la pince (réutilisées par le pousse-pièces) : id = plush_pink, plush_blue, mini_toy_green, capsule_purple, figurine_gold.</summary>
+        public static RewardData GetReward(string id)
+        {
+            ProjectSetup.EnsureFolder(DataDir + "/Rewards");
+            foreach (var s in Specs) if (s.id == id) return EnsureReward(s);
+            return null;
+        }
+
+        /// <summary>Modèle FBX et couleur d'un lot de la pince.</summary>
+        public static bool GetPrizeLook(string id, out string model, out Color color, out Rarity rarity)
+        {
+            foreach (var s in Specs)
+                if (s.id == id) { model = s.model; color = s.color; rarity = s.rarity; return true; }
+            model = null; color = Color.white; rarity = Rarity.Common;
+            return false;
+        }
+
         public static ClawMachine Build(Transform parent, Vector3 pos, float rotY)
         {
             ProjectSetup.EnsureFolder(DataDir + "/Rewards");

@@ -155,7 +155,7 @@ def pusher_shell():
             m.add(cylinder(0.014, 0.014, 0.006, seg=8, mat="Metal"), (s * x, 0.657, z))                          # vis du pupitre
         m.add(rbox((0.05, 0.03, 0.4), 0.3, mat="Metal"), (s * 0.78, 0.52, -0.2))                                 # rebords latéraux du bac
     m.add(rbox((1.0, 0.025, 0.05), 0.4, mat="Metal"), (0, 0.515, -0.89))                                         # lèvre de la zone de récupération
-    m.add(rbox((1.1, 0.03, 0.14), 0.3, mat="Dark"), (0, 1.505, 0.25))                                            # rail d'insertion (sous le plafond)
+    m.add(rbox((1.1, 0.03, 0.14), 0.3, mat="Dark"), (0, 1.505, 0.78))                                            # rail d'insertion (sous le plafond)
     for x in (-0.5, -0.25, 0.0, 0.25, 0.5):
         m.add(cylinder(0.012, 0.012, 0.006, seg=8, mat="Metal"), (x, 1.746, -0.54), R=rot(0, 0, 0))             # vis du plafond
     return m.finish(keep=True)
@@ -164,10 +164,10 @@ def pusher_shell():
 @model
 def pusher_plate():
     m = Model("pusher_plate", uv=1.0)
-    m.add(rbox((1.28, 0.12, 0.5), 0.12, mat="Metal"))
-    for i in range(7):
-        m.add(box((1.2, 0.012, 0.018), "Metal"), (0, 0.066, -0.2 + i * 0.066))               # stries antidérapantes
-    m.add(rbox((1.3, 0.06, 0.03), 0.3, mat="NeonPink"), (0, 0.0, -0.255))                    # bord lumineux avant
+    m.add(rbox((1.28, 0.12, 0.62), 0.12, mat="Metal"))
+    for i in range(9):
+        m.add(box((1.2, 0.01, 0.018), "Metal"), (0, 0.062, -0.26 + i * 0.065))               # nervures (les pièces glissent vers l'avant)
+    m.add(rbox((1.3, 0.06, 0.03), 0.3, mat="NeonPink"), (0, 0.0, -0.315))                    # bord lumineux avant
     return m.finish(keep=True)
 
 

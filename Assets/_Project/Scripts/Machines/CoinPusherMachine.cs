@@ -30,17 +30,19 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float aimMinX = -0.5f;
         [SerializeField] private float aimMaxX = 0.5f;
         [SerializeField] private float dropY = 1.45f;
-        [SerializeField] private float dropZ = 0.25f;
-        [SerializeField] private float plateY = 0.96f;
-        [SerializeField] private float plateRetractedZ = 0.70f;
-        [SerializeField] private float plateExtendedZ = 0.20f;
+        [SerializeField] private float dropZ = 0.78f;
+        [SerializeField] private float plateY = 0.995f;
+        [SerializeField] private float plateRetractedZ = 0.64f;
+        [SerializeField] private float plateExtendedZ = 0.14f;
+        [Tooltip("Inclinaison de la plaque vers l'avant (degrés) : les pièces tombées dessus glissent vers le plateau inférieur.")]
+        [SerializeField] private float plateTilt = 6f;
         [SerializeField] private float killY = 0.3f;
 
         [Header("Réglages")]
         [SerializeField] private float aimSpeed = 0.6f;
         [SerializeField] private float pushPeriod = 3.2f;
         [SerializeField] private float dropCooldown = 0.3f;
-        [SerializeField] private int maxCoinsOnTray = 240;
+        [SerializeField] private int maxCoinsOnTray = 360;
 
         public override string ControlsHint => "Q/D ou ←/→ : viser      ESPACE : insérer une pièce      R : récupérer les gains      Échap : quitter";
 
@@ -56,7 +58,7 @@ namespace ArcadeEmpire.Machines
         private float displayedPending;
         private float prevPusherZ;
         private long lastCredit = -1;
-        private int lastPendingShown = -1, lastInserted = -1;
+        private int lastPendingShown = -1, lastInserted = -1, lastMult = 1;
 
         private AudioSource[] voices; private int nextVoice;
         private AudioSource motor;
@@ -66,6 +68,8 @@ namespace ArcadeEmpire.Machines
         private const float BinDelay = 0.7f;
 
         public int CoinsOnTray => active.Count;
+        public int GainMultiplier => Time.time < doubleUntil ? 2 : 1;
+        private float doubleUntil;
         public int PendingWinnings => pending;
 
         public void Configure(MachineData machineData, Transform anchor, Rigidbody pusherBody, Transform aim,
@@ -100,7 +104,7 @@ namespace ArcadeEmpire.Machines
                 }
             if (pusher != null)
             {
-                pusher.transform.position = transform.TransformPoint(0f, plateY, plateRetractedZ);
+                pusher.transform.SetPositionAndRotation(transform.TransformPoint(0f, plateY, plateRetractedZ), transform.rotation * Quaternion.Euler(-plateTilt, 0f, 0f));
                 prevPusherZ = plateRetractedZ;
             }
             BuildAudio();
@@ -188,7 +192,8 @@ namespace ArcadeEmpire.Machines
             long credit = CurrencyManager.Instance != null ? CurrencyManager.Instance.Get(CurrencyType.Coins) : 0;
             if (credit != lastCredit) { lastCredit = credit; creditText.text = "CRÉDIT\n" + credit; }
             if (inserted != lastInserted) { lastInserted = inserted; insertedText.text = "INSÉRÉES\n" + inserted; }
-            if (shown != lastPendingShown) { lastPendingShown = shown; gainsText.text = "GAINS\n" + shown; }
+            int mult = GainMultiplier;
+            if (shown != lastPendingShown || mult != lastMult) { lastPendingShown = shown; lastMult = mult; gainsText.text = (mult > 1 ? "GAINS x2\n" : "GAINS\n") + shown; }
         }
 
         private void UpdateLeds()
@@ -245,6 +250,7 @@ namespace ArcadeEmpire.Machines
                 dropButton.localPosition = p;
             }
 
+            if (IsInUse && Time.frameCount % 20 == 0) RefreshStatus();
             UpdateInserting();
             UpdateBin();
             UpdateDisplay();
@@ -304,7 +310,7 @@ namespace ArcadeEmpire.Machines
             float k = Mathf.Lerp(tri, tri * tri * (3f - 2f * tri), 0.65f);    // vitesse quasi constante, douce aux extrémités
             float z = Mathf.Lerp(plateRetractedZ, plateExtendedZ, k);
             pusher.MovePosition(transform.TransformPoint(0f, plateY, z));
-            pusher.MoveRotation(transform.rotation);
+            pusher.MoveRotation(transform.rotation * Quaternion.Euler(-plateTilt, 0f, 0f));
 
             // bruit sec aux inversions de course, ronronnement du moteur selon la vitesse
             int half = Mathf.FloorToInt(pushPhase * 2f);
@@ -319,7 +325,9 @@ namespace ArcadeEmpire.Machines
         }
 
         // ------------------------------------------------------------------ pièces
-        private void SpawnCoin()
+        private void SpawnCoin() => SpawnCoin(aimX);
+
+        private void SpawnCoin(float x)
         {
             PusherCoin coin;
             if (pool.Count > 0) coin = pool.Pop();
@@ -335,8 +343,8 @@ namespace ArcadeEmpire.Machines
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             coin.transform.SetPositionAndRotation(
-                transform.TransformPoint(aimX, dropY + 0.07f, dropZ),
-                transform.rotation * Quaternion.Euler(90f + Random.Range(-8f, 8f), Random.Range(-15f, 15f), Random.Range(-8f, 8f)));
+                transform.TransformPoint(x, dropY + 0.07f, dropZ),
+                transform.rotation * Quaternion.Euler(90f + Random.Range(-4f, 4f), Random.Range(-6f, 6f), Random.Range(-4f, 4f)));
             coin.gameObject.SetActive(true);
             active.Add(coin);
             inserting.Add(new Pending { coin = coin, time = Time.time });
@@ -359,8 +367,8 @@ namespace ArcadeEmpire.Machines
                 {
                     var rb = p.coin.Body != null ? p.coin.Body : p.coin.GetComponent<Rigidbody>();
                     rb.isKinematic = false;
-                    rb.linearVelocity = transform.forward * Random.Range(-0.05f, 0.1f);
-                    rb.angularVelocity = new Vector3(Random.Range(-2f, 2f), Random.Range(-2f, 2f), Random.Range(-2f, 2f));
+                    rb.linearVelocity = Vector3.zero;   // chute verticale, le long de la paroi arrière
+                    rb.angularVelocity = new Vector3(Random.Range(-0.6f, 0.6f), Random.Range(-0.4f, 0.4f), Random.Range(-0.6f, 0.6f));
                     inserting.RemoveAt(i);
                 }
             }
@@ -389,7 +397,7 @@ namespace ArcadeEmpire.Machines
             if (coin == null || coin.Collected) return;
             coin.Collected = true;
             inBin.Add(new Pending { coin = coin, time = Time.time });
-            pending++;
+            pending += GainMultiplier;
             flash = Mathf.Max(flash, 0.7f);
             if (Time.time - lastSfx > 0.07f)
             {
@@ -428,10 +436,51 @@ namespace ArcadeEmpire.Machines
             Destroy(prize.gameObject);
         }
 
+        /// <summary>Un jeton bonus est tombé dans le bac : déclenche son effet.</summary>
+        public void OnBonusCollected(PusherBonus bonus)
+        {
+            if (bonus == null || bonus.Collected) return;
+            bonus.Collected = true;
+            flash = 1f;
+            PlayVoice(PusherAudio.Id.Payout, bonus.transform.position, 0.9f);
+            var cm = CurrencyManager.Instance;
+            switch (bonus.kind)
+            {
+                case PusherBonus.Kind.CoinRain:
+                    StartCoroutine(CoinRain(16));
+                    break;
+                case PusherBonus.Kind.DoubleGains:
+                    doubleUntil = Time.time + 30f;
+                    break;
+                case PusherBonus.Kind.TicketBurst:
+                    if (cm != null) { cm.Add(CurrencyType.Tickets, 25); cm.Add(CurrencyType.Experience, 30); }
+                    break;
+                default:
+                    if (cm != null) { cm.Add(CurrencyType.PremiumTokens, 1); cm.Add(CurrencyType.Experience, 60); }
+                    break;
+            }
+            StatusText = "BONUS : " + PusherBonus.Label(bonus.kind) + " !";
+            bonusMessageUntil = Time.time + 3.5f;
+            Destroy(bonus.gameObject, 0.6f);
+        }
+
+        private float bonusMessageUntil;
+
+        private System.Collections.IEnumerator CoinRain(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                if (active.Count + inserting.Count < maxCoinsOnTray)
+                    SpawnCoin(Random.Range(aimMinX, aimMaxX));
+                yield return new WaitForSeconds(0.07f);
+            }
+        }
+
         private void RefreshStatus()
         {
-            if (IsInUse)
-                StatusText = $"Gains dans le bac : {pending} (R pour récupérer)   —   sur le plateau : {active.Count}";
+            if (!IsInUse || Time.time < bonusMessageUntil) return;
+            string bonus = GainMultiplier > 1 ? $"   —   GAINS x2 ({Mathf.CeilToInt(doubleUntil - Time.time)} s)" : "";
+            StatusText = $"Gains dans le bac : {pending} (R pour récupérer)   —   sur le plateau : {active.Count}{bonus}";
         }
     }
 }
