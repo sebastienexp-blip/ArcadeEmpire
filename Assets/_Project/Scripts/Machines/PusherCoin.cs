@@ -7,6 +7,7 @@ namespace ArcadeEmpire.Machines
     {
         public bool Collected { get; set; }
         public float StuckTime { get; set; }
+        public float TopplePending { get; set; }
         public CoinPusherMachine Machine { get; set; }
         public Rigidbody Body { get; private set; }
 

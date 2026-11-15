@@ -297,6 +297,19 @@ namespace ArcadeEmpire.Machines
                 PusherCoin c = active[i];
                 if (c == null || c.Body == null || c.Body.isKinematic) continue;
                 Vector3 lp = transform.InverseTransformPoint(c.transform.position);
+                // pièce debout (tranche vers le bas) posée sur la plaque dans le couloir : on la fait basculer à plat vers l'avant
+                bool standing = Mathf.Abs(Vector3.Dot(c.transform.up, transform.forward)) > 0.6f;
+                if (standing && lp.y > 1.0f && lp.y < 1.14f && lp.z > 0.2f && lp.z < 0.34f)
+                {
+                    c.TopplePending += dt;
+                    if (c.TopplePending > 1.2f)
+                    {
+                        c.Body.WakeUp();
+                        c.Body.AddForce(transform.TransformDirection(new Vector3(Random.Range(-0.15f, 0.15f), 0.35f, -0.9f)), ForceMode.VelocityChange);
+                        c.TopplePending = 0.6f;
+                    }
+                }
+                else c.TopplePending = 0f;
                 bool inChute = lp.y > 1.13f && lp.z > 0.25f && lp.z < 0.32f;
                 if (!inChute || c.Body.linearVelocity.sqrMagnitude > 0.0064f) { c.StuckTime = 0f; continue; }
                 c.StuckTime += dt;

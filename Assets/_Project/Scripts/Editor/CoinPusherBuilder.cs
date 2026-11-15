@@ -70,7 +70,8 @@ namespace ArcadeEmpire.EditorTools
             B("Hood", root, new Vector3(0, 1.263f, 0.315f), new Vector3(1.3f, 0.464f, 0.03f), glass, true);
 
             // --- Couloir de chute : les pièces tombent debout (sur la tranche) contre la paroi du fond, guidées par une vitre fine (27 mm de large)
-            B("ChuteGuide", root, new Vector3(0, 1.28f, 0.268f), new Vector3(1.3f, 0.42f, 0.01f), glass, true);
+            // la vitre s'arrête au-dessus des pièces posées sur la plaque (bord bas à 1,145 m) : une pièce qui quitte les toboggans peut basculer à plat vers l'avant
+            B("ChuteGuide", root, new Vector3(0, 1.3275f, 0.268f), new Vector3(1.3f, 0.365f, 0.01f), glass, true);
             root.Find("ChuteGuide").GetComponent<Collider>().sharedMaterial = slidePhys;
             root.Find("Hood").GetComponent<Collider>().sharedMaterial = slidePhys;
 
