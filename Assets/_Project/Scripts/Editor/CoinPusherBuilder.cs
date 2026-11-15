@@ -60,7 +60,7 @@ namespace ArcadeEmpire.EditorTools
             // --- Parois et plafond
             B("Wall_L", root, new Vector3(-0.675f, 1.2f, 0.2f), new Vector3(0.05f, 0.6f, 1.5f), glass, true);
             B("Wall_R", root, new Vector3(0.675f, 1.2f, 0.2f), new Vector3(0.05f, 0.6f, 1.5f), glass, true);
-            B("Wall_Back", root, new Vector3(0, 1.2f, 0.975f), new Vector3(1.4f, 0.6f, 0.05f), body, true);
+            B("Wall_Back", root, new Vector3(0, 1.2985f, 0.975f), new Vector3(1.4f, 0.403f, 0.05f), body, true);   // fente en dessous : la plaque coulisse dessous
             B("Top", root, new Vector3(0, 1.62f, 0.2f), new Vector3(1.5f, 0.25f, 1.6f), body, true);
             B("Marquee", root, new Vector3(0, 1.95f, 0.45f), new Vector3(1.5f, 0.4f, 1.0f), pink, false);
             B("FrontPillar_L", root, new Vector3(-0.7f, 1.2f, -0.55f), new Vector3(0.1f, 0.6f, 0.1f), body, true);
@@ -76,7 +76,8 @@ namespace ArcadeEmpire.EditorTools
             prb.interpolation = RigidbodyInterpolation.Interpolate;
             prb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             var pcol = pusherGo.AddComponent<BoxCollider>();
-            pcol.size = new Vector3(1.28f, 0.12f, 0.62f);
+            pcol.size = new Vector3(1.28f, 0.12f, 1.12f);
+            pcol.center = new Vector3(0f, 0f, 0.25f);   // prolongée vers l'arrière : plus aucun trou derrière la plaque
             pcol.sharedMaterial = platePhys;
             var pvis = GameObject.CreatePrimitive(PrimitiveType.Cube);
             pvis.name = "PlateVisual";
@@ -84,6 +85,13 @@ namespace ArcadeEmpire.EditorTools
             pvis.transform.SetParent(pusherGo.transform, false);
             pvis.transform.localScale = new Vector3(1.28f, 0.12f, 0.62f);
             pvis.GetComponent<MeshRenderer>().sharedMaterial = plateMat;
+            var prear = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            prear.name = "PlateRear";
+            Object.DestroyImmediate(prear.GetComponent<BoxCollider>());
+            prear.transform.SetParent(pusherGo.transform, false);
+            prear.transform.localPosition = new Vector3(0f, 0f, 0.56f);
+            prear.transform.localScale = new Vector3(1.28f, 0.12f, 0.5f);
+            prear.GetComponent<MeshRenderer>().sharedMaterial = plateMat;
 
             // --- Commandes : indicateur de visée (se déplace réellement) et bouton (s'enfonce à chaque pièce)
             var aim = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -114,10 +122,10 @@ namespace ArcadeEmpire.EditorTools
             var rnd = new System.Random(2024);
 
             // plateau inférieur : gros tas bombé au centre (comme sur les vraies machines), pièces légèrement penchées
-            for (float z = -0.47f; z <= 0.27f; z += 0.105f)
+            for (float z = -0.32f; z <= 0.27f; z += 0.105f)
                 for (float x = -0.55f; x <= 0.56f; x += 0.11f)
                 {
-                    float bump = Mathf.Exp(-(x * x) / 0.16f - ((z + 0.12f) * (z + 0.12f)) / 0.14f);   // 0..1, maximum au centre
+                    float bump = Mathf.Exp(-(x * x) / 0.16f - ((z + 0.02f) * (z + 0.02f)) / 0.12f);   // 0..1, maximum au centre
                     int layers = 1 + Mathf.RoundToInt(bump * 4.2f * (0.6f + 0.4f * (float)rnd.NextDouble()));
                     for (int layer = 0; layer < layers; layer++)
                     {

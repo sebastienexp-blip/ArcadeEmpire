@@ -33,7 +33,7 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float dropZ = 0.78f;
         [SerializeField] private float plateY = 0.995f;
         [SerializeField] private float plateRetractedZ = 0.64f;
-        [SerializeField] private float plateExtendedZ = 0.14f;
+        [SerializeField] private float plateExtendedZ = 0.24f;
         [Tooltip("Inclinaison de la plaque vers l'avant (degrés) : les pièces tombées dessus glissent vers le plateau inférieur.")]
         [SerializeField] private float plateTilt = 6f;
         [SerializeField] private float killY = 0.3f;
@@ -65,6 +65,7 @@ namespace ArcadeEmpire.Machines
         private Text creditText, insertedText, gainsText;
 
         private const float InsertSlide = 0.16f;
+        private const float RunSecondsPerCoin = 14f;
         private const float BinDelay = 0.7f;
 
         public int CoinsOnTray => active.Count;
@@ -102,6 +103,8 @@ namespace ArcadeEmpire.Machines
                     var rb = c.GetComponent<Rigidbody>();
                     if (rb != null) rb.Sleep();   // les pièces posées au départ ne s'agitent pas avant la première poussée
                 }
+            if (coinRoot != null)
+                foreach (Rigidbody rb in coinRoot.GetComponentsInChildren<Rigidbody>(false)) rb.Sleep();   // lots et jetons bonus aussi
             if (pusher != null)
             {
                 pusher.transform.SetPositionAndRotation(transform.TransformPoint(0f, plateY, plateRetractedZ), transform.rotation * Quaternion.Euler(-plateTilt, 0f, 0f));
@@ -225,6 +228,7 @@ namespace ArcadeEmpire.Machines
 
         protected override void OnPlayStarted()
         {
+            runUntil = Mathf.Min(Mathf.Max(runUntil, Time.time) + RunSecondsPerCoin, Time.time + 60f);
             SpawnCoin();
             inserted++;
             PlayVoice(PusherAudio.Id.Insert, transform.TransformPoint(aimX, dropY, dropZ), 0.55f);
@@ -297,7 +301,8 @@ namespace ArcadeEmpire.Machines
             if (pusher == null) return;
             float dt = Time.fixedDeltaTime;
             float prev = pushPhase;
-            if (IsInUse) pushPhase += dt / pushPeriod;
+            bool running = Time.time < runUntil;
+            if (running) pushPhase += dt / pushPeriod;
             else if (pushPhase % 1f > 0.0001f)
             {
                 // à l'arrêt, la plaque termine sa course et s'immobilise rentrée (comme une vraie machine)
@@ -314,7 +319,7 @@ namespace ArcadeEmpire.Machines
 
             // bruit sec aux inversions de course, ronronnement du moteur selon la vitesse
             int half = Mathf.FloorToInt(pushPhase * 2f);
-            if (half != lastHalf) { lastHalf = half; if (IsInUse) PlayVoice(PusherAudio.Id.Clank, transform.TransformPoint(0f, plateY, z), 0.5f); }
+            if (half != lastHalf) { lastHalf = half; if (running) PlayVoice(PusherAudio.Id.Clank, transform.TransformPoint(0f, plateY, z), 0.5f); }
             float speed = Mathf.Abs(z - prevPusherZ) / dt;
             prevPusherZ = z;
             if (motor != null)
@@ -465,6 +470,7 @@ namespace ArcadeEmpire.Machines
         }
 
         private float bonusMessageUntil;
+        private float runUntil;   // la plaque ne bouge que si des pièces ont été insérées récemment
 
         private System.Collections.IEnumerator CoinRain(int count)
         {
@@ -480,7 +486,8 @@ namespace ArcadeEmpire.Machines
         {
             if (!IsInUse || Time.time < bonusMessageUntil) return;
             string bonus = GainMultiplier > 1 ? $"   —   GAINS x2 ({Mathf.CeilToInt(doubleUntil - Time.time)} s)" : "";
-            StatusText = $"Gains dans le bac : {pending} (R pour récupérer)   —   sur le plateau : {active.Count}{bonus}";
+            string run = Time.time < runUntil ? $"plaque en marche : {Mathf.CeilToInt(runUntil - Time.time)} s" : "plaque à l'arrêt : insère une pièce";
+            StatusText = $"Gains dans le bac : {pending} (R pour récupérer)   —   {run}{bonus}";
         }
     }
 }
