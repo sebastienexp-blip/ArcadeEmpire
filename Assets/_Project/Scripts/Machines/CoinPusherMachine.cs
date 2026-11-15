@@ -454,7 +454,7 @@ namespace ArcadeEmpire.Machines
                 {
                     var rb = p.coin.Body != null ? p.coin.Body : p.coin.GetComponent<Rigidbody>();
                     rb.isKinematic = false;
-                    rb.linearVelocity = Vector3.zero;   // chute verticale, le long de la paroi arrière
+                    rb.linearVelocity = transform.TransformDirection(new Vector3(Random.Range(-0.12f, 0.12f), 0f, 0f));   // chute le long du mur du fond, légère dérive aléatoire
                     rb.angularVelocity = new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f), Random.Range(-0.6f, 0.6f));
                     inserting.RemoveAt(i);
                 }

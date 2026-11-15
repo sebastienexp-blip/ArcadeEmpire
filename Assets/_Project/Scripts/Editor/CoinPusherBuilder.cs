@@ -70,7 +70,10 @@ namespace ArcadeEmpire.EditorTools
             B("FrontPillar_R", root, new Vector3(0.7f, 1.2f, -0.55f), new Vector3(0.1f, 0.6f, 0.1f), body, true);
 
             // --- Capot racleur en plexiglas : fixe, bord inférieur à 6 mm au-dessus de la plaque (moins épais qu'une pièce)
-            B("Hood", root, new Vector3(0, 1.263f, 0.315f), new Vector3(1.3f, 0.464f, 0.03f), glass, true);
+            var backMat = RoomBuilder.Mat("Pusher_BackWall", new Color(0.1f, 0.07f, 0.28f), 0.45f);
+            B("Hood", root, new Vector3(0, 1.263f, 0.315f), new Vector3(1.3f, 0.464f, 0.03f), backMat, true);
+            for (int d = 0; d < 5; d++)   // décor lumineux du mur du fond
+                B("BackDeco_" + d, root, new Vector3(0, 1.1f + d * 0.09f, 0.2985f), new Vector3(1.22f, 0.012f, 0.004f), d % 2 == 0 ? cyan : pink, false);
 
             // --- Couloir de chute : les pièces tombent debout (sur la tranche) contre la paroi du fond, guidées par une vitre fine (27 mm de large)
             // la vitre s'arrête au-dessus des pièces posées sur la plaque (bord bas à 1,145 m) : une pièce qui quitte les toboggans peut basculer à plat vers l'avant
@@ -78,24 +81,7 @@ namespace ArcadeEmpire.EditorTools
             root.Find("ChuteGuide").GetComponent<Collider>().sharedMaterial = slidePhys;
             root.Find("Hood").GetComponent<Collider>().sharedMaterial = slidePhys;
 
-            // --- Toboggans : réseau de pentes fixes contre la paroi du fond (3 étages de « toits » décalés, 25°).
-            // La pièce tombe sur la tranche, roule sur un toit à gauche ou à droite, retombe par les passages libres (16 cm > diamètre de pièce)
-            // sur l'étage suivant, etc. : chemins multiples, sortie aléatoire sur toute la largeur.
-            float[][] roofs = { new[] { 1.38f, -0.4f, 0f, 0.4f }, new[] { 1.26f, -0.2f, 0.2f }, new[] { 1.14f, -0.4f, 0f, 0.4f } };
-            int slat = 0;
-            foreach (float[] level in roofs)
-                for (int k = 1; k < level.Length; k++)
-                    for (int side = -1; side <= 1; side += 2)
-                    {
-                        string nm = "Slide_" + (slat++);
-                        float cx = level[k] + side * 0.06f;
-                        float cy = level[0] - 0.028f;
-                        B(nm, root, new Vector3(cx, cy, 0.27f), new Vector3(0.1323f, 0.008f, 0.052f), level[0] > 1.3f ? yellow : (level[0] > 1.2f ? pink : cyan), true);
-                        // côté gauche : monte vers le sommet (+25°) ; côté droit : descend (-25°)
-                        root.Find(nm).localRotation = Quaternion.Euler(0f, 0f, -side * 32f);
-                        root.Find(nm).GetComponent<Collider>().sharedMaterial = slidePhys;
-                    }
-
+            // --- Pas de toboggans : les pièces tombent droit contre le mur du fond, dans la fente choisie (4 fentes)
             // --- Poussoir (Rigidbody cinématique, déplacé par CoinPusherMachine)
             var pusherGo = new GameObject("Pusher");
             pusherGo.transform.SetParent(root, false);
