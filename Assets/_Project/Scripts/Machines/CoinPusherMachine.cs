@@ -34,14 +34,14 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float dropZ = 0.27f;
         [SerializeField] private float plateY = 0.965f;
         [SerializeField] private float plateRetractedZ = 0.64f;
-        [SerializeField] private float plateExtendedZ = 0.24f;
+        [SerializeField] private float plateExtendedZ = 0.17f;
         [Tooltip("Inclinaison de la plaque vers l'avant (degrés) : les pièces tombées dessus glissent vers le plateau inférieur.")]
         [SerializeField] private float plateTilt = 0f;
         [SerializeField] private float killY = 0.3f;
 
         [Header("Réglages")]
         [SerializeField] private float aimSpeed = 0.6f;
-        [SerializeField] private float pushPeriod = 3.2f;
+        [SerializeField] private float pushPeriod = 2.6f;
         [SerializeField] private float dropCooldown = 0.3f;
         [SerializeField] private int maxCoinsOnTray = 700;
 
@@ -353,7 +353,6 @@ namespace ArcadeEmpire.Machines
             selectedSlot = Mathf.Clamp(slot, 0, SlotX.Length - 1);
             buttonPress = 0.2f;
             if (Time.time < nextDropTime) return;
-            if (active.Count + inserting.Count >= maxCoinsOnTray) { StatusText = "Plateau plein : attends que des pièces tombent."; return; }
             aimX = SlotX[selectedSlot];
             if (TryStartPlay()) nextDropTime = Time.time + dropCooldown;
             else StatusText = "Plus de pièces !";
@@ -537,6 +536,10 @@ namespace ArcadeEmpire.Machines
                 case PusherBonus.Kind.CoinRain:
                     StartCoroutine(CoinRain(16));
                     break;
+                case PusherBonus.Kind.Cash:
+                    pending += bonus.value * GainMultiplier;
+                    if (cm != null) cm.Add(CurrencyType.Experience, 8);
+                    break;
                 case PusherBonus.Kind.DoubleGains:
                     doubleUntil = Time.time + 30f;
                     break;
@@ -559,8 +562,7 @@ namespace ArcadeEmpire.Machines
         {
             for (int i = 0; i < count; i++)
             {
-                if (active.Count + inserting.Count < maxCoinsOnTray)
-                    SpawnCoin(Random.Range(aimMinX, aimMaxX));
+                SpawnCoin(Random.Range(aimMinX, aimMaxX));
                 yield return new WaitForSeconds(0.07f);
             }
         }

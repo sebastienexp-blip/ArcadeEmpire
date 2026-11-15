@@ -36,11 +36,11 @@ namespace ArcadeEmpire.EditorTools
             var tokenMat = RoomBuilder.Mat("Pusher_Token", new Color(0.2f, 0.9f, 0.5f), 0.6f);
             var jackpotMat = RoomBuilder.Mat("Pusher_Jackpot", new Color(0.8f, 0.3f, 1f), 0.6f);
 
-            coinPhys = EnsurePhysicsMaterial("Coin_Physics", 0.34f, 0.28f, 0.05f);
+            coinPhys = EnsurePhysicsMaterial("Coin_Physics", 0.28f, 0.22f, 0.05f);
             var platePhys = EnsurePhysicsMaterial("Plate_Physics", 0.2f, 0.14f, 0.04f);
             var slidePhys = EnsurePhysicsMaterial("Slide_Physics", 0.03f, 0.03f, 0.02f);   // quasi sans frottement : les pièces ne restent pas collées
             
-            var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.35f, 0.3f, 0.08f);
+            var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.2f, 0.15f, 0.05f);
             coinHull = EnsureCoinHull();
 
             var root = new GameObject("CoinPusher_Classic").transform;
@@ -73,8 +73,15 @@ namespace ArcadeEmpire.EditorTools
             // --- Capot racleur en plexiglas : fixe, bord inférieur à 6 mm au-dessus de la plaque (moins épais qu'une pièce)
             var backMat = RoomBuilder.Mat("Pusher_BackWall", new Color(0.1f, 0.07f, 0.28f), 0.45f);
             B("Hood", root, new Vector3(0, 1.263f, 0.315f), new Vector3(1.3f, 0.467f, 0.03f), backMat, true);   // bord bas à 4,5 mm de la plaque : moins épais qu'une pièce
-            for (int d = 0; d < 5; d++)   // décor lumineux du mur du fond
-                B("BackDeco_" + d, root, new Vector3(0, 1.1f + d * 0.09f, 0.2985f), new Vector3(1.22f, 0.012f, 0.004f), d % 2 == 0 ? cyan : pink, false);
+            B("BackDeco_Top", root, new Vector3(0, 1.488f, 0.2985f), new Vector3(1.28f, 0.014f, 0.004f), cyan, false);
+            B("BackDeco_Bottom", root, new Vector3(0, 1.04f, 0.2985f), new Vector3(1.28f, 0.014f, 0.004f), pink, false);
+            var mural = GameObject.CreatePrimitive(PrimitiveType.Quad);   // fresque du mur du fond (étoiles, vagues, bulles)
+            mural.name = "BackMural";
+            Object.DestroyImmediate(mural.GetComponent<Collider>());
+            mural.transform.SetParent(root, false);
+            mural.transform.localPosition = new Vector3(0, 1.265f, 0.2992f);
+            mural.transform.localScale = new Vector3(1.26f, 0.43f, 1f);
+            mural.GetComponent<MeshRenderer>().sharedMaterial = TexMat("Pusher_Mural", MuralTexture(), 1.1f);
 
             // --- Couloir de chute : les pièces tombent debout (sur la tranche) contre la paroi du fond, guidées par une vitre fine (27 mm de large)
             // la vitre s'arrête au-dessus des pièces posées sur la plaque (bord bas à 1,145 m) : une pièce qui quitte les toboggans peut basculer à plat vers l'avant
@@ -87,7 +94,7 @@ namespace ArcadeEmpire.EditorTools
             // --- Poussoir (Rigidbody cinématique, déplacé par CoinPusherMachine)
             var pusherGo = new GameObject("Pusher");
             pusherGo.transform.SetParent(root, false);
-            pusherGo.transform.localPosition = new Vector3(0, 0.965f, 0.24f);   // au repos la plaque est sortie
+            pusherGo.transform.localPosition = new Vector3(0, 0.965f, 0.17f);   // au repos la plaque est sortie
             pusherGo.transform.localRotation = Quaternion.Euler(-PlateTilt, 0f, 0f);
             var prb = pusherGo.AddComponent<Rigidbody>();
             prb.isKinematic = true;
@@ -165,7 +172,13 @@ namespace ArcadeEmpire.EditorTools
                 ("capsule_purple", new Vector3(-0.46f, plateTop + 0.05f, 0.14f), 0.085f),
                 ("mini_toy_green", new Vector3(0.47f, plateTop + 0.05f, 0.14f), 0.085f),
                 ("figurine_gold", new Vector3(0.18f, plateTop + 0.06f, 0.2f), 0.1f),
+                ("plush_blue", new Vector3(-0.2f, plateTop + 0.05f, 0.2f), 0.09f),
+                ("plush_green", new Vector3(0.58f, plateTop + 0.05f, 0.02f), 0.09f),
+                ("capsule_cyan", new Vector3(-0.58f, plateTop + 0.05f, 0.02f), 0.085f),
+                ("mini_toy_pink", new Vector3(0.2f, plateTop + 0.05f, 0.02f), 0.085f),
                 ("plush_pink", new Vector3(-0.25f, 0.96f, -0.28f), 0.1f),
+                ("plush_yellow", new Vector3(0.5f, 0.96f, -0.4f), 0.1f),
+                ("figurine_silver", new Vector3(-0.5f, 0.96f, -0.3f), 0.1f),
             };
             var tokenPlan = new[]
             {
@@ -174,14 +187,24 @@ namespace ArcadeEmpire.EditorTools
                 (new Vector3(0.05f, 0.9055f, -0.4f), tokenMat, 0.09f, tokenSmall),
                 (new Vector3(-0.05f, 0.9055f, -0.2f), jackpotMat, 0.1f, tokenJackpot),
             };
+            // faux billets en plastique (épais de 6 mm : le capot les racle comme les pièces) : valeur selon la couleur
+            var billPlan = new[]
+            {
+                (new Vector3(-0.5f, plateTop + 0.0035f, 0.2f), 0, 20), (new Vector3(0.45f, plateTop + 0.0035f, 0.2f), 1, 35),
+                (new Vector3(-0.1f, plateTop + 0.0035f, 0.05f), 2, 50), (new Vector3(0.33f, plateTop + 0.0035f, 0.1f), 0, 20),
+                (new Vector3(-0.35f, plateTop + 0.0035f, 0.03f), 3, 100), (new Vector3(0.05f, plateTop + 0.0035f, 0.2f), 1, 35),
+                (new Vector3(-0.12f, 0.9035f, -0.33f), 0, 20), (new Vector3(0.3f, 0.9035f, -0.45f), 2, 50),
+                (new Vector3(-0.55f, 0.9035f, -0.45f), 1, 35), (new Vector3(0.58f, 0.9035f, -0.26f), 0, 20),
+            };
             foreach (var b in bonusPlan) reserved.Add(b.Item1);
             foreach (var pz in prizePlan) reserved.Add(pz.Item2);
             foreach (var t in tokenPlan) reserved.Add(t.Item1);
+            foreach (var bl in billPlan) reserved.Add(bl.Item1);
 
             var coinMatLight = RoomBuilder.Mat("Pusher_Coin_Light", new Color(0.82f, 0.52f, 0.3f), 0.8f);
 
             // plateau fixe : gros tas bombé près du bord avant (la plaque sortie occupe l'arrière)
-            for (float z = -0.47f; z <= -0.14f; z += 0.066f)
+            for (float z = -0.47f; z <= -0.2f; z += 0.066f)
                 for (float x = -0.55f; x <= 0.56f; x += 0.068f)
                 {
                     float bump = Mathf.Exp(-(x * x) / 0.16f - ((z + 0.3f) * (z + 0.3f)) / 0.05f);
@@ -215,6 +238,7 @@ namespace ArcadeEmpire.EditorTools
                     }
 
             foreach (var t in tokenPlan) BuildCoin("Token_" + (++index), coins, t.Item1, (float)(rnd.NextDouble() * 360.0), t.Item2, t.Item3, 0.01f, t.Item4);
+            foreach (var bl in billPlan) BillAt(coins, "Bill_" + (++index), bl.Item1, (float)(rnd.NextDouble() * 360.0), bl.Item2, bl.Item3);
             foreach (var b in bonusPlan) BonusAt(coins, "Bonus_" + b.Item2 + "_" + (++index), b.Item1, b.Item2, b.Item3);
             foreach (var pz in prizePlan) PrizeAt(coins, pz.Item1, pz.Item2, pz.Item3);
 
@@ -283,6 +307,18 @@ namespace ArcadeEmpire.EditorTools
             bc.size = new Vector3(1.3f, 0.34f, 0.32f);
             zone.AddComponent<PusherCollector>().Configure(machine);
 
+            // --- Décor : guirlande chenillard, lumières d'ambiance, liserés lumineux
+            BuildMarquee(root, yellow, RoomBuilder.Mat("Pusher_BulbOff", new Color(0.25f, 0.18f, 0.04f), 0.3f));
+            B("BaseGlow", root, new Vector3(0, 0.06f, -0.935f), new Vector3(1.44f, 0.02f, 0.012f), cyan, false);
+            B("DeckEdgeGlow", root, new Vector3(0, 0.893f, -0.575f), new Vector3(1.3f, 0.012f, 0.012f), pink, false);
+            foreach (var lp in new[] { (-0.45f, new Color(0.2f, 0.9f, 1f)), (0.45f, new Color(1f, 0.25f, 0.7f)) })
+            {
+                var lg = new GameObject("AmbientLight").AddComponent<Light>();
+                lg.transform.SetParent(root, false);
+                lg.transform.localPosition = new Vector3(lp.Item1, 1.42f, 0.1f);
+                lg.type = LightType.Point; lg.color = lp.Item2; lg.range = 1.3f; lg.intensity = 2.5f; lg.shadows = LightShadows.None;
+            }
+
             return machine;
         }
 
@@ -299,11 +335,153 @@ namespace ArcadeEmpire.EditorTools
             return data;
         }
 
+        // ------------------------------------------------------------------ billets, fresque, guirlande
+        static readonly Color[] BillColors = { new Color(0.25f, 0.75f, 0.35f), new Color(0.3f, 0.55f, 1f), new Color(1f, 0.4f, 0.7f), new Color(1f, 0.8f, 0.2f) };
+
+        static Material TexMat(string name, Texture2D tex, float emission)
+        {
+            var m = RoomBuilder.Mat(name, Color.white, 0.35f);
+            m.SetTexture("_BaseMap", tex);
+            m.EnableKeyword("_EMISSION");
+            m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+            m.SetTexture("_EmissionMap", tex);
+            m.SetColor("_EmissionColor", Color.white * emission * 0.55f);
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        static Texture2D SaveTexture(string name, Texture2D t)
+        {
+            ProjectSetup.EnsureFolder("Assets/_Project/Generated");
+            string path = "Assets/_Project/Generated/" + name + ".png";
+            System.IO.File.WriteAllBytes(path, t.EncodeToPNG());
+            Object.DestroyImmediate(t);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        }
+
+        /// <summary>Faux billet : fond coloré, double bordure, médaillon central, guillochis et coins numérotés.</summary>
+        static Texture2D BillTexture(int variant)
+        {
+            const int W = 256, H = 112;
+            Color c = BillColors[variant];
+            var tex = new Texture2D(W, H, TextureFormat.RGBA32, false);
+            var px = new Color[W * H];
+            for (int y = 0; y < H; y++)
+                for (int x = 0; x < W; x++)
+                {
+                    float u = x / (float)W, v = y / (float)H;
+                    float g = 0.75f + 0.25f * Mathf.Sin(u * 90f + Mathf.Sin(v * 22f) * 2.5f) * Mathf.Cos(v * 60f);
+                    Color col = Color.Lerp(c * 0.55f, Color.Lerp(c, Color.white, 0.35f), g * (0.5f + 0.5f * v));
+                    int ex = Mathf.Min(x, W - 1 - x), ey = Mathf.Min(y, H - 1 - y), e = Mathf.Min(ex, ey);
+                    if (e < 3) col = Color.Lerp(c, Color.white, 0.8f);
+                    else if (e >= 6 && e < 8) col = c * 0.35f;
+                    float dx = (x - W * 0.5f) / (H * 0.36f), dy = (y - H * 0.5f) / (H * 0.36f), d = Mathf.Sqrt(dx * dx + dy * dy);
+                    if (d < 1f) col = Color.Lerp(col, Color.white, 0.55f);
+                    if (d < 1f && d > 0.88f) col = c * 0.3f;
+                    if (d < 0.55f) col = Color.Lerp(c * 0.45f, c, Mathf.Clamp01(dy * 0.5f + 0.6f));
+                    if (d < 0.2f && dy > 0f) col = c * 0.3f;
+                    bool cornerA = x > 12 && x < 52 && y > H - 34 && y < H - 8 && ((x / 6 + y / 6) % 2 == 0);
+                    bool cornerB = x < W - 12 && x > W - 52 && y < 34 && y > 8 && ((x / 6 + y / 6) % 2 == 0);
+                    if (cornerA || cornerB) col = c * 0.25f;
+                    col.a = 1f;
+                    px[y * W + x] = col;
+                }
+            tex.SetPixels(px); tex.Apply();
+            return SaveTexture("Pusher_Bill_" + variant, tex);
+        }
+
+        static readonly Dictionary<int, Material> billMats = new Dictionary<int, Material>();
+
+        static void BillAt(Transform parent, string name, Vector3 pos, float yaw, int variant, int value)
+        {
+            var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            go.name = name;
+            go.transform.SetParent(parent, false);
+            go.transform.localPosition = pos;
+            go.transform.localRotation = Quaternion.Euler(0f, yaw, 0f);
+            go.transform.localScale = new Vector3(0.12f, 0.006f, 0.056f);
+            var bc = go.GetComponent<BoxCollider>(); bc.sharedMaterial = coinPhys; bc.contactOffset = 0.002f;
+            if (!billMats.TryGetValue(variant, out var bm) || bm == null) billMats[variant] = bm = TexMat("Pusher_Bill_" + variant, BillTexture(variant), 0.5f);
+            go.GetComponent<MeshRenderer>().sharedMaterial = bm;
+            var rb = go.AddComponent<Rigidbody>();
+            rb.mass = 0.01f; rb.linearDamping = 0.02f; rb.angularDamping = 0.2f;
+            rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            rb.sleepThreshold = 0.03f; rb.solverIterations = 12; rb.maxDepenetrationVelocity = 1.2f;
+            var pb = go.AddComponent<PusherBonus>(); pb.kind = PusherBonus.Kind.Cash; pb.value = value;
+        }
+
+        /// <summary>Fresque du mur du fond : dégradé nuit, étoiles, vagues néon, bulles et soleil doré.</summary>
+        static Texture2D MuralTexture()
+        {
+            const int W = 512, H = 176;
+            var rng = new System.Random(7);
+            var tex = new Texture2D(W, H, TextureFormat.RGBA32, false);
+            var px = new Color[W * H];
+            for (int y = 0; y < H; y++)
+                for (int x = 0; x < W; x++)
+                {
+                    float v = y / (float)H, u = x / (float)W;
+                    Color col = Color.Lerp(new Color(0.05f, 0.04f, 0.22f), new Color(0.35f, 0.1f, 0.45f), 1f - v);
+                    float w1 = 0.22f + 0.05f * Mathf.Sin(u * 28f), w2 = 0.34f + 0.05f * Mathf.Sin(u * 21f + 1.5f), w3 = 0.46f + 0.04f * Mathf.Sin(u * 35f + 3f);
+                    if (Mathf.Abs(v - w1) < 0.012f) col = new Color(0.1f, 0.9f, 1f);
+                    if (Mathf.Abs(v - w2) < 0.012f) col = new Color(1f, 0.2f, 0.65f);
+                    if (Mathf.Abs(v - w3) < 0.01f) col = new Color(1f, 0.85f, 0.2f);
+                    float dx = (u - 0.5f) * (W / (float)H), dy = (v - 0.62f);
+                    float d = Mathf.Sqrt(dx * dx + dy * dy);
+                    if (d < 0.2f) col = Color.Lerp(new Color(1f, 0.6f, 0.15f), new Color(1f, 0.9f, 0.4f), 1f - d / 0.2f);
+                    else if (d < 0.23f) col = new Color(1f, 0.3f, 0.5f);
+                    col.a = 1f;
+                    px[y * W + x] = col;
+                }
+            for (int i = 0; i < 90; i++)   // étoiles
+            {
+                int sx = rng.Next(4, W - 4), sy = rng.Next(60, H - 4), r = rng.Next(1, 3);
+                Color sc = i % 3 == 0 ? new Color(1f, 0.9f, 0.4f) : Color.white;
+                for (int k = -r; k <= r; k++) { px[sy * W + Mathf.Clamp(sx + k, 0, W - 1)] = sc; px[Mathf.Clamp(sy + k, 0, H - 1) * W + sx] = sc; }
+            }
+            for (int i = 0; i < 26; i++)   // bulles
+            {
+                int cx = rng.Next(10, W - 10), cy = rng.Next(6, H - 40), r = rng.Next(4, 11);
+                for (int a = 0; a < 48; a++)
+                {
+                    int bx = cx + Mathf.RoundToInt(Mathf.Cos(a / 48f * 6.2832f) * r), by = cy + Mathf.RoundToInt(Mathf.Sin(a / 48f * 6.2832f) * r);
+                    if (bx >= 0 && bx < W && by >= 0 && by < H) px[by * W + bx] = new Color(0.7f, 0.95f, 1f);
+                }
+            }
+            tex.SetPixels(px); tex.Apply();
+            return SaveTexture("Pusher_Mural", tex);
+        }
+
+        /// <summary>Guirlande d'ampoules chenillard autour de l'ouverture.</summary>
+        static void BuildMarquee(Transform root, Material onMat, Material offMat)
+        {
+            var bulbs = new List<Renderer>();
+            var holder = new GameObject("Marquee").transform;
+            holder.SetParent(root, false);
+            System.Action<Vector3> add = pos =>
+            {
+                var s = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                s.name = "Bulb";
+                Object.DestroyImmediate(s.GetComponent<Collider>());
+                s.transform.SetParent(holder, false);
+                s.transform.localPosition = pos;
+                s.transform.localScale = Vector3.one * 0.032f;
+                s.GetComponent<MeshRenderer>().sharedMaterial = offMat;
+                bulbs.Add(s.GetComponent<MeshRenderer>());
+            };
+            for (float x = -0.64f; x <= 0.645f; x += 0.08f) add(new Vector3(x, 1.468f, -0.61f));
+            for (float y = 1.43f; y >= 0.99f; y -= 0.073f) { add(new Vector3(-0.7f, y, -0.607f)); add(new Vector3(0.7f, y, -0.607f)); }
+            var m = holder.gameObject.AddComponent<PusherMarquee>();
+            m.bulbs = bulbs.ToArray(); m.on = onMat; m.off = offMat;
+        }
+
         static void BonusAt(Transform parent, string name, Vector3 pos, PusherBonus.Kind kind, Color color)
         {
             var mat = RoomBuilder.Mat("Pusher_Bonus_" + kind, color, 0.7f);
             var go = BuildCoin(name, parent, pos, 0f, mat, 0.105f, 0.012f, null, kind);
             go.transform.localRotation = Quaternion.identity;
+            go.AddComponent<PusherBonusVisual>();   // étiquette flottante + pulsation : bien visible comme sur une vraie borne
         }
 
         static void PrizeAt(Transform parent, string id, Vector3 pos, float size)
