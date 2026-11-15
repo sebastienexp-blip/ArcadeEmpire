@@ -71,23 +71,22 @@ namespace ArcadeEmpire.EditorTools
             // --- Couloir de chute : les pièces tombent debout (sur la tranche) contre la paroi du fond, guidées par une vitre fine (27 mm de large)
             B("ChuteGuide", root, new Vector3(0, 1.28f, 0.268f), new Vector3(1.3f, 0.42f, 0.01f), glass, true);
 
-            // --- Toboggan oscillant (déviateur) : plaque inclinée qui bascule d'un côté à l'autre, le long de la paroi ; il suit le viseur
-            var diverterGo = new GameObject("Diverter");
-            diverterGo.transform.SetParent(root, false);
-            diverterGo.transform.localPosition = new Vector3(0f, 1.30f, 0.2865f);
-            var drb = diverterGo.AddComponent<Rigidbody>();
-            drb.isKinematic = true;
-            drb.interpolation = RigidbodyInterpolation.Interpolate;
-            drb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
-            var dcol = diverterGo.AddComponent<BoxCollider>();
-            dcol.size = new Vector3(0.30f, 0.012f, 0.022f);
-            dcol.sharedMaterial = platePhys;
-            var dvis = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            dvis.name = "DiverterVisual";
-            Object.DestroyImmediate(dvis.GetComponent<BoxCollider>());
-            dvis.transform.SetParent(diverterGo.transform, false);
-            dvis.transform.localScale = new Vector3(0.30f, 0.012f, 0.022f);
-            dvis.GetComponent<MeshRenderer>().sharedMaterial = yellow;
+            // --- Toboggans : réseau de pentes fixes contre la paroi du fond (3 étages de « toits » décalés, 25°).
+            // La pièce tombe sur la tranche, roule sur un toit à gauche ou à droite, retombe par les passages libres (16 cm > diamètre de pièce)
+            // sur l'étage suivant, etc. : chemins multiples, sortie aléatoire sur toute la largeur.
+            float[][] roofs = { new[] { 1.38f, -0.4f, 0f, 0.4f }, new[] { 1.26f, -0.2f, 0.2f }, new[] { 1.14f, -0.4f, 0f, 0.4f } };
+            int slat = 0;
+            foreach (float[] level in roofs)
+                for (int k = 1; k < level.Length; k++)
+                    for (int side = -1; side <= 1; side += 2)
+                    {
+                        string nm = "Slide_" + (slat++);
+                        float cx = level[k] + side * 0.06f;
+                        float cy = level[0] - 0.028f;
+                        B(nm, root, new Vector3(cx, cy, 0.2865f), new Vector3(0.1323f, 0.008f, 0.022f), level[0] > 1.3f ? yellow : (level[0] > 1.2f ? pink : cyan), true);
+                        // côté gauche : monte vers le sommet (+25°) ; côté droit : descend (-25°)
+                        root.Find(nm).localRotation = Quaternion.Euler(0f, 0f, -side * 25f);
+                    }
 
             // --- Poussoir (Rigidbody cinématique, déplacé par CoinPusherMachine)
             var pusherGo = new GameObject("Pusher");
@@ -272,7 +271,6 @@ namespace ArcadeEmpire.EditorTools
             var machine = root.gameObject.AddComponent<CoinPusherMachine>();
             machine.Configure(data, anchor, prb, aim.transform, button.transform, template.transform, coins);
             machine.SetupExtras(display, leds);
-            machine.SetupDiverter(drb);
 
             // --- Zone de récupération sous le bord avant
             var zone = new GameObject("Collector");
