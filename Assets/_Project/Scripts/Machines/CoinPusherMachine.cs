@@ -43,7 +43,7 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float aimSpeed = 0.6f;
         [SerializeField] private float pushPeriod = 3.2f;
         [SerializeField] private float dropCooldown = 0.3f;
-        [SerializeField] private int maxCoinsOnTray = 360;
+        [SerializeField] private int maxCoinsOnTray = 700;
 
         public override string ControlsHint => "←/→ : choisir la fente      1-4 : insérer dans la fente      ESPACE : insérer      R : gains      Échap : quitter";
 
@@ -101,6 +101,7 @@ namespace ArcadeEmpire.Machines
         private void Awake()
         {
             Physics.defaultSolverIterations = Mathf.Max(Physics.defaultSolverIterations, 8);
+            Time.fixedDeltaTime = Mathf.Min(Time.fixedDeltaTime, 1f / 60f);   // pas de physique fin : pièces fines, pas de traversée
             if (coinRoot != null)
                 foreach (PusherCoin c in coinRoot.GetComponentsInChildren<PusherCoin>(false))
                 {
