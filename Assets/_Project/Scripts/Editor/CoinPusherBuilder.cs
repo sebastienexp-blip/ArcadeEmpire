@@ -26,7 +26,7 @@ namespace ArcadeEmpire.EditorTools
             var tokenJackpot = EnsureReward("token_jackpot", "Jeton Jackpot", Rarity.Epic, 40, 50);
 
             var body = RoomBuilder.Mat("Pusher_Body", new Color(0.09f, 0.08f, 0.13f), 0.5f);
-            var tray = RoomBuilder.Mat("Pusher_Tray", new Color(0.30f, 0.14f, 0.45f), 0.3f);
+            var tray = RoomBuilder.Mat("Pusher_Tray", new Color(0.08f, 0.45f, 0.58f), 0.3f);
             var plateMat = RoomBuilder.Mat("Pusher_Plate", new Color(0.8f, 0.82f, 0.9f), 0.7f);
             var pink = RoomBuilder.Neon("Neon_Pink", new Color(1f, 0.1f, 0.6f));
             var cyan = RoomBuilder.Neon("Neon_Cyan", new Color(0.1f, 0.9f, 1f));
@@ -113,34 +113,37 @@ namespace ArcadeEmpire.EditorTools
             int index = 0;
             var rnd = new System.Random(2024);
 
-            // plateau inférieur : tas de 2 couches devant la plaque
-            for (int layer = 0; layer < 3; layer++)
-                for (float z = -0.47f; z <= 0.27f; z += 0.105f)
-                    for (float x = -0.55f; x <= 0.56f; x += 0.11f)
+            // plateau inférieur : gros tas bombé au centre (comme sur les vraies machines), pièces légèrement penchées
+            for (float z = -0.47f; z <= 0.27f; z += 0.105f)
+                for (float x = -0.55f; x <= 0.56f; x += 0.11f)
+                {
+                    float bump = Mathf.Exp(-(x * x) / 0.16f - ((z + 0.12f) * (z + 0.12f)) / 0.14f);   // 0..1, maximum au centre
+                    int layers = 1 + Mathf.RoundToInt(bump * 4.2f * (0.6f + 0.4f * (float)rnd.NextDouble()));
+                    for (int layer = 0; layer < layers; layer++)
                     {
-                        if (layer == 1 && rnd.NextDouble() < 0.2) continue;
-                        if (layer == 2 && rnd.NextDouble() < 0.5) continue;
+                        if (layer > 0 && rnd.NextDouble() < 0.15) continue;
                         index++;
-                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.03f, jz = (float)(rnd.NextDouble() - 0.5) * 0.03f;
-                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.04f : 0f), 0.907f + layer * 0.0125f, z + jz);
+                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.04f, jz = (float)(rnd.NextDouble() - 0.5) * 0.04f;
+                        Vector3 p = new Vector3(x + jx + (layer % 2 == 1 ? 0.035f : 0f), 0.907f + layer * 0.0145f, z + jz);
                         float yaw = (float)(rnd.NextDouble() * 360.0);
-                        BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.011f, null);
+                        var c = BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.011f, null);
+                        float lean = layer == 0 ? 0f : 7f;
+                        c.transform.localRotation = Quaternion.Euler((float)(rnd.NextDouble() - 0.5) * lean, yaw, (float)(rnd.NextDouble() - 0.5) * lean);
                     }
+                }
 
-            // plaque supérieure : gros tas de pièces (3 couches), comme sur une vraie machine
+            // plaque supérieure : rangées bien rangées près du bord avant (1 à 2 couches), le fond reste libre pour la chute des pièces
             float tanT = Mathf.Tan(PlateTilt * Mathf.Deg2Rad);
             float plateTop = 0.995f + 0.06f;
-            for (int layer = 0; layer < 4; layer++)
-                for (float z = 0.38f; z <= 0.91f; z += 0.105f)
-                    for (float x = -0.55f; x <= 0.56f; x += 0.11f)
+            for (int layer = 0; layer < 2; layer++)
+                for (float z = 0.385f; z <= 0.66f; z += 0.1f)
+                    for (float x = -0.57f; x <= 0.58f; x += 0.1f)
                     {
-                        if (layer == 1 && rnd.NextDouble() < 0.15) continue;
-                        if (layer == 2 && rnd.NextDouble() < 0.35) continue;
-                        if (layer == 3 && rnd.NextDouble() < 0.6) continue;
+                        if (layer == 1 && rnd.NextDouble() < 0.5) continue;
                         index++;
-                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.03f, jz = (float)(rnd.NextDouble() - 0.5) * 0.03f;
+                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.015f, jz = (float)(rnd.NextDouble() - 0.5) * 0.015f;
                         float zz = z + jz;
-                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.04f : 0f), plateTop + (zz - 0.64f) * tanT + 0.007f + layer * 0.0125f, zz);
+                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.04f : 0f), plateTop + (zz - 0.64f) * tanT + 0.007f + layer * 0.0135f, zz);
                         float yaw = (float)(rnd.NextDouble() * 360.0);
                         var c = BuildCoin("Coin_" + index, coins, p, yaw, coinMat, 0.1f, 0.011f, null);
                         c.transform.localRotation = Quaternion.Euler(-PlateTilt, 0f, 0f) * Quaternion.Euler(0f, yaw, 0f);
