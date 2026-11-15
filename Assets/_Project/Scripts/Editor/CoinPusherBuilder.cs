@@ -59,19 +59,40 @@ namespace ArcadeEmpire.EditorTools
             // --- Parois et plafond
             B("Wall_L", root, new Vector3(-0.675f, 1.2f, 0.2f), new Vector3(0.05f, 0.6f, 1.5f), glass, true);
             B("Wall_R", root, new Vector3(0.675f, 1.2f, 0.2f), new Vector3(0.05f, 0.6f, 1.5f), glass, true);
-            B("Wall_Back", root, new Vector3(0, 1.2815f, 0.975f), new Vector3(1.4f, 0.437f, 0.05f), body, true);   // fente en dessous : la plaque coulisse dessous
+            B("Wall_Back", root, new Vector3(0, 1.2655f, 0.975f), new Vector3(1.4f, 0.469f, 0.05f), body, true);   // fente en dessous : la plaque coulisse dessous
             B("Top", root, new Vector3(0, 1.62f, 0.2f), new Vector3(1.5f, 0.25f, 1.6f), body, true);
             B("Marquee", root, new Vector3(0, 1.95f, 0.45f), new Vector3(1.5f, 0.4f, 1.0f), pink, false);
             B("FrontPillar_L", root, new Vector3(-0.7f, 1.2f, -0.55f), new Vector3(0.1f, 0.6f, 0.1f), body, true);
             B("FrontPillar_R", root, new Vector3(0.7f, 1.2f, -0.55f), new Vector3(0.1f, 0.6f, 0.1f), body, true);
 
             // --- Capot racleur en plexiglas : fixe, bord inférieur à 6 mm au-dessus de la plaque (moins épais qu'une pièce)
-            B("Hood", root, new Vector3(0, 1.2785f, 0.315f), new Vector3(1.3f, 0.431f, 0.03f), glass, true);
+            B("Hood", root, new Vector3(0, 1.263f, 0.315f), new Vector3(1.3f, 0.464f, 0.03f), glass, true);
+
+            // --- Couloir de chute : les pièces tombent debout (sur la tranche) contre la paroi du fond, guidées par une vitre fine (27 mm de large)
+            B("ChuteGuide", root, new Vector3(0, 1.28f, 0.268f), new Vector3(1.3f, 0.42f, 0.01f), glass, true);
+
+            // --- Toboggan oscillant (déviateur) : plaque inclinée qui bascule d'un côté à l'autre, le long de la paroi ; il suit le viseur
+            var diverterGo = new GameObject("Diverter");
+            diverterGo.transform.SetParent(root, false);
+            diverterGo.transform.localPosition = new Vector3(0f, 1.30f, 0.2865f);
+            var drb = diverterGo.AddComponent<Rigidbody>();
+            drb.isKinematic = true;
+            drb.interpolation = RigidbodyInterpolation.Interpolate;
+            drb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+            var dcol = diverterGo.AddComponent<BoxCollider>();
+            dcol.size = new Vector3(0.30f, 0.012f, 0.022f);
+            dcol.sharedMaterial = platePhys;
+            var dvis = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            dvis.name = "DiverterVisual";
+            Object.DestroyImmediate(dvis.GetComponent<BoxCollider>());
+            dvis.transform.SetParent(diverterGo.transform, false);
+            dvis.transform.localScale = new Vector3(0.30f, 0.012f, 0.022f);
+            dvis.GetComponent<MeshRenderer>().sharedMaterial = yellow;
 
             // --- Poussoir (Rigidbody cinématique, déplacé par CoinPusherMachine)
             var pusherGo = new GameObject("Pusher");
             pusherGo.transform.SetParent(root, false);
-            pusherGo.transform.localPosition = new Vector3(0, 0.995f, 0.24f);   // au repos la plaque est sortie
+            pusherGo.transform.localPosition = new Vector3(0, 0.965f, 0.24f);   // au repos la plaque est sortie
             pusherGo.transform.localRotation = Quaternion.Euler(-PlateTilt, 0f, 0f);
             var prb = pusherGo.AddComponent<Rigidbody>();
             prb.isKinematic = true;
@@ -100,7 +121,7 @@ namespace ArcadeEmpire.EditorTools
             aim.name = "AimIndicator";
             Object.DestroyImmediate(aim.GetComponent<BoxCollider>());
             aim.transform.SetParent(root, false);
-            aim.transform.localPosition = new Vector3(0, 1.48f, 0.24f);
+            aim.transform.localPosition = new Vector3(0, 1.48f, 0.2865f);
             aim.transform.localScale = new Vector3(0.14f, 0.03f, 0.14f);
             aim.GetComponent<MeshRenderer>().sharedMaterial = yellow;
 
@@ -126,7 +147,7 @@ namespace ArcadeEmpire.EditorTools
             // Mécanisme réel : la plaque mobile (étage supérieur) porte les pièces ; un capot en plexiglas fixe, juste au-dessus d'elle,
             // racle les pièces quand elle recule : elles tombent alors devant elle sur le plateau fixe, et la plaque les pousse vers le bord.
             // Au repos, la plaque est sortie : ses rangées de pièces sont devant le capot.
-            float plateTop = 0.995f + 0.06f;
+            float plateTop = 0.965f + 0.06f;
             var reserved = new List<Vector3>();
             System.Func<float, float, bool> isReserved = (px, pz) =>
             {
@@ -222,8 +243,8 @@ namespace ArcadeEmpire.EditorTools
 
             // --- Vitre avant (visuelle seulement : les pièces tombent par-dessous), rail d'insertion et fente
             B("Glass_Front", root, new Vector3(0, 1.2f, -0.575f), new Vector3(1.3f, 0.55f, 0.02f), glass, false);
-            B("InsertRail", root, new Vector3(0, 1.49f, 0.24f), new Vector3(1.1f, 0.02f, 0.12f), body, false);
-            B("InsertSlot", root, new Vector3(0, 1.488f, 0.24f), new Vector3(1.0f, 0.005f, 0.03f), yellow, false);
+            B("InsertRail", root, new Vector3(0, 1.49f, 0.2865f), new Vector3(1.1f, 0.02f, 0.12f), body, false);
+            B("InsertSlot", root, new Vector3(0, 1.488f, 0.2865f), new Vector3(1.0f, 0.005f, 0.03f), yellow, false);
 
             // --- Afficheur numérique (canvas monde, face au joueur) et éclairages LED animés
             var display = new GameObject("Display").transform;
@@ -251,6 +272,7 @@ namespace ArcadeEmpire.EditorTools
             var machine = root.gameObject.AddComponent<CoinPusherMachine>();
             machine.Configure(data, anchor, prb, aim.transform, button.transform, template.transform, coins);
             machine.SetupExtras(display, leds);
+            machine.SetupDiverter(drb);
 
             // --- Zone de récupération sous le bord avant
             var zone = new GameObject("Collector");

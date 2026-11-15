@@ -25,13 +25,16 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private Transform coinRoot;
         [SerializeField] private Transform displayAnchor;
         [SerializeField] private Light[] ledLights;
+        [SerializeField] private Rigidbody diverter;
+        [SerializeField] private float diverterY = 1.30f;
+        [SerializeField] private float diverterSwing = 28f;
 
         [Header("Géométrie (repère local)")]
         [SerializeField] private float aimMinX = -0.5f;
         [SerializeField] private float aimMaxX = 0.5f;
         [SerializeField] private float dropY = 1.45f;
-        [SerializeField] private float dropZ = 0.24f;
-        [SerializeField] private float plateY = 0.995f;
+        [SerializeField] private float dropZ = 0.2865f;
+        [SerializeField] private float plateY = 0.965f;
         [SerializeField] private float plateRetractedZ = 0.64f;
         [SerializeField] private float plateExtendedZ = 0.24f;
         [Tooltip("Inclinaison de la plaque vers l'avant (degrés) : les pièces tombées dessus glissent vers le plateau inférieur.")]
@@ -67,6 +70,9 @@ namespace ArcadeEmpire.Machines
         private const float InsertSlide = 0.16f;
         private const float RunSecondsPerCoin = 14f;
         private const float BinDelay = 0.7f;
+
+        public void SetupDiverter(Rigidbody body) => diverter = body;
+        private float diverterAngle, diverterPhase;
 
         public int CoinsOnTray => active.Count;
         public int GainMultiplier => Time.time < doubleUntil ? 2 : 1;
@@ -312,6 +318,8 @@ namespace ArcadeEmpire.Machines
                 if (Mathf.Floor(pushPhase - 0.5f) > Mathf.Floor(prev - 0.5f)) pushPhase = Mathf.Floor(pushPhase - 0.5f) + 0.5f;
             }
 
+            UpdateDiverter(dt, running);
+
             float t = pushPhase % 1f;
             float tri = t < 0.5f ? t * 2f : 2f - 2f * t;                       // 0 -> 1 -> 0
             float k = Mathf.Lerp(tri, tri * tri * (3f - 2f * tri), 0.65f);    // vitesse quasi constante, douce aux extrémités
@@ -329,6 +337,17 @@ namespace ArcadeEmpire.Machines
                 motor.volume = Mathf.Lerp(motor.volume, Mathf.Clamp01(speed * 0.5f) * 0.12f * GameAudio.EffectiveSfx, 0.2f);
                 motor.pitch = 0.8f + Mathf.Clamp01(speed * 0.6f) * 0.4f;
             }
+        }
+
+        /// <summary>Toboggan oscillant le long de la paroi du fond : il bascule d'un côté à l'autre pendant que la machine tourne, donc la direction prise par chaque pièce est aléatoire.</summary>
+        private void UpdateDiverter(float dt, bool running)
+        {
+            if (diverter == null) return;
+            if (running) diverterPhase += dt * 1.1f;
+            float target = running ? Mathf.Sin(diverterPhase * 6.2832f) * diverterSwing : 0f;
+            diverterAngle = Mathf.MoveTowards(diverterAngle, target, 120f * dt);
+            diverter.MovePosition(transform.TransformPoint(aimX, diverterY, dropZ));
+            diverter.MoveRotation(transform.rotation * Quaternion.Euler(0f, 0f, diverterAngle));
         }
 
         // ------------------------------------------------------------------ pièces
