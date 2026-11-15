@@ -30,12 +30,12 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float aimMinX = -0.5f;
         [SerializeField] private float aimMaxX = 0.5f;
         [SerializeField] private float dropY = 1.45f;
-        [SerializeField] private float dropZ = 0.78f;
+        [SerializeField] private float dropZ = 0.24f;
         [SerializeField] private float plateY = 0.995f;
         [SerializeField] private float plateRetractedZ = 0.64f;
         [SerializeField] private float plateExtendedZ = 0.24f;
         [Tooltip("Inclinaison de la plaque vers l'avant (degrés) : les pièces tombées dessus glissent vers le plateau inférieur.")]
-        [SerializeField] private float plateTilt = 6f;
+        [SerializeField] private float plateTilt = 0f;
         [SerializeField] private float killY = 0.3f;
 
         [Header("Réglages")]
@@ -104,11 +104,13 @@ namespace ArcadeEmpire.Machines
                     if (rb != null) rb.Sleep();   // les pièces posées au départ ne s'agitent pas avant la première poussée
                 }
             if (coinRoot != null)
-                foreach (Rigidbody rb in coinRoot.GetComponentsInChildren<Rigidbody>(false)) rb.Sleep();   // lots et jetons bonus aussi
+                foreach (PusherBonus b in coinRoot.GetComponentsInChildren<PusherBonus>(false)) b.GetComponent<Rigidbody>().Sleep();
             if (pusher != null)
             {
                 pusher.transform.SetPositionAndRotation(transform.TransformPoint(0f, plateY, plateRetractedZ), transform.rotation * Quaternion.Euler(-plateTilt, 0f, 0f));
-                prevPusherZ = plateRetractedZ;
+                pusher.transform.position = transform.TransformPoint(0f, plateY, plateExtendedZ);
+                prevPusherZ = plateExtendedZ;
+                pushPhase = 0.5f; lastHalf = 1;   // au repos la plaque est sortie
             }
             BuildAudio();
             if (displayAnchor != null) BuildDisplay();
@@ -303,11 +305,11 @@ namespace ArcadeEmpire.Machines
             float prev = pushPhase;
             bool running = Time.time < runUntil;
             if (running) pushPhase += dt / pushPeriod;
-            else if (pushPhase % 1f > 0.0001f)
+            else if (Mathf.Repeat(pushPhase - 0.5f, 1f) > 0.0001f)
             {
-                // à l'arrêt, la plaque termine sa course et s'immobilise rentrée (comme une vraie machine)
+                // à l'arrêt, la plaque termine sa course et s'immobilise sortie (ses pièces sont alors devant le capot)
                 pushPhase += dt / pushPeriod;
-                if (Mathf.Floor(pushPhase) > Mathf.Floor(prev)) pushPhase = Mathf.Floor(pushPhase);
+                if (Mathf.Floor(pushPhase - 0.5f) > Mathf.Floor(prev - 0.5f)) pushPhase = Mathf.Floor(pushPhase - 0.5f) + 0.5f;
             }
 
             float t = pushPhase % 1f;

@@ -155,7 +155,7 @@ def pusher_shell():
             m.add(cylinder(0.014, 0.014, 0.006, seg=8, mat="Metal"), (s * x, 0.657, z))                          # vis du pupitre
         m.add(rbox((0.05, 0.03, 0.4), 0.3, mat="Metal"), (s * 0.78, 0.52, -0.2))                                 # rebords latéraux du bac
     m.add(rbox((1.0, 0.025, 0.05), 0.4, mat="Metal"), (0, 0.515, -0.89))                                         # lèvre de la zone de récupération
-    m.add(rbox((1.1, 0.03, 0.14), 0.3, mat="Dark"), (0, 1.505, 0.78))                                            # rail d'insertion (sous le plafond)
+    m.add(rbox((1.1, 0.03, 0.14), 0.3, mat="Dark"), (0, 1.505, 0.24))                                            # rail d'insertion (sous le plafond)
     for x in (-0.5, -0.25, 0.0, 0.25, 0.5):
         m.add(cylinder(0.012, 0.012, 0.006, seg=8, mat="Metal"), (x, 1.746, -0.54), R=rot(0, 0, 0))             # vis du plafond
     return m.finish(keep=True)
