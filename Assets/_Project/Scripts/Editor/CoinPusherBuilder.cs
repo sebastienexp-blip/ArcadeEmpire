@@ -38,6 +38,7 @@ namespace ArcadeEmpire.EditorTools
 
             coinPhys = EnsurePhysicsMaterial("Coin_Physics", 0.32f, 0.26f, 0.12f);
             var platePhys = EnsurePhysicsMaterial("Plate_Physics", 0.2f, 0.14f, 0.04f);
+            var slidePhys = EnsurePhysicsMaterial("Slide_Physics", 0.03f, 0.03f, 0.02f);   // quasi sans frottement : les pièces ne restent pas collées
             
             var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.35f, 0.3f, 0.08f);
             coinHull = EnsureCoinHull();
@@ -70,6 +71,8 @@ namespace ArcadeEmpire.EditorTools
 
             // --- Couloir de chute : les pièces tombent debout (sur la tranche) contre la paroi du fond, guidées par une vitre fine (27 mm de large)
             B("ChuteGuide", root, new Vector3(0, 1.28f, 0.268f), new Vector3(1.3f, 0.42f, 0.01f), glass, true);
+            root.Find("ChuteGuide").GetComponent<Collider>().sharedMaterial = slidePhys;
+            root.Find("Hood").GetComponent<Collider>().sharedMaterial = slidePhys;
 
             // --- Toboggans : réseau de pentes fixes contre la paroi du fond (3 étages de « toits » décalés, 25°).
             // La pièce tombe sur la tranche, roule sur un toit à gauche ou à droite, retombe par les passages libres (16 cm > diamètre de pièce)
@@ -85,7 +88,8 @@ namespace ArcadeEmpire.EditorTools
                         float cy = level[0] - 0.028f;
                         B(nm, root, new Vector3(cx, cy, 0.2865f), new Vector3(0.1323f, 0.008f, 0.022f), level[0] > 1.3f ? yellow : (level[0] > 1.2f ? pink : cyan), true);
                         // côté gauche : monte vers le sommet (+25°) ; côté droit : descend (-25°)
-                        root.Find(nm).localRotation = Quaternion.Euler(0f, 0f, -side * 25f);
+                        root.Find(nm).localRotation = Quaternion.Euler(0f, 0f, -side * 32f);
+                        root.Find(nm).GetComponent<Collider>().sharedMaterial = slidePhys;
                     }
 
             // --- Poussoir (Rigidbody cinématique, déplacé par CoinPusherMachine)
@@ -244,6 +248,11 @@ namespace ArcadeEmpire.EditorTools
             B("Glass_Front", root, new Vector3(0, 1.2f, -0.575f), new Vector3(1.3f, 0.55f, 0.02f), glass, false);
             B("InsertRail", root, new Vector3(0, 1.49f, 0.2865f), new Vector3(1.1f, 0.02f, 0.12f), body, false);
             B("InsertSlot", root, new Vector3(0, 1.488f, 0.2865f), new Vector3(1.0f, 0.005f, 0.03f), yellow, false);
+            for (int sl = 0; sl < CoinPusherMachine.SlotX.Length; sl++)   // 4 fentes d'insertion repérées
+            {
+                B("SlotMark_" + (sl + 1), root, new Vector3(CoinPusherMachine.SlotX[sl], 1.5f, 0.2865f), new Vector3(0.11f, 0.012f, 0.05f), cyan, false);
+                B("SlotMouth_" + (sl + 1), root, new Vector3(CoinPusherMachine.SlotX[sl], 1.502f, 0.2865f), new Vector3(0.07f, 0.014f, 0.016f), pink, false);
+            }
 
             // --- Afficheur numérique (canvas monde, face au joueur) et éclairages LED animés
             var display = new GameObject("Display").transform;

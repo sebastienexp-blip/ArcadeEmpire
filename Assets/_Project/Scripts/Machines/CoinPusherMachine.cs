@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using ArcadeEmpire.Core;
 using ArcadeEmpire.Data;
 using ArcadeEmpire.Economy;
+using ArcadeEmpire.UI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
@@ -44,7 +45,12 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float dropCooldown = 0.3f;
         [SerializeField] private int maxCoinsOnTray = 360;
 
-        public override string ControlsHint => "Q/D ou ←/→ : viser      ESPACE : insérer une pièce      R : récupérer les gains      Échap : quitter";
+        public override string ControlsHint => "←/→ : choisir la fente      1-4 : insérer dans la fente      ESPACE : insérer      R : gains      Échap : quitter";
+
+        /// <summary>Les 4 fentes d'insertion (x local), comme sur les vraies machines : on choisit où tombe la pièce.</summary>
+        public static readonly float[] SlotX = { -0.42f, -0.14f, 0.14f, 0.42f };
+        private int selectedSlot = 1;
+        private GameObject slotUi;
 
         private struct Pending { public PusherCoin coin; public float time; }
 
@@ -219,11 +225,13 @@ namespace ArcadeEmpire.Machines
         protected override void OnPlayerEntered()
         {
             enterFrame = Time.frameCount;
+            if (slotUi == null) BuildSlotUi();
             RefreshStatus();
         }
 
         protected override void OnPlayerExited()
         {
+            if (slotUi != null) slotUi.SetActive(false);
             CollectWinnings();   // les gains du bac sont toujours récupérés en quittant
             StatusText = "";
         }
@@ -241,6 +249,8 @@ namespace ArcadeEmpire.Machines
         private void Update()
         {
             if (IsInUse) HandleInput();
+            if (slotUi != null) slotUi.SetActive(IsInUse && !UIState.PanelOpen);
+            aimX = Mathf.Lerp(aimX, SlotX[selectedSlot], 1f - Mathf.Exp(-14f * Time.deltaTime));
 
             if (aimIndicator != null)
             {
@@ -271,6 +281,35 @@ namespace ArcadeEmpire.Machines
                     if (active[i] != null && transform.InverseTransformPoint(active[i].transform.position).y < killY)
                         Recycle(active[i]);
             }
+            UnjamChute();
+        }
+
+        // Anti-blocage : une pièce immobile dans le couloir de chute (au-dessus du plateau) reçoit une petite secousse, comme le
+        // tapotement d'un technicien ; de plus en plus forte si elle reste coincée.
+        private float unjamTimer;
+        private void UnjamChute()
+        {
+            unjamTimer += Time.deltaTime;
+            if (unjamTimer < 0.25f) return;
+            float dt = unjamTimer; unjamTimer = 0f;
+            for (int i = 0; i < active.Count; i++)
+            {
+                PusherCoin c = active[i];
+                if (c == null || c.Body == null || c.Body.isKinematic) continue;
+                Vector3 lp = transform.InverseTransformPoint(c.transform.position);
+                bool inChute = lp.y > 1.13f && lp.z > 0.25f && lp.z < 0.32f;
+                if (!inChute || c.Body.linearVelocity.sqrMagnitude > 0.0064f) { c.StuckTime = 0f; continue; }
+                c.StuckTime += dt;
+                if (c.StuckTime > 0.9f)
+                {
+                    float power = Mathf.Min(0.5f + c.StuckTime * 0.35f, 1.8f);
+                    float side = Random.value < 0.5f ? -1f : 1f;
+                    c.Body.WakeUp();
+                    c.Body.AddForce(transform.TransformDirection(new Vector3(side * power, 0.25f, 0f)), ForceMode.VelocityChange);
+                    c.Body.AddTorque(transform.TransformDirection(new Vector3(0f, 0f, -side * power * 2f)), ForceMode.VelocityChange);
+                    c.StuckTime = 0.5f;
+                }
+            }
         }
 
         private void HandleInput()
@@ -278,22 +317,50 @@ namespace ArcadeEmpire.Machines
             Keyboard kb = Keyboard.current;
             if (kb == null) return;
 
-            bool left = kb.aKey.isPressed || kb.qKey.isPressed || kb.leftArrowKey.isPressed;
-            bool right = kb.dKey.isPressed || kb.rightArrowKey.isPressed;
-            aimX = Mathf.Clamp(aimX + ((right ? 1f : 0f) - (left ? 1f : 0f)) * aimSpeed * Time.deltaTime, aimMinX, aimMaxX);
+            if (kb.aKey.wasPressedThisFrame || kb.qKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame) selectedSlot = Mathf.Max(0, selectedSlot - 1);
+            if (kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame) selectedSlot = Mathf.Min(SlotX.Length - 1, selectedSlot + 1);
+            if (kb.digit1Key.wasPressedThisFrame) { InsertAt(0); return; }
+            if (kb.digit2Key.wasPressedThisFrame) { InsertAt(1); return; }
+            if (kb.digit3Key.wasPressedThisFrame) { InsertAt(2); return; }
+            if (kb.digit4Key.wasPressedThisFrame) { InsertAt(3); return; }
 
             bool exit = kb.escapeKey.wasPressedThisFrame || (kb.eKey.wasPressedThisFrame && Time.frameCount != enterFrame);
             if (exit) { Exit(); return; }
 
             if (kb.rKey.wasPressedThisFrame) { CollectWinnings(); return; }
 
-            if (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame)
+            if (kb.spaceKey.wasPressedThisFrame || kb.enterKey.wasPressedThisFrame) InsertAt(selectedSlot);
+        }
+
+        /// <summary>Insère une pièce dans la fente choisie (clavier 1-4, boutons tactiles ou ESPACE sur la fente sélectionnée).</summary>
+        public void InsertAt(int slot)
+        {
+            if (!IsInUse) return;
+            selectedSlot = Mathf.Clamp(slot, 0, SlotX.Length - 1);
+            buttonPress = 0.2f;
+            if (Time.time < nextDropTime) return;
+            if (active.Count + inserting.Count >= maxCoinsOnTray) { StatusText = "Plateau plein : attends que des pièces tombent."; return; }
+            aimX = SlotX[selectedSlot];
+            if (TryStartPlay()) nextDropTime = Time.time + dropCooldown;
+            else StatusText = "Plus de pièces !";
+        }
+
+        private void BuildSlotUi()
+        {
+            var canvas = UiKit.NewCanvas(transform, "PusherSlotsUi", 12);
+            slotUi = canvas.gameObject;
+            var go = new GameObject("Row", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            go.transform.SetParent(slotUi.transform, false);
+            var r = go.GetComponent<RectTransform>();
+            r.anchorMin = r.anchorMax = new Vector2(0.5f, 0f); r.pivot = new Vector2(0.5f, 0f);
+            r.anchoredPosition = new Vector2(Application.isMobilePlatform ? -60f : 0f, 168f); r.sizeDelta = new Vector2(440f, 64f);
+            var h = go.GetComponent<HorizontalLayoutGroup>();
+            h.spacing = 10f; h.childAlignment = TextAnchor.MiddleCenter;
+            h.childControlWidth = true; h.childControlHeight = true; h.childForceExpandWidth = false; h.childForceExpandHeight = false;
+            for (int i = 0; i < SlotX.Length; i++)
             {
-                buttonPress = 0.2f;
-                if (Time.time < nextDropTime) return;
-                if (active.Count + inserting.Count >= maxCoinsOnTray) { StatusText = "Plateau plein : attends que des pièces tombent."; return; }
-                if (TryStartPlay()) nextDropTime = Time.time + dropCooldown;
-                else StatusText = "Plus de pièces !";
+                int slot = i;
+                UiKit.AddIconButton(r, "down", (i + 1).ToString(), 100f, 64f, () => InsertAt(slot));
             }
         }
 
@@ -350,7 +417,7 @@ namespace ArcadeEmpire.Machines
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             coin.transform.SetPositionAndRotation(
-                transform.TransformPoint(Mathf.Clamp(x + Random.Range(-0.03f, 0.03f), aimMinX, aimMaxX), dropY + 0.07f, dropZ),
+                transform.TransformPoint(Mathf.Clamp(x + Random.Range(-0.02f, 0.02f), aimMinX, aimMaxX), dropY + 0.07f, dropZ),
                 transform.rotation * Quaternion.Euler(90f + Random.Range(-4f, 4f), Random.Range(-6f, 6f), Random.Range(-4f, 4f)));
             coin.gameObject.SetActive(true);
             active.Add(coin);
@@ -375,7 +442,7 @@ namespace ArcadeEmpire.Machines
                     var rb = p.coin.Body != null ? p.coin.Body : p.coin.GetComponent<Rigidbody>();
                     rb.isKinematic = false;
                     rb.linearVelocity = Vector3.zero;   // chute verticale, le long de la paroi arrière
-                    rb.angularVelocity = new Vector3(Random.Range(-0.6f, 0.6f), Random.Range(-0.4f, 0.4f), Random.Range(-0.6f, 0.6f));
+                    rb.angularVelocity = new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.1f), Random.Range(-0.6f, 0.6f));
                     inserting.RemoveAt(i);
                 }
             }

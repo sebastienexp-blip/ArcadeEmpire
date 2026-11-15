@@ -128,7 +128,8 @@ namespace ArcadeEmpire.UI
             statusText.resizeTextForBestFit = true; statusText.resizeTextMinSize = 13; statusText.resizeTextMaxSize = 26;
             statusText.rectTransform.offsetMin = new Vector2(10, 2); statusText.rectTransform.offsetMax = new Vector2(-10, -2);
             hintBox = Box(r, "Hint", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(Mobile ? -60 : 0, Mobile ? 96 : 90), new Vector2(Mobile ? 640 : 920, 62), new Color(0.04f, 0.03f, 0.12f, 0.72f)).gameObject;
-            hintText = TextAt(hintBox.transform, "H1", 19, TextAnchor.MiddleCenter, new Vector2(0, -4), new Vector2(900, 28), UiTheme.Text, true);
+            hintText = TextAt(hintBox.transform, "H1", 19, TextAnchor.MiddleCenter, new Vector2(0, -4), new Vector2(Mobile ? 620 : 900, 28), UiTheme.Text, true);
+            hintText.horizontalOverflow = HorizontalWrapMode.Wrap; hintText.resizeTextForBestFit = true; hintText.resizeTextMinSize = 12; hintText.resizeTextMaxSize = 19;
             camHintText = TextAt(hintBox.transform, "H2", 15, TextAnchor.MiddleCenter, new Vector2(0, -32), new Vector2(900, 24), UiTheme.TextDim, true);
             camHintText.text = "Clic droit + glisser : tourner la vue    Molette : zoom    V : changer de vue    Retour arrière : recentrer";
 
@@ -319,7 +320,7 @@ namespace ArcadeEmpire.UI
             if (active)
             {
                 statusText.text = interactor.Active.StatusText;
-                hintText.text = Mobile ? "Flèches : diriger    ACTION : jouer    R : gains    X : quitter" : interactor.Active.ControlsHint;
+                hintText.text = Mobile ? "Flèches : choisir la fente    ACTION : insérer    R : gains    X : quitter" : interactor.Active.ControlsHint;
             }
             else if (near)
             {

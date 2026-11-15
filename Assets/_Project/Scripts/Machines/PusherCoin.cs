@@ -6,6 +6,7 @@ namespace ArcadeEmpire.Machines
     public class PusherCoin : MonoBehaviour
     {
         public bool Collected { get; set; }
+        public float StuckTime { get; set; }
         public CoinPusherMachine Machine { get; set; }
         public Rigidbody Body { get; private set; }
 
