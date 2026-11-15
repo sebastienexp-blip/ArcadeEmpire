@@ -61,6 +61,9 @@ namespace ArcadeEmpire.EditorTools
             B("Wall_L", root, new Vector3(-0.675f, 1.2f, 0.2f), new Vector3(0.05f, 0.6f, 1.5f), glass, true);
             B("Wall_R", root, new Vector3(0.675f, 1.2f, 0.2f), new Vector3(0.05f, 0.6f, 1.5f), glass, true);
             B("Wall_Back", root, new Vector3(0, 1.2655f, 0.975f), new Vector3(1.4f, 0.469f, 0.05f), body, true);   // fente en dessous : la plaque coulisse dessous
+            // --- Caisson arrière : la plaque recule dedans (elle ne dépasse plus de la machine, comme sur les vraies)
+            B("RearHousing", root, new Vector3(0, 1.17f, 1.27f), new Vector3(1.5f, 0.7f, 0.55f), body, false);
+            B("RearHousingTrim", root, new Vector3(0, 1.17f, 1.5475f), new Vector3(1.3f, 0.04f, 0.005f), cyan, false);
             B("Top", root, new Vector3(0, 1.62f, 0.2f), new Vector3(1.5f, 0.25f, 1.6f), body, true);
             B("Marquee", root, new Vector3(0, 1.95f, 0.45f), new Vector3(1.5f, 0.4f, 1.0f), pink, false);
             B("FrontPillar_L", root, new Vector3(-0.7f, 1.2f, -0.55f), new Vector3(0.1f, 0.6f, 0.1f), body, true);
