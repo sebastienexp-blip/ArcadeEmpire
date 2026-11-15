@@ -31,7 +31,7 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float aimMinX = -0.5f;
         [SerializeField] private float aimMaxX = 0.5f;
         [SerializeField] private float dropY = 1.45f;
-        [SerializeField] private float dropZ = 0.2865f;
+        [SerializeField] private float dropZ = 0.27f;
         [SerializeField] private float plateY = 0.965f;
         [SerializeField] private float plateRetractedZ = 0.64f;
         [SerializeField] private float plateExtendedZ = 0.24f;

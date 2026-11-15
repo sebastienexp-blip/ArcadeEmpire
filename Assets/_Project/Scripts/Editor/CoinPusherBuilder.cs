@@ -74,7 +74,7 @@ namespace ArcadeEmpire.EditorTools
 
             // --- Couloir de chute : les pièces tombent debout (sur la tranche) contre la paroi du fond, guidées par une vitre fine (27 mm de large)
             // la vitre s'arrête au-dessus des pièces posées sur la plaque (bord bas à 1,145 m) : une pièce qui quitte les toboggans peut basculer à plat vers l'avant
-            B("ChuteGuide", root, new Vector3(0, 1.3275f, 0.268f), new Vector3(1.3f, 0.365f, 0.01f), glass, true);
+            B("ChuteGuide", root, new Vector3(0, 1.3275f, 0.235f), new Vector3(1.3f, 0.365f, 0.01f), glass, true);
             root.Find("ChuteGuide").GetComponent<Collider>().sharedMaterial = slidePhys;
             root.Find("Hood").GetComponent<Collider>().sharedMaterial = slidePhys;
 
@@ -90,7 +90,7 @@ namespace ArcadeEmpire.EditorTools
                         string nm = "Slide_" + (slat++);
                         float cx = level[k] + side * 0.06f;
                         float cy = level[0] - 0.028f;
-                        B(nm, root, new Vector3(cx, cy, 0.2865f), new Vector3(0.1323f, 0.008f, 0.022f), level[0] > 1.3f ? yellow : (level[0] > 1.2f ? pink : cyan), true);
+                        B(nm, root, new Vector3(cx, cy, 0.27f), new Vector3(0.1323f, 0.008f, 0.052f), level[0] > 1.3f ? yellow : (level[0] > 1.2f ? pink : cyan), true);
                         // côté gauche : monte vers le sommet (+25°) ; côté droit : descend (-25°)
                         root.Find(nm).localRotation = Quaternion.Euler(0f, 0f, -side * 32f);
                         root.Find(nm).GetComponent<Collider>().sharedMaterial = slidePhys;
@@ -128,7 +128,7 @@ namespace ArcadeEmpire.EditorTools
             aim.name = "AimIndicator";
             Object.DestroyImmediate(aim.GetComponent<BoxCollider>());
             aim.transform.SetParent(root, false);
-            aim.transform.localPosition = new Vector3(0, 1.48f, 0.2865f);
+            aim.transform.localPosition = new Vector3(0, 1.48f, 0.27f);
             aim.transform.localScale = new Vector3(0.14f, 0.03f, 0.14f);
             aim.GetComponent<MeshRenderer>().sharedMaterial = yellow;
 
@@ -250,12 +250,12 @@ namespace ArcadeEmpire.EditorTools
 
             // --- Vitre avant (visuelle seulement : les pièces tombent par-dessous), rail d'insertion et fente
             B("Glass_Front", root, new Vector3(0, 1.2f, -0.575f), new Vector3(1.3f, 0.55f, 0.02f), glass, false);
-            B("InsertRail", root, new Vector3(0, 1.49f, 0.2865f), new Vector3(1.1f, 0.02f, 0.12f), body, false);
-            B("InsertSlot", root, new Vector3(0, 1.488f, 0.2865f), new Vector3(1.0f, 0.005f, 0.03f), yellow, false);
+            B("InsertRail", root, new Vector3(0, 1.49f, 0.27f), new Vector3(1.1f, 0.02f, 0.12f), body, false);
+            B("InsertSlot", root, new Vector3(0, 1.488f, 0.27f), new Vector3(1.0f, 0.005f, 0.03f), yellow, false);
             for (int sl = 0; sl < CoinPusherMachine.SlotX.Length; sl++)   // 4 fentes d'insertion repérées
             {
-                B("SlotMark_" + (sl + 1), root, new Vector3(CoinPusherMachine.SlotX[sl], 1.5f, 0.2865f), new Vector3(0.11f, 0.012f, 0.05f), cyan, false);
-                B("SlotMouth_" + (sl + 1), root, new Vector3(CoinPusherMachine.SlotX[sl], 1.502f, 0.2865f), new Vector3(0.07f, 0.014f, 0.016f), pink, false);
+                B("SlotMark_" + (sl + 1), root, new Vector3(CoinPusherMachine.SlotX[sl], 1.5f, 0.27f), new Vector3(0.11f, 0.012f, 0.05f), cyan, false);
+                B("SlotMouth_" + (sl + 1), root, new Vector3(CoinPusherMachine.SlotX[sl], 1.502f, 0.27f), new Vector3(0.07f, 0.014f, 0.016f), pink, false);
             }
 
             // --- Afficheur numérique (canvas monde, face au joueur) et éclairages LED animés
