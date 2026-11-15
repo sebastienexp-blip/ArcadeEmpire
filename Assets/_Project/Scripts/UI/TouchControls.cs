@@ -37,7 +37,7 @@ namespace ArcadeEmpire.UI
             Button(canvas.transform, "icon:right", "<Keyboard>/d", new Vector2(0, 0), new Vector2(250, 105), 84);
 
             // Actions (bas droite)
-            Button(canvas.transform, "ACTION", "<Keyboard>/space", new Vector2(1, 0), new Vector2(-110, 120), 130);
+            Button(canvas.transform, "ACTION", "<Keyboard>/space", new Vector2(1, 0), new Vector2(-110, 105), 130);
             Button(canvas.transform, "E\njouer", "<Keyboard>/e", new Vector2(1, 0), new Vector2(-260, 70), 92);
             Button(canvas.transform, "R\ngains", "<Keyboard>/r", new Vector2(1, 0), new Vector2(-380, 70), 80);
             Button(canvas.transform, "icon:close", "<Keyboard>/escape", new Vector2(1, 0), new Vector2(-260, 180), 80);
@@ -83,7 +83,7 @@ namespace ArcadeEmpire.UI
             var t = new GameObject("Label", typeof(RectTransform), typeof(Text));
             t.transform.SetParent(go.transform, false);
             var tx = t.GetComponent<Text>();
-            tx.font = UiKit.Font; tx.text = label; tx.fontSize = size >= 100 ? 24 : 20; tx.fontStyle = FontStyle.Bold;
+            tx.font = UiKit.Font; tx.text = label; tx.fontSize = size >= 100 ? 24 : 17; tx.fontStyle = FontStyle.Bold;
             tx.alignment = TextAnchor.MiddleCenter; tx.color = UiKit.Light; tx.raycastTarget = false;
             var tr = t.GetComponent<RectTransform>();
             tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one; tr.offsetMin = tr.offsetMax = Vector2.zero;

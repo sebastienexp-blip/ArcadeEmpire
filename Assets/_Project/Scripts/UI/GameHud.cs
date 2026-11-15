@@ -29,6 +29,7 @@ namespace ArcadeEmpire.UI
             private void OnDisable() => down = false;
         }
 
+        private static readonly bool Mobile = Application.isMobilePlatform;
         private MachineInteractor interactor;
         private string toast = "";
         private float toastUntil;
@@ -75,6 +76,7 @@ namespace ArcadeEmpire.UI
         private Canvas canvas;
         private GameObject root, menuButtons, cameraPad, statusBox, promptBox, toastBox, keysBox, hintBox;
         private Text coinsText, ticketsText, tokensText, levelNum, xpText, nameText, statusText, hintText, camHintText, promptText, promptKey, toastText;
+        private RectTransform cameraPadRect;
         private Image xpRing, xpBar, toastIcon;
 
         private void BuildCanvas()
@@ -111,28 +113,32 @@ namespace ArcadeEmpire.UI
             mr.anchorMin = mr.anchorMax = mr.pivot = new Vector2(1, 1); mr.anchoredPosition = new Vector2(-12, -12); mr.sizeDelta = new Vector2(216, 280);
             var v = menuButtons.GetComponent<VerticalLayoutGroup>();
             v.spacing = 8f; v.childControlWidth = true; v.childControlHeight = true; v.childForceExpandWidth = true; v.childForceExpandHeight = false;
-            UiKit.AddIconButton(mr, "bag", "Inventaire", 216f, 56f, () => UIState.Request("inventory"), "I");
-            UiKit.AddIconButton(mr, "shop", "Boutique", 216f, 56f, () => UIState.Request("shop"), "B");
-            UiKit.AddIconButton(mr, "hammer", "Construire", 216f, 56f, () => UIState.Request("build"), "C");
-            UiKit.AddIconButton(mr, "gear", "Options", 216f, 56f, () => UIState.Request("options"), "Échap");
+            UiKit.AddIconButton(mr, "bag", "Inventaire", 216f, 56f, () => UIState.Request("inventory"), Mobile ? null : "I");
+            UiKit.AddIconButton(mr, "shop", "Boutique", 216f, 56f, () => UIState.Request("shop"), Mobile ? null : "B");
+            UiKit.AddIconButton(mr, "hammer", "Construire", 216f, 56f, () => UIState.Request("build"), Mobile ? null : "C");
+            UiKit.AddIconButton(mr, "gear", "Options", 216f, 56f, () => UIState.Request("options"), Mobile ? null : "Échap");
 
             // ---- caméra (milieu droit)
             BuildCameraPad(r);
 
             // ---- bandeau de la machine utilisée (bas)
-            statusBox = Box(r, "Status", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 24), new Vector2(820, 58), UiTheme.Panel).gameObject;
+            statusBox = Box(r, "Status", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(Mobile ? -60 : 0, 24), new Vector2(Mobile ? 640 : 820, Mobile ? 64 : 58), UiTheme.Panel).gameObject;
             statusText = Text(statusBox.transform, "StatusText", 26, TextAnchor.MiddleCenter, Vector2.zero, Vector2.zero, UiTheme.Gold, true);
-            hintBox = Box(r, "Hint", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 90), new Vector2(920, 62), new Color(0.04f, 0.03f, 0.12f, 0.72f)).gameObject;
+            statusText.horizontalOverflow = HorizontalWrapMode.Wrap; statusText.verticalOverflow = VerticalWrapMode.Truncate;
+            statusText.resizeTextForBestFit = true; statusText.resizeTextMinSize = 13; statusText.resizeTextMaxSize = 26;
+            statusText.rectTransform.offsetMin = new Vector2(10, 2); statusText.rectTransform.offsetMax = new Vector2(-10, -2);
+            hintBox = Box(r, "Hint", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(Mobile ? -60 : 0, Mobile ? 96 : 90), new Vector2(Mobile ? 640 : 920, 62), new Color(0.04f, 0.03f, 0.12f, 0.72f)).gameObject;
             hintText = TextAt(hintBox.transform, "H1", 19, TextAnchor.MiddleCenter, new Vector2(0, -4), new Vector2(900, 28), UiTheme.Text, true);
             camHintText = TextAt(hintBox.transform, "H2", 15, TextAnchor.MiddleCenter, new Vector2(0, -32), new Vector2(900, 24), UiTheme.TextDim, true);
             camHintText.text = "Clic droit + glisser : tourner la vue    Molette : zoom    V : changer de vue    Retour arrière : recentrer";
 
             // ---- invite d'interaction (bas)
-            promptBox = Box(r, "Prompt", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(0, 40), new Vector2(720, 64), UiTheme.Panel).gameObject;
+            promptBox = Box(r, "Prompt", new Vector2(0.5f, 0), new Vector2(0.5f, 0), new Vector2(Mobile ? -60 : 0, 40), new Vector2(Mobile ? 620 : 720, 64), UiTheme.Panel).gameObject;
             var keycap = Box(promptBox.transform, "Key", new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(14, 0), new Vector2(44, 44), new Color(0.92f, 0.95f, 1f));
             promptKey = Text(keycap, "K", 26, TextAnchor.MiddleCenter, Vector2.zero, Vector2.zero, new Color(0.1f, 0.12f, 0.25f), true);
             promptKey.text = "E";
-            promptText = TextAt(promptBox.transform, "PromptText", 24, TextAnchor.MiddleLeft, new Vector2(72, -16), new Vector2(630, 34), UiTheme.Gold);
+            promptText = TextAt(promptBox.transform, "PromptText", 24, TextAnchor.MiddleLeft, new Vector2(72, -16), new Vector2(Mobile ? 540 : 630, 34), UiTheme.Gold);
+            promptText.horizontalOverflow = HorizontalWrapMode.Wrap; promptText.resizeTextForBestFit = true; promptText.resizeTextMinSize = 14; promptText.resizeTextMaxSize = 24;
 
             // ---- notification (haut centre)
             toastBox = Box(r, "Toast", new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -112), new Vector2(900, 60), new Color(0.12f, 0.1f, 0.3f, 0.95f)).gameObject;
@@ -163,6 +169,7 @@ namespace ArcadeEmpire.UI
             UiKit.Round(cameraPad, new Color(0.05f, 0.04f, 0.14f, 0.7f));
             var pr = cameraPad.GetComponent<RectTransform>();
             pr.anchorMin = pr.anchorMax = pr.pivot = new Vector2(1, 0.5f); pr.anchoredPosition = new Vector2(-12, -70); pr.sizeDelta = new Vector2(206, 262);
+            cameraPadRect = pr;
             Image(pr, "Cam", UiTheme.Icon("camera"), new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(-70, -16), new Vector2(30, 30), Color.white);
             var title = TextAt(pr, "Title", 16, TextAnchor.MiddleLeft, new Vector2(60, -6), new Vector2(130, 24), UiTheme.TextDim);
             title.text = "CAMÉRA";
@@ -258,7 +265,7 @@ namespace ArcadeEmpire.UI
 
         private Text Pill(Transform r, string icon, int index, Color tint)
         {
-            RectTransform pill = Box(r, "Pill_" + icon, new Vector2(0, 1), new Vector2(0, 1), new Vector2(354f + index * 176f, -12), new Vector2(168, 44), UiTheme.Panel);
+            RectTransform pill = Box(r, "Pill_" + icon, new Vector2(0, 1), new Vector2(0, 1), new Vector2(354f + index * 176f, -12), new Vector2(168, 44), new Color(0.05f, 0.04f, 0.14f, 0.97f));
             Image(pill, "Icon", UiTheme.Icon(icon), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(24, 0), new Vector2(34, 34), Color.white);
             Text t = Text(pill, "Value", 22, TextAnchor.MiddleRight, Vector2.zero, Vector2.zero, tint, true);
             t.rectTransform.offsetMin = new Vector2(44, 0); t.rectTransform.offsetMax = new Vector2(-12, 0);
@@ -298,22 +305,28 @@ namespace ArcadeEmpire.UI
             bool pad = GameSettings.ShowCameraPad;
             menuButtons.SetActive(!active);
             cameraPad.SetActive(pad);
-            keysBox.SetActive(!active && GameSettings.ShowKeyHints);
+            keysBox.SetActive(!Mobile && !active && GameSettings.ShowKeyHints);
+            if (cameraPadRect != null)
+            {
+                cameraPadRect.anchorMin = cameraPadRect.anchorMax = cameraPadRect.pivot = new Vector2(1, 1);
+                cameraPadRect.anchoredPosition = active ? new Vector2(-12, -12) : new Vector2(-12, -276);
+                cameraPadRect.localScale = Vector3.one * (active ? 1f : 0.75f);
+            }
             statusBox.SetActive(active);
             hintBox.SetActive(active);
-            camHintText.gameObject.SetActive(GameSettings.ShowKeyHints);
+            camHintText.gameObject.SetActive(!Mobile && GameSettings.ShowKeyHints);
             promptBox.SetActive(near);
             if (active)
             {
                 statusText.text = interactor.Active.StatusText;
-                hintText.text = interactor.Active.ControlsHint;
+                hintText.text = Mobile ? "Flèches : diriger    ACTION : jouer    R : gains    X : quitter" : interactor.Active.ControlsHint;
             }
             else if (near)
             {
                 var d = interactor.Nearest.Data;
                 bool unlocked = interactor.Nearest.IsUnlocked;
                 promptKey.text = unlocked ? "E" : "×";
-                promptText.text = unlocked ? $"Jouer — {d.displayName}   ({d.costPerPlay} pièces)" : $"{d.displayName} — niveau {d.unlockLevel} requis";
+                promptText.text = unlocked ? $"Jouer — {d.displayName}   ({d.costPerPlay} pièce{(d.costPerPlay > 1 ? "s" : "")})" : $"{d.displayName} — niveau {d.unlockLevel} requis";
             }
             bool showToast = Time.time < toastUntil;
             toastBox.SetActive(showToast);
