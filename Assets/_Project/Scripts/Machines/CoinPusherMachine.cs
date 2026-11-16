@@ -75,8 +75,24 @@ namespace ArcadeEmpire.Machines
         private const float BinDelay = 0.7f;
 
         public int CoinsOnTray => active.Count;
-        public int GainMultiplier => Time.time < doubleUntil ? 2 : 1;
-        private float doubleUntil;
+        public int GainMultiplier => Time.time < tripleUntil ? 3 : (Time.time < doubleUntil ? 2 : 1);
+        private float doubleUntil, tripleUntil, turboUntil;
+        public bool PlateRunning => Time.time < runUntil;
+        public bool TurboActive => Time.time < turboUntil;
+        public float TurboFactor => Time.time < turboUntil ? 1.7f : 1f;
+
+        /// <summary>Les 8 segments de la roue bonus (dans l'ordre du dessin).</summary>
+        public enum Outcome { CoinRain, Gains3, Tickets, Gem, BillRain, Turbo, Jackpot, FreeCoins }
+        private PusherMechanics mech;
+        private Transform[] billTemplates;
+        private bool wheelBusy;
+
+        /// <summary>Mécanismes annexes (vibreur, pousseurs, hélice, voies, roue) et modèles de billets, assignés par le builder.</summary>
+        public void SetupMechanics(PusherMechanics m, Transform[] bills)
+        {
+            mech = m; billTemplates = bills;
+            if (m != null) m.machine = this;
+        }
         public int PendingWinnings => pending;
 
         public void Configure(MachineData machineData, Transform anchor, Rigidbody pusherBody, Transform aim,
@@ -205,7 +221,7 @@ namespace ArcadeEmpire.Machines
             if (credit != lastCredit) { lastCredit = credit; creditText.text = "CRÉDIT\n" + credit; }
             if (inserted != lastInserted) { lastInserted = inserted; insertedText.text = "INSÉRÉES\n" + inserted; }
             int mult = GainMultiplier;
-            if (shown != lastPendingShown || mult != lastMult) { lastPendingShown = shown; lastMult = mult; gainsText.text = (mult > 1 ? "GAINS x2\n" : "GAINS\n") + shown; }
+            if (shown != lastPendingShown || mult != lastMult) { lastPendingShown = shown; lastMult = mult; gainsText.text = (mult > 1 ? "GAINS x" + mult + "\n" : "GAINS\n") + shown; }
         }
 
         private void UpdateLeds()
@@ -242,6 +258,7 @@ namespace ArcadeEmpire.Machines
             runUntil = Mathf.Min(Mathf.Max(runUntil, Time.time) + RunSecondsPerCoin, Time.time + 60f);
             SpawnCoin();
             inserted++;
+            if (inserted % 20 == 0) StartWheel();   // tous les 20 pièces insérées, la roue bonus se lance
             PlayVoice(PusherAudio.Id.Insert, transform.TransformPoint(aimX, dropY, dropZ), 0.55f);
             flash = Mathf.Max(flash, 0.25f);
             EndPlay();   // chaque pièce insérée est une « partie » instantanée
@@ -384,7 +401,7 @@ namespace ArcadeEmpire.Machines
             float dt = Time.fixedDeltaTime;
             float prev = pushPhase;
             bool running = Time.time < runUntil;
-            if (running) pushPhase += dt / pushPeriod;
+            if (running) pushPhase += dt * TurboFactor / pushPeriod;
             else if (Mathf.Repeat(pushPhase - 0.5f, 1f) > 0.0001f)
             {
                 // à l'arrêt, la plaque termine sa course et s'immobilise sortie (ses pièces sont alors devant le capot)
@@ -479,12 +496,21 @@ namespace ArcadeEmpire.Machines
         }
 
         /// <summary>Une pièce est tombée dans le bac : +1 gain à récupérer. La pièce reste visible dans le bac un instant.</summary>
-        public void OnCoinCollected(PusherCoin coin)
+        public void OnCoinCollected(PusherCoin coin) => OnCoinCollected(coin, -1);
+
+        public void OnCoinCollected(PusherCoin coin, int lane)
         {
             if (coin == null || coin.Collected) return;
             coin.Collected = true;
             inBin.Add(new Pending { coin = coin, time = Time.time });
-            pending += GainMultiplier;
+            int gain = GainMultiplier;
+            if (lane >= 0 && mech != null && lane == mech.LitLane)
+            {
+                gain *= 3;   // voie chance éclairée : gains x3
+                StatusText = "VOIE CHANCE x3 !"; bonusMessageUntil = Time.time + 1.2f;
+                flash = 1f;
+            }
+            pending += gain;
             flash = Mathf.Max(flash, 0.7f);
             if (Time.time - lastSfx > 0.07f)
             {
@@ -534,7 +560,11 @@ namespace ArcadeEmpire.Machines
             switch (bonus.kind)
             {
                 case PusherBonus.Kind.CoinRain:
-                    StartCoroutine(CoinRain(16));
+                    runUntil = Mathf.Max(runUntil, Time.time + 12f);
+                    StartCoroutine(CeilingRain(24, 0.09f));
+                    break;
+                case PusherBonus.Kind.Wheel:
+                    StartWheel();
                     break;
                 case PusherBonus.Kind.Cash:
                     pending += bonus.value * GainMultiplier;
@@ -558,19 +588,102 @@ namespace ArcadeEmpire.Machines
         private float bonusMessageUntil;
         private float runUntil;   // la plaque ne bouge que si des pièces ont été insérées récemment
 
-        private System.Collections.IEnumerator CoinRain(int count)
+        // ------------------------------------------------------------------ roue bonus et effets spectaculaires
+        private static readonly int[] WheelWeights = { 18, 14, 14, 6, 16, 12, 4, 16 };
+
+        private void StartWheel()
+        {
+            if (wheelBusy || mech == null) return;
+            wheelBusy = true;
+            int total = 0; foreach (int w in WheelWeights) total += w;
+            int r = Random.Range(0, total), seg = 0;
+            for (; seg < WheelWeights.Length - 1; seg++) { if (r < WheelWeights[seg]) break; r -= WheelWeights[seg]; }
+            StatusText = "ROUE BONUS : ça tourne...";
+            bonusMessageUntil = Time.time + 6f;
+            mech.Show(5f);
+            flash = 1f;
+            PlayVoice(PusherAudio.Id.Payout, transform.TransformPoint(0f, 1.3f, 0.3f), 0.8f);
+            mech.SpinWheel(seg, 4.5f, () => { wheelBusy = false; ApplyOutcome((Outcome)seg); });
+        }
+
+        private void ApplyOutcome(Outcome o)
+        {
+            var cm = CurrencyManager.Instance;
+            string msg;
+            switch (o)
+            {
+                case Outcome.CoinRain: runUntil = Mathf.Max(runUntil, Time.time + 14f); StartCoroutine(CeilingRain(30, 0.08f)); msg = "PLUIE DE PIÈCES !"; break;
+                case Outcome.Gains3: tripleUntil = Time.time + 30f; msg = "GAINS x3 pendant 30 s !"; break;
+                case Outcome.Tickets: if (cm != null) { cm.Add(CurrencyType.Tickets, 40); cm.Add(CurrencyType.Experience, 30); } msg = "+40 TICKETS !"; break;
+                case Outcome.Gem: if (cm != null) { cm.Add(CurrencyType.PremiumTokens, 1); cm.Add(CurrencyType.Experience, 60); } msg = "GEMME PREMIUM !"; break;
+                case Outcome.BillRain: runUntil = Mathf.Max(runUntil, Time.time + 14f); StartCoroutine(BillRain(10)); msg = "PLUIE DE BILLETS !"; break;
+                case Outcome.Turbo: turboUntil = Time.time + 20f; runUntil = Mathf.Max(runUntil, Time.time + 20f); msg = "TURBO : la plaque s'emballe !"; break;
+                case Outcome.Jackpot:
+                    runUntil = Mathf.Max(runUntil, Time.time + 25f); tripleUntil = Time.time + 20f;
+                    StartCoroutine(CeilingRain(50, 0.06f)); StartCoroutine(BillRain(8)); mech.Show(10f);
+                    msg = "JACKPOT !!! Pluie géante + gains x3"; break;
+                default: pending += 20 * GainMultiplier; msg = "+20 PIÈCES OFFERTES !"; break;
+            }
+            StatusText = "ROUE : " + msg;
+            bonusMessageUntil = Time.time + 4.5f;
+            flash = 1f;
+            mech.Show(3f);
+            PlayVoice(PusherAudio.Id.Payout, transform.TransformPoint(0f, 1.2f, 0f), 1f);
+        }
+
+        /// <summary>Pluie de pièces qui tombent du plafond, partout sur le plateau (retournées au hasard).</summary>
+        private System.Collections.IEnumerator CeilingRain(int count, float interval)
         {
             for (int i = 0; i < count; i++)
             {
-                SpawnCoin(Random.Range(aimMinX, aimMaxX));
-                yield return new WaitForSeconds(0.07f);
+                SpawnCeilingCoin();
+                yield return new WaitForSeconds(interval);
             }
+        }
+
+        private void SpawnCeilingCoin()
+        {
+            PusherCoin coin;
+            if (pool.Count > 0) coin = pool.Pop();
+            else { coin = Instantiate(coinTemplate.gameObject, coinRoot).GetComponent<PusherCoin>(); coin.Machine = this; }
+            coin.Collected = false;
+            var rb = coin.GetComponent<Rigidbody>();
+            rb.isKinematic = false;
+            rb.linearVelocity = Vector3.down * 0.5f;
+            rb.angularVelocity = new Vector3(Random.Range(-3f, 3f), Random.Range(-3f, 3f), Random.Range(-3f, 3f));
+            coin.transform.SetPositionAndRotation(
+                transform.TransformPoint(Random.Range(-0.55f, 0.55f), 1.42f, Random.Range(-0.1f, 0.17f)),
+                transform.rotation * Random.rotation);
+            coin.gameObject.SetActive(true);
+            active.Add(coin);
+        }
+
+        private System.Collections.IEnumerator BillRain(int count)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                SpawnBill();
+                yield return new WaitForSeconds(0.2f);
+            }
+        }
+
+        private void SpawnBill()
+        {
+            if (billTemplates == null || billTemplates.Length == 0) return;
+            int k = Random.value < 0.1f ? billTemplates.Length - 1 : Random.Range(0, Mathf.Max(1, billTemplates.Length - 1));
+            var go = Instantiate(billTemplates[k].gameObject, coinRoot);
+            go.transform.SetPositionAndRotation(
+                transform.TransformPoint(Random.Range(-0.5f, 0.5f), 1.42f, Random.Range(-0.1f, 0.17f)),
+                transform.rotation * Quaternion.Euler(Random.Range(-20f, 20f), Random.Range(0f, 360f), Random.Range(-20f, 20f)));
+            go.SetActive(true);
+            var rb = go.GetComponent<Rigidbody>();
+            if (rb != null) rb.angularVelocity = new Vector3(Random.Range(-2f, 2f), Random.Range(-2f, 2f), Random.Range(-2f, 2f));
         }
 
         private void RefreshStatus()
         {
             if (!IsInUse || Time.time < bonusMessageUntil) return;
-            string bonus = GainMultiplier > 1 ? $"   —   GAINS x2 ({Mathf.CeilToInt(doubleUntil - Time.time)} s)" : "";
+            string bonus = GainMultiplier > 1 ? $"   —   GAINS x{GainMultiplier} ({Mathf.CeilToInt(Mathf.Max(doubleUntil, tripleUntil) - Time.time)} s)" : "";
             string run = Time.time < runUntil ? $"plaque en marche : {Mathf.CeilToInt(runUntil - Time.time)} s" : "plaque à l'arrêt : insère une pièce";
             StatusText = $"Gains dans le bac : {pending} (R pour récupérer)   —   {run}{bonus}";
         }

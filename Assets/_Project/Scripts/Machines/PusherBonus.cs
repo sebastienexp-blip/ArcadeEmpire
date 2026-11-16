@@ -5,7 +5,7 @@ namespace ArcadeEmpire.Machines
     /// <summary>Bonus posé sur le plateau : quand il tombe dans le bac, l'effet se déclenche (pluie de pièces, gains doublés, tickets, gemme, faux billet en plastique).</summary>
     public class PusherBonus : MonoBehaviour
     {
-        public enum Kind { CoinRain, DoubleGains, TicketBurst, Gem, Cash }
+        public enum Kind { CoinRain, DoubleGains, TicketBurst, Gem, Cash, Wheel }
 
         public Kind kind;
         /// <summary>Valeur en pièces d'un billet (Kind.Cash).</summary>
@@ -20,6 +20,7 @@ namespace ArcadeEmpire.Machines
                 case Kind.DoubleGains: return "GAINS x2";
                 case Kind.TicketBurst: return "BONUS TICKETS";
                 case Kind.Cash: return "BILLET";
+                case Kind.Wheel: return "ROUE BONUS";
                 default: return "GEMME PREMIUM";
             }
         }
@@ -32,6 +33,7 @@ namespace ArcadeEmpire.Machines
                 case Kind.DoubleGains: return "GAINS x2";
                 case Kind.TicketBurst: return "TICKETS";
                 case Kind.Cash: return "+" + value;
+                case Kind.Wheel: return "ROUE";
                 default: return "GEMME";
             }
         }

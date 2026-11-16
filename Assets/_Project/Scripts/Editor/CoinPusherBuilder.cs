@@ -36,11 +36,11 @@ namespace ArcadeEmpire.EditorTools
             var tokenMat = RoomBuilder.Mat("Pusher_Token", new Color(0.2f, 0.9f, 0.5f), 0.6f);
             var jackpotMat = RoomBuilder.Mat("Pusher_Jackpot", new Color(0.8f, 0.3f, 1f), 0.6f);
 
-            coinPhys = EnsurePhysicsMaterial("Coin_Physics", 0.28f, 0.22f, 0.05f);
-            var platePhys = EnsurePhysicsMaterial("Plate_Physics", 0.2f, 0.14f, 0.04f);
+            coinPhys = EnsurePhysicsMaterial("Coin_Physics", 0.18f, 0.14f, 0.03f);
+            var platePhys = EnsurePhysicsMaterial("Plate_Physics", 0.14f, 0.1f, 0.03f);
             var slidePhys = EnsurePhysicsMaterial("Slide_Physics", 0.03f, 0.03f, 0.02f);   // quasi sans frottement : les pièces ne restent pas collées
             
-            var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.2f, 0.15f, 0.05f);
+            var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.12f, 0.1f, 0.03f);
             coinHull = EnsureCoinHull();
 
             var root = new GameObject("CoinPusher_Classic").transform;
@@ -165,7 +165,9 @@ namespace ArcadeEmpire.EditorTools
                 (new Vector3(0.36f, plateTop + 0.0065f, 0.01f), PusherBonus.Kind.CoinRain, new Color(0.2f, 0.9f, 1f)),
                 (new Vector3(0.0f, plateTop + 0.0065f, 0.115f), PusherBonus.Kind.DoubleGains, new Color(1f, 0.5f, 0.1f)),
                 (new Vector3(-0.12f, plateTop + 0.0065f, 0.01f), PusherBonus.Kind.TicketBurst, new Color(1f, 0.25f, 0.65f)),
-                (new Vector3(0.2f, 0.9055f, -0.3f), PusherBonus.Kind.Gem, new Color(0.35f, 0.7f, 1f)),
+                (new Vector3(0.3f, plateTop + 0.0065f, 0.115f), PusherBonus.Kind.Wheel, new Color(0.7f, 0.3f, 1f)),
+                (new Vector3(-0.27f, plateTop + 0.0065f, 0.0f), PusherBonus.Kind.Wheel, new Color(0.7f, 0.3f, 1f)),
+                (new Vector3(0.27f, 0.9055f, -0.36f), PusherBonus.Kind.Gem, new Color(0.35f, 0.7f, 1f)),
             };
             var prizePlan = new[]
             {
@@ -176,16 +178,16 @@ namespace ArcadeEmpire.EditorTools
                 ("plush_green", new Vector3(0.58f, plateTop + 0.05f, 0.02f), 0.09f),
                 ("capsule_cyan", new Vector3(-0.58f, plateTop + 0.05f, 0.02f), 0.085f),
                 ("mini_toy_pink", new Vector3(0.2f, plateTop + 0.05f, 0.02f), 0.085f),
-                ("plush_pink", new Vector3(-0.25f, 0.96f, -0.28f), 0.1f),
+                ("plush_pink", new Vector3(-0.28f, 0.96f, -0.3f), 0.1f),
                 ("plush_yellow", new Vector3(0.5f, 0.96f, -0.4f), 0.1f),
-                ("figurine_silver", new Vector3(-0.5f, 0.96f, -0.3f), 0.1f),
+                ("figurine_silver", new Vector3(-0.5f, 0.96f, -0.4f), 0.1f),
             };
             var tokenPlan = new[]
             {
-                (new Vector3(-0.3f, 0.9055f, -0.42f), tokenMat, 0.09f, tokenSmall),
-                (new Vector3(0.35f, 0.9055f, -0.2f), tokenMat, 0.09f, tokenSmall),
-                (new Vector3(0.05f, 0.9055f, -0.4f), tokenMat, 0.09f, tokenSmall),
-                (new Vector3(-0.05f, 0.9055f, -0.2f), jackpotMat, 0.1f, tokenJackpot),
+                (new Vector3(-0.45f, 0.9055f, -0.22f), tokenMat, 0.09f, tokenSmall),
+                (new Vector3(0.35f, 0.9055f, -0.22f), tokenMat, 0.09f, tokenSmall),
+                (new Vector3(-0.3f, 0.9055f, -0.46f), tokenMat, 0.09f, tokenSmall),
+                (new Vector3(-0.2f, 0.9055f, -0.2f), jackpotMat, 0.1f, tokenJackpot),
             };
             // faux billets en plastique (épais de 6 mm : le capot les racle comme les pièces) : valeur selon la couleur
             var billPlan = new[]
@@ -193,19 +195,21 @@ namespace ArcadeEmpire.EditorTools
                 (new Vector3(-0.5f, plateTop + 0.0035f, 0.2f), 0, 20), (new Vector3(0.45f, plateTop + 0.0035f, 0.2f), 1, 35),
                 (new Vector3(-0.1f, plateTop + 0.0035f, 0.05f), 2, 50), (new Vector3(0.33f, plateTop + 0.0035f, 0.1f), 0, 20),
                 (new Vector3(-0.35f, plateTop + 0.0035f, 0.03f), 3, 100), (new Vector3(0.05f, plateTop + 0.0035f, 0.2f), 1, 35),
-                (new Vector3(-0.12f, 0.9035f, -0.33f), 0, 20), (new Vector3(0.3f, 0.9035f, -0.45f), 2, 50),
-                (new Vector3(-0.55f, 0.9035f, -0.45f), 1, 35), (new Vector3(0.58f, 0.9035f, -0.26f), 0, 20),
+                (new Vector3(0.3f, 0.9035f, -0.45f), 2, 50), (new Vector3(0.5f, 0.9035f, -0.28f), 0, 20),
             };
             foreach (var b in bonusPlan) reserved.Add(b.Item1);
             foreach (var pz in prizePlan) reserved.Add(pz.Item2);
             foreach (var t in tokenPlan) reserved.Add(t.Item1);
             foreach (var bl in billPlan) reserved.Add(bl.Item1);
+            for (int a = 0; a < 3; a++)   // zone balayée par l'hélice centrale (bras à 30°, 150°, 270°)
+                foreach (float rr in new[] { 0f, 0.05f, 0.1f, 0.15f })
+                    reserved.Add(new Vector3(Mathf.Sin((30f + a * 120f) * Mathf.Deg2Rad) * rr, 0f, -0.40f + Mathf.Cos((30f + a * 120f) * Mathf.Deg2Rad) * rr));
 
             var coinMatLight = RoomBuilder.Mat("Pusher_Coin_Light", new Color(0.82f, 0.52f, 0.3f), 0.8f);
 
             // plateau fixe : gros tas bombé près du bord avant (la plaque sortie occupe l'arrière)
             for (float z = -0.47f; z <= -0.2f; z += 0.066f)
-                for (float x = -0.55f; x <= 0.56f; x += 0.068f)
+                for (float x = -0.5f; x <= 0.5f; x += 0.068f)
                 {
                     float bump = Mathf.Exp(-(x * x) / 0.16f - ((z + 0.3f) * (z + 0.3f)) / 0.05f);
                     int layers = 1 + Mathf.RoundToInt(bump * 6f * (0.6f + 0.4f * (float)rnd.NextDouble()));
@@ -298,26 +302,102 @@ namespace ArcadeEmpire.EditorTools
             machine.Configure(data, anchor, prb, aim.transform, button.transform, template.transform, coins);
             machine.SetupExtras(display, leds);
 
-            // --- Zone de récupération sous le bord avant
-            var zone = new GameObject("Collector");
-            zone.transform.SetParent(root, false);
-            zone.transform.localPosition = new Vector3(0, 0.68f, -0.72f);
-            var bc = zone.AddComponent<BoxCollider>();
-            bc.isTrigger = true;
-            bc.size = new Vector3(1.3f, 0.34f, 0.32f);
-            zone.AddComponent<PusherCollector>().Configure(machine);
+            // --- 5 voies de récupération sous le bord avant (une voie « chance » éclairée à tour de rôle : gains x3)
+            float[] laneX = { -0.52f, -0.26f, 0f, 0.26f, 0.52f };
+            var laneOff = RoomBuilder.Mat("Pusher_LaneOff", new Color(0.08f, 0.3f, 0.4f), 0.4f);
+            var laneLights = new Renderer[laneX.Length];
+            for (int ln = 0; ln < laneX.Length; ln++)
+            {
+                var zone = new GameObject("Collector_" + ln);
+                zone.transform.SetParent(root, false);
+                zone.transform.localPosition = new Vector3(laneX[ln], 0.68f, -0.72f);
+                var bc = zone.AddComponent<BoxCollider>();
+                bc.isTrigger = true;
+                bc.size = new Vector3(0.262f, 0.34f, 0.32f);
+                var col = zone.AddComponent<PusherCollector>();
+                col.Configure(machine);
+                col.lane = ln;
+                var ll = RoomBuilder.Box("LaneLight_" + ln, root, new Vector3(laneX[ln], 0.897f, -0.566f), new Vector3(0.22f, 0.012f, 0.022f), laneOff, false, true);
+                GameObjectUtility.SetStaticEditorFlags(ll, 0);
+                laneLights[ln] = ll.GetComponent<Renderer>();
+                if (ln < laneX.Length - 1) GameObjectUtility.SetStaticEditorFlags(RoomBuilder.Box("LaneDivider_" + ln, root, new Vector3(laneX[ln] + 0.13f, 0.93f, -0.566f), new Vector3(0.012f, 0.07f, 0.022f), body, false, true), 0);
+            }
+
+            // --- Mécanismes annexes (corps cinématiques) : plateau vibrant, pousseurs latéraux, hélice centrale
+            var mech = root.gameObject.AddComponent<PusherMechanics>();
+            var trayT = root.Find("Tray");
+            var trayRb = trayT.gameObject.AddComponent<Rigidbody>(); trayRb.isKinematic = true; trayRb.useGravity = false;
+            GameObjectUtility.SetStaticEditorFlags(trayT.gameObject, 0);
+            mech.tray = trayRb; mech.trayLocal = trayT.localPosition;
+            System.Func<string, Vector3, Rigidbody> paddle = (nm, lp) =>
+            {
+                var pg = RoomBuilder.Box(nm, root, lp, new Vector3(0.07f, 0.05f, 0.16f), pink, true, true);
+                GameObjectUtility.SetStaticEditorFlags(pg, 0);
+                pg.GetComponent<Collider>().sharedMaterial = slidePhys; pg.GetComponent<Collider>().contactOffset = 0.002f;
+                var prb2 = pg.AddComponent<Rigidbody>(); prb2.isKinematic = true; prb2.useGravity = false;
+                return prb2;
+            };
+            mech.paddleLLocal = new Vector3(-0.612f, 0.929f, -0.40f); mech.paddleRLocal = new Vector3(0.612f, 0.929f, -0.40f);
+            mech.paddleL = paddle("Paddle_L", mech.paddleLLocal); mech.paddleR = paddle("Paddle_R", mech.paddleRLocal);
+            var spinGo = new GameObject("Spinner");
+            spinGo.transform.SetParent(root, false);
+            mech.spinnerLocal = new Vector3(0f, 0.919f, -0.40f);
+            spinGo.transform.localPosition = mech.spinnerLocal;
+            var spinRb = spinGo.AddComponent<Rigidbody>(); spinRb.isKinematic = true; spinRb.useGravity = false;
+            var hub = RoomBuilder.Box("Hub", spinGo.transform, Vector3.zero, new Vector3(0.06f, 0.03f, 0.06f), yellow, true, true);
+            GameObjectUtility.SetStaticEditorFlags(hub, 0);
+            for (int a = 0; a < 3; a++)
+            {
+                Quaternion q = Quaternion.Euler(0f, 30f + a * 120f, 0f);
+                var arm = RoomBuilder.Box("Arm_" + a, spinGo.transform, q * new Vector3(0f, 0f, 0.085f), new Vector3(0.016f, 0.03f, 0.17f), pink, true, true);
+                arm.transform.localRotation = q;
+                GameObjectUtility.SetStaticEditorFlags(arm, 0);
+                arm.GetComponent<Collider>().sharedMaterial = slidePhys; arm.GetComponent<Collider>().contactOffset = 0.002f;
+            }
+            mech.spinner = spinRb;
+            mech.laneLights = laneLights; mech.laneOn = yellow; mech.laneOff = laneOff;
+
+            // --- Roue bonus du mur du fond (découpée dans la texture : alpha clipping) + pointeur
+            var wheelQ = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            wheelQ.name = "BonusWheel";
+            Object.DestroyImmediate(wheelQ.GetComponent<Collider>());
+            wheelQ.transform.SetParent(root, false);
+            wheelQ.transform.localPosition = new Vector3(0, 1.265f, 0.298f);
+            wheelQ.transform.localScale = new Vector3(0.38f, 0.38f, 1f);
+            var wheelMat = TexMat("Pusher_Wheel", WheelTexture(), 1.2f);
+            wheelMat.SetFloat("_AlphaClip", 1f); wheelMat.SetFloat("_Cutoff", 0.5f);
+            wheelMat.EnableKeyword("_ALPHATEST_ON");
+            wheelMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
+            wheelQ.GetComponent<MeshRenderer>().sharedMaterial = wheelMat;
+            mech.wheel = wheelQ.transform;
+            var pointer = RoomBuilder.Box("WheelPointer", root, new Vector3(0, 1.472f, 0.296f), new Vector3(0.036f, 0.036f, 0.006f), yellow, false, true);
+            pointer.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+
+            // --- Modèles de billets (désactivés) pour la pluie de billets
+            var billTemplates = new Transform[BillColors.Length];
+            int[] billValues = { 20, 35, 50, 100 };
+            for (int bt = 0; bt < billTemplates.Length; bt++)
+            {
+                var tgo = BillAt(root, "BillTemplate_" + bt, new Vector3(0f, 2.6f, 0f), 0f, bt, billValues[bt]);
+                tgo.SetActive(false);
+                billTemplates[bt] = tgo.transform;
+            }
+            machine.SetupMechanics(mech, billTemplates);
 
             // --- Décor : guirlande chenillard, lumières d'ambiance, liserés lumineux
-            BuildMarquee(root, yellow, RoomBuilder.Mat("Pusher_BulbOff", new Color(0.25f, 0.18f, 0.04f), 0.3f));
+            mech.marquee = BuildMarquee(root, yellow, RoomBuilder.Mat("Pusher_BulbOff", new Color(0.25f, 0.18f, 0.04f), 0.3f));
             B("BaseGlow", root, new Vector3(0, 0.06f, -0.935f), new Vector3(1.44f, 0.02f, 0.012f), cyan, false);
             B("DeckEdgeGlow", root, new Vector3(0, 0.893f, -0.575f), new Vector3(1.3f, 0.012f, 0.012f), pink, false);
+            var ambientList = new List<Light>();
             foreach (var lp in new[] { (-0.45f, new Color(0.2f, 0.9f, 1f)), (0.45f, new Color(1f, 0.25f, 0.7f)) })
             {
                 var lg = new GameObject("AmbientLight").AddComponent<Light>();
                 lg.transform.SetParent(root, false);
                 lg.transform.localPosition = new Vector3(lp.Item1, 1.42f, 0.1f);
                 lg.type = LightType.Point; lg.color = lp.Item2; lg.range = 1.3f; lg.intensity = 2.5f; lg.shadows = LightShadows.None;
+                ambientList.Add(lg);
             }
+            mech.ambient = ambientList.ToArray();
 
             return machine;
         }
@@ -391,9 +471,51 @@ namespace ArcadeEmpire.EditorTools
             return SaveTexture("Pusher_Bill_" + variant, tex);
         }
 
+        /// <summary>Roue bonus : 8 segments (ordre = CoinPusherMachine.Outcome), le segment k occupe l'angle (k+0,5) x 45° à partir de la droite.</summary>
+        static Texture2D WheelTexture()
+        {
+            const int S = 512;
+            Color[] cols =
+            {
+                new Color(1f, 0.8f, 0.2f), new Color(1f, 0.3f, 0.7f), new Color(0.2f, 0.9f, 1f), new Color(0.3f, 0.5f, 1f),
+                new Color(0.3f, 0.9f, 0.4f), new Color(1f, 0.5f, 0.1f), new Color(0.7f, 0.3f, 1f), new Color(0.95f, 0.95f, 1f)
+            };
+            var tex = new Texture2D(S, S, TextureFormat.RGBA32, false);
+            var px = new Color[S * S];
+            for (int y = 0; y < S; y++)
+                for (int x = 0; x < S; x++)
+                {
+                    float dx = x - S * 0.5f + 0.5f, dy = y - S * 0.5f + 0.5f, r = Mathf.Sqrt(dx * dx + dy * dy);
+                    Color col = new Color(0f, 0f, 0f, 0f);
+                    if (r <= 254f)
+                    {
+                        float ang = Mathf.Atan2(dy, dx) * Mathf.Rad2Deg; if (ang < 0f) ang += 360f;
+                        int k = Mathf.Min(7, Mathf.FloorToInt(ang / 45f));
+                        float within = ang - k * 45f;
+                        col = Color.Lerp(cols[k] * 0.75f, cols[k], Mathf.Clamp01(r / 230f));
+                        if (within < 1.6f || within > 43.4f) col = new Color(0.08f, 0.05f, 0.2f);   // séparateurs
+                        if (r > 232f) col = ((Mathf.FloorToInt(ang / 7.5f) % 2) == 0) ? new Color(1f, 0.9f, 0.4f) : new Color(0.15f, 0.08f, 0.3f);   // couronne d'ampoules
+                        if (r < 46f) col = new Color(1f, 0.85f, 0.3f);
+                        if (r < 46f && r > 38f) col = new Color(0.4f, 0.2f, 0.05f);
+                        // k+1 pastilles par segment pour les distinguer
+                        float mid = (k + 0.5f) * 45f * Mathf.Deg2Rad;
+                        for (int d = 0; d <= k; d++)
+                        {
+                            float off = (d - k * 0.5f) * 0.11f;
+                            float cx = Mathf.Cos(mid + off) * 150f, cy = Mathf.Sin(mid + off) * 150f;
+                            if ((dx - cx) * (dx - cx) + (dy - cy) * (dy - cy) < 49f) col = new Color(0.08f, 0.05f, 0.2f);
+                        }
+                        col.a = 1f;
+                    }
+                    px[y * S + x] = col;
+                }
+            tex.SetPixels(px); tex.Apply();
+            return SaveTexture("Pusher_Wheel", tex);
+        }
+
         static readonly Dictionary<int, Material> billMats = new Dictionary<int, Material>();
 
-        static void BillAt(Transform parent, string name, Vector3 pos, float yaw, int variant, int value)
+        static GameObject BillAt(Transform parent, string name, Vector3 pos, float yaw, int variant, int value)
         {
             var go = GameObject.CreatePrimitive(PrimitiveType.Cube);
             go.name = name;
@@ -409,6 +531,7 @@ namespace ArcadeEmpire.EditorTools
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
             rb.sleepThreshold = 0.03f; rb.solverIterations = 12; rb.maxDepenetrationVelocity = 1.2f;
             var pb = go.AddComponent<PusherBonus>(); pb.kind = PusherBonus.Kind.Cash; pb.value = value;
+            return go;
         }
 
         /// <summary>Fresque du mur du fond : dégradé nuit, étoiles, vagues néon, bulles et soleil doré.</summary>
@@ -454,7 +577,7 @@ namespace ArcadeEmpire.EditorTools
         }
 
         /// <summary>Guirlande d'ampoules chenillard autour de l'ouverture.</summary>
-        static void BuildMarquee(Transform root, Material onMat, Material offMat)
+        static PusherMarquee BuildMarquee(Transform root, Material onMat, Material offMat)
         {
             var bulbs = new List<Renderer>();
             var holder = new GameObject("Marquee").transform;
@@ -474,6 +597,7 @@ namespace ArcadeEmpire.EditorTools
             for (float y = 1.43f; y >= 0.99f; y -= 0.073f) { add(new Vector3(-0.7f, y, -0.607f)); add(new Vector3(0.7f, y, -0.607f)); }
             var m = holder.gameObject.AddComponent<PusherMarquee>();
             m.bulbs = bulbs.ToArray(); m.on = onMat; m.off = offMat;
+            return m;
         }
 
         static void BonusAt(Transform parent, string name, Vector3 pos, PusherBonus.Kind kind, Color color)
