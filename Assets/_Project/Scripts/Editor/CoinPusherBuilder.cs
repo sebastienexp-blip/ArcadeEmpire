@@ -201,15 +201,11 @@ namespace ArcadeEmpire.EditorTools
             foreach (var pz in prizePlan) reserved.Add(pz.Item2);
             foreach (var t in tokenPlan) reserved.Add(t.Item1);
             foreach (var bl in billPlan) reserved.Add(bl.Item1);
-            for (int a = 0; a < 3; a++)   // zone balayée par l'hélice centrale (bras à 30°, 150°, 270°)
-                foreach (float rr in new[] { 0f, 0.05f, 0.1f, 0.15f })
-                    reserved.Add(new Vector3(Mathf.Sin((30f + a * 120f) * Mathf.Deg2Rad) * rr, 0f, -0.40f + Mathf.Cos((30f + a * 120f) * Mathf.Deg2Rad) * rr));
-
             var coinMatLight = RoomBuilder.Mat("Pusher_Coin_Light", new Color(0.82f, 0.52f, 0.3f), 0.8f);
 
             // plateau fixe : gros tas bombé près du bord avant (la plaque sortie occupe l'arrière)
             for (float z = -0.47f; z <= -0.2f; z += 0.066f)
-                for (float x = -0.5f; x <= 0.5f; x += 0.068f)
+                for (float x = -0.55f; x <= 0.56f; x += 0.068f)
                 {
                     float bump = Mathf.Exp(-(x * x) / 0.16f - ((z + 0.3f) * (z + 0.3f)) / 0.05f);
                     int layers = 1 + Mathf.RoundToInt(bump * 6f * (0.6f + 0.4f * (float)rnd.NextDouble()));
@@ -323,38 +319,12 @@ namespace ArcadeEmpire.EditorTools
                 if (ln < laneX.Length - 1) GameObjectUtility.SetStaticEditorFlags(RoomBuilder.Box("LaneDivider_" + ln, root, new Vector3(laneX[ln] + 0.13f, 0.93f, -0.566f), new Vector3(0.012f, 0.07f, 0.022f), body, false, true), 0);
             }
 
-            // --- Mécanismes annexes (corps cinématiques) : plateau vibrant, pousseurs latéraux, hélice centrale
+            // --- Plateau fixe vibrant (corps cinématique)
             var mech = root.gameObject.AddComponent<PusherMechanics>();
             var trayT = root.Find("Tray");
             var trayRb = trayT.gameObject.AddComponent<Rigidbody>(); trayRb.isKinematic = true; trayRb.useGravity = false;
             GameObjectUtility.SetStaticEditorFlags(trayT.gameObject, 0);
             mech.tray = trayRb; mech.trayLocal = trayT.localPosition;
-            System.Func<string, Vector3, Rigidbody> paddle = (nm, lp) =>
-            {
-                var pg = RoomBuilder.Box(nm, root, lp, new Vector3(0.07f, 0.05f, 0.16f), pink, true, true);
-                GameObjectUtility.SetStaticEditorFlags(pg, 0);
-                pg.GetComponent<Collider>().sharedMaterial = slidePhys; pg.GetComponent<Collider>().contactOffset = 0.002f;
-                var prb2 = pg.AddComponent<Rigidbody>(); prb2.isKinematic = true; prb2.useGravity = false;
-                return prb2;
-            };
-            mech.paddleLLocal = new Vector3(-0.612f, 0.929f, -0.40f); mech.paddleRLocal = new Vector3(0.612f, 0.929f, -0.40f);
-            mech.paddleL = paddle("Paddle_L", mech.paddleLLocal); mech.paddleR = paddle("Paddle_R", mech.paddleRLocal);
-            var spinGo = new GameObject("Spinner");
-            spinGo.transform.SetParent(root, false);
-            mech.spinnerLocal = new Vector3(0f, 0.919f, -0.40f);
-            spinGo.transform.localPosition = mech.spinnerLocal;
-            var spinRb = spinGo.AddComponent<Rigidbody>(); spinRb.isKinematic = true; spinRb.useGravity = false;
-            var hub = RoomBuilder.Box("Hub", spinGo.transform, Vector3.zero, new Vector3(0.06f, 0.03f, 0.06f), yellow, true, true);
-            GameObjectUtility.SetStaticEditorFlags(hub, 0);
-            for (int a = 0; a < 3; a++)
-            {
-                Quaternion q = Quaternion.Euler(0f, 30f + a * 120f, 0f);
-                var arm = RoomBuilder.Box("Arm_" + a, spinGo.transform, q * new Vector3(0f, 0f, 0.085f), new Vector3(0.016f, 0.03f, 0.17f), pink, true, true);
-                arm.transform.localRotation = q;
-                GameObjectUtility.SetStaticEditorFlags(arm, 0);
-                arm.GetComponent<Collider>().sharedMaterial = slidePhys; arm.GetComponent<Collider>().contactOffset = 0.002f;
-            }
-            mech.spinner = spinRb;
             mech.laneLights = laneLights; mech.laneOn = yellow; mech.laneOff = laneOff;
 
             // --- Roue bonus du mur du fond (découpée dans la texture : alpha clipping) + pointeur
