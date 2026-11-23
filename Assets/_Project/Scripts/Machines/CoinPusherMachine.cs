@@ -75,6 +75,12 @@ namespace ArcadeEmpire.Machines
         private const float BinDelay = 0.7f;
 
         public int CoinsOnTray => active.Count;
+        // --- accès pour le labo automatique (PusherLab)
+        public IReadOnlyList<PusherCoin> ActiveCoins => active;
+        public int TotalCollected { get; private set; }
+        public int InsertedCount => inserted;
+        public float PlateFrontZ => pusher != null ? transform.InverseTransformPoint(pusher.position).z - 0.31f : 0f;
+        public void LabSpinWheel() => StartWheel();
         public int GainMultiplier => Time.time < tripleUntil ? 3 : (Time.time < doubleUntil ? 2 : 1);
         private float doubleUntil, tripleUntil, turboUntil;
         public bool PlateRunning => Time.time < runUntil;
@@ -503,6 +509,7 @@ namespace ArcadeEmpire.Machines
             if (coin == null || coin.Collected) return;
             coin.Collected = true;
             inBin.Add(new Pending { coin = coin, time = Time.time });
+            TotalCollected++;
             int gain = GainMultiplier;
             if (lane >= 0 && mech != null && lane == mech.LitLane)
             {

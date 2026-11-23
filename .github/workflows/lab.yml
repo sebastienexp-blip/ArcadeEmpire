@@ -1,0 +1,44 @@
+# Labo du coin pusher : lance le jeu PC (dernière release) sur un serveur Windows, le laisse jouer seul,
+# et récupère mesures physiques + captures d'écran (artefact « labo »). Se lance à la demande.
+name: Labo coin pusher
+
+on:
+  workflow_dispatch:
+    inputs:
+      seconds:
+        description: "Durée de la phase d'insertion (secondes de jeu)"
+        default: "200"
+
+permissions:
+  contents: read
+
+jobs:
+  lab:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Télécharger le jeu PC
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download pc-derniere -R ${{ github.repository }} -p ArcadeEmpire-Windows.zip
+          Expand-Archive ArcadeEmpire-Windows.zip -DestinationPath game
+          Get-ChildItem game | Select-Object -First 10
+
+      - name: Lancer le labo
+        run: |
+          $out = Join-Path $env:GITHUB_WORKSPACE "lab"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $exe = Join-Path $env:GITHUB_WORKSPACE "game\ArcadeEmpire.exe"
+          $argsList = @("-pusherlab", "-labseconds", "${{ inputs.seconds }}", "-labout", "`"$out`"", "-screen-fullscreen", "0", "-screen-width", "960", "-screen-height", "540", "-logFile", "`"$out\player.log`"")
+          $p = Start-Process -FilePath $exe -ArgumentList $argsList -PassThru
+          if (-not $p.WaitForExit(2100000)) { Write-Host "Délai dépassé"; $p.Kill() }
+          Get-ChildItem $out
+          if (Test-Path "$out\journal.txt") { Get-Content "$out\journal.txt" }
+          else { Get-Content "$out\player.log" -Tail 80 }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: labo
+          path: lab
