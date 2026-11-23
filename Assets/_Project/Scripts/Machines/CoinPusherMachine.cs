@@ -33,7 +33,7 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float dropY = 1.45f;
         [SerializeField] private float dropZ = 0.27f;
         [SerializeField] private float plateY = 0.965f;
-        [SerializeField] private float plateRetractedZ = 0.64f;
+        [SerializeField] private float plateRetractedZ = 0.37f;   // course de 20 cm : la plaque garde un tapis de pièces (comme une vraie)
         [SerializeField] private float plateExtendedZ = 0.17f;
         [Tooltip("Inclinaison de la plaque vers l'avant (degrés) : les pièces tombées dessus glissent vers le plateau inférieur.")]
         [SerializeField] private float plateTilt = 0f;
@@ -41,7 +41,7 @@ namespace ArcadeEmpire.Machines
 
         [Header("Réglages")]
         [SerializeField] private float aimSpeed = 0.6f;
-        [SerializeField] private float pushPeriod = 2.6f;
+        [SerializeField] private float pushPeriod = 2.2f;
         [SerializeField] private float dropCooldown = 0.3f;
         [SerializeField] private int maxCoinsOnTray = 700;
 

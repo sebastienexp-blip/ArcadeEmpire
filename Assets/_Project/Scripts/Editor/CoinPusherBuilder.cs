@@ -27,7 +27,7 @@ namespace ArcadeEmpire.EditorTools
 
             var body = RoomBuilder.Mat("Pusher_Body", new Color(0.09f, 0.08f, 0.13f), 0.5f);
             var tray = RoomBuilder.Mat("Pusher_Tray", new Color(0.08f, 0.45f, 0.58f), 0.3f);
-            var plateMat = RoomBuilder.Mat("Pusher_Plate", new Color(0.8f, 0.82f, 0.9f), 0.7f);
+            var plateMat = RoomBuilder.Mat("Pusher_PlateSteel", new Color(0.2f, 0.22f, 0.32f), 0.93f);   // acier poli sombre
             var pink = RoomBuilder.Neon("Neon_Pink", new Color(1f, 0.1f, 0.6f));
             var cyan = RoomBuilder.Neon("Neon_Cyan", new Color(0.1f, 0.9f, 1f));
             var yellow = RoomBuilder.Neon("Neon_Yellow", new Color(1f, 0.85f, 0.1f));
@@ -118,6 +118,26 @@ namespace ArcadeEmpire.EditorTools
             prear.transform.localPosition = new Vector3(0f, 0f, 0.56f);
             prear.transform.localScale = new Vector3(1.28f, 0.12f, 0.5f);
             prear.GetComponent<MeshRenderer>().sharedMaterial = plateMat;
+            // liserés lumineux : nez de plaque et rainures du dessus (visuels seulement)
+            foreach (var st in new[] { (new Vector3(0f, 0.032f, -0.3115f), new Vector3(1.28f, 0.022f, 0.004f), 0), (new Vector3(0f, -0.022f, -0.3115f), new Vector3(1.28f, 0.01f, 0.004f), 1) })
+            {
+                var s = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                s.name = "PlateNose_" + st.Item3;
+                Object.DestroyImmediate(s.GetComponent<BoxCollider>());
+                s.transform.SetParent(pusherGo.transform, false);
+                s.transform.localPosition = st.Item1; s.transform.localScale = st.Item2;
+                s.GetComponent<MeshRenderer>().sharedMaterial = st.Item3 == 0 ? RoomBuilder.Neon("Neon_Yellow", new Color(1f, 0.85f, 0.2f)) : RoomBuilder.Neon("Neon_Cyan", new Color(0.2f, 0.9f, 1f));
+            }
+            for (int g = 0; g < 6; g++)
+            {
+                var s = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                s.name = "PlateGroove_" + g;
+                Object.DestroyImmediate(s.GetComponent<BoxCollider>());
+                s.transform.SetParent(pusherGo.transform, false);
+                s.transform.localPosition = new Vector3(0f, 0.0598f, -0.27f + g * 0.1f);
+                s.transform.localScale = new Vector3(1.24f, 0.0016f, 0.005f);
+                s.GetComponent<MeshRenderer>().sharedMaterial = RoomBuilder.Neon("Neon_Cyan", new Color(0.2f, 0.9f, 1f));
+            }
 
             // --- Commandes : indicateur de visée (se déplace réellement) et bouton (s'enfonce à chaque pièce)
             var aim = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -225,7 +245,7 @@ namespace ArcadeEmpire.EditorTools
 
             // plaque sortie : rangées bien alignées devant le capot (1 à 2 couches)
             for (int layer = 0; layer < 3; layer++)
-                for (float z = 0.215f; z >= -0.0f; z -= 0.063f)
+                for (float z = 0.262f; z >= -0.11f; z -= 0.062f)
                     for (float x = -0.57f; x <= 0.58f; x += 0.064f)
                     {
                         if (layer >= 1 && rnd.NextDouble() < 0.4) continue;
@@ -257,7 +277,6 @@ namespace ArcadeEmpire.EditorTools
                     else c.GetComponent<Renderer>().enabled = false;
                 }
             }
-            if (ModelLib.Dress(pusherGo.transform, "pusher_plate", pal, 1f, false)) pvis.GetComponent<Renderer>().enabled = false;
             ModelLib.Dress(aim.transform, "pusher_aim", pal);
             ModelLib.Dress(button.transform, "arcade_button", ModelLib.WithButtonColor(pal, new Color(0.1f, 0.9f, 1f)), 0.65f);
 
@@ -322,9 +341,7 @@ namespace ArcadeEmpire.EditorTools
             // --- Plateau fixe vibrant (corps cinématique)
             var mech = root.gameObject.AddComponent<PusherMechanics>();
             var trayT = root.Find("Tray");
-            var trayRb = trayT.gameObject.AddComponent<Rigidbody>(); trayRb.isKinematic = true; trayRb.useGravity = false;
-            GameObjectUtility.SetStaticEditorFlags(trayT.gameObject, 0);
-            mech.tray = trayRb; mech.trayLocal = trayT.localPosition;
+            mech.tray = null; mech.trayLocal = trayT.localPosition;   // pas de vibreur : les vraies machines n'en ont pas, et les pièces peuvent dormir
             mech.laneLights = laneLights; mech.laneOn = yellow; mech.laneOff = laneOff;
 
             // --- Roue bonus du mur du fond (découpée dans la texture : alpha clipping) + pointeur
@@ -332,15 +349,15 @@ namespace ArcadeEmpire.EditorTools
             wheelQ.name = "BonusWheel";
             Object.DestroyImmediate(wheelQ.GetComponent<Collider>());
             wheelQ.transform.SetParent(root, false);
-            wheelQ.transform.localPosition = new Vector3(0, 1.265f, 0.298f);
-            wheelQ.transform.localScale = new Vector3(0.38f, 0.38f, 1f);
+            wheelQ.transform.localPosition = new Vector3(0, 1.235f, 0.298f);
+            wheelQ.transform.localScale = new Vector3(0.34f, 0.34f, 1f);
             var wheelMat = TexMat("Pusher_Wheel", WheelTexture(), 1.2f);
             wheelMat.SetFloat("_AlphaClip", 1f); wheelMat.SetFloat("_Cutoff", 0.5f);
             wheelMat.EnableKeyword("_ALPHATEST_ON");
             wheelMat.renderQueue = (int)UnityEngine.Rendering.RenderQueue.AlphaTest;
             wheelQ.GetComponent<MeshRenderer>().sharedMaterial = wheelMat;
             mech.wheel = wheelQ.transform;
-            var pointer = RoomBuilder.Box("WheelPointer", root, new Vector3(0, 1.472f, 0.296f), new Vector3(0.036f, 0.036f, 0.006f), yellow, false, true);
+            var pointer = RoomBuilder.Box("WheelPointer", root, new Vector3(0, 1.418f, 0.296f), new Vector3(0.032f, 0.032f, 0.006f), yellow, false, true);
             pointer.transform.localRotation = Quaternion.Euler(0f, 0f, 45f);
 
             // --- Modèles de billets (désactivés) pour la pluie de billets

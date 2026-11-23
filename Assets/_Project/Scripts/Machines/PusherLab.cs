@@ -135,7 +135,7 @@ namespace ArcadeEmpire.Machines
             switch (view)
             {
                 case 1: pos = new Vector3(-1.15f, 1.75f, -1.25f); look = new Vector3(0f, 1.0f, -0.05f); break;
-                case 2: pos = new Vector3(0f, 2.35f, -0.3f); look = new Vector3(0f, 0.95f, -0.12f); break;
+                case 2: pos = new Vector3(0f, 1.44f, -0.52f); look = new Vector3(0f, 0.92f, -0.05f); break;
                 case 3: pos = new Vector3(1.55f, 1.3f, -0.05f); look = new Vector3(0f, 1.05f, 0.0f); break;
                 default: pos = new Vector3(0f, 1.62f, -1.45f); look = new Vector3(0f, 1.02f, -0.05f); break;
             }
