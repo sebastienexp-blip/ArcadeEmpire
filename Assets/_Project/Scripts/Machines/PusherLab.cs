@@ -65,7 +65,7 @@ namespace ArcadeEmpire.Machines
 
             if (CurrencyManager.Instance != null) CurrencyManager.Instance.Add(CurrencyType.Coins, 100000);
             Note("Entrée dans la machine : " + machine.Enter());
-            csv.AppendLine("t,inserees,tombees,sur_plateau,c0,c1,c2,c3,c4,c5,c6plus,couche_max,debout,couloir,eveillees");
+            csv.AppendLine("t,inserees,tombees,sur_plateau,c0,c1,c2,c3,c4,c5,c6plus,couche_max,debout,couloir,eveillees,bas_n,bas_z_moy,bas_bord");
             CaptureAll("00_debut");
             Sample(0f);
 
@@ -106,7 +106,7 @@ namespace ArcadeEmpire.Machines
         private void Sample(float t)
         {
             var hist = new int[7];
-            int maxLayer = 0, standing = 0, chute = 0, awake = 0;
+            int maxLayer = 0, standing = 0, chute = 0, awake = 0, deckN = 0; float deckZ = 0f, deckFront = 0f;
             float plateFront = machine.PlateFrontZ;
             foreach (var c in machine.ActiveCoins)
             {
@@ -115,6 +115,7 @@ namespace ArcadeEmpire.Machines
                 Vector3 lp = machine.transform.InverseTransformPoint(c.transform.position);
                 if (lp.y > 1.13f && lp.z > 0.23f && lp.z < 0.31f) { chute++; continue; }
                 bool onPlate = lp.z > plateFront && lp.y > 1.0f;
+                if (!onPlate && lp.y < 0.95f && lp.y > 0.89f) { deckN++; deckZ += lp.z; if (lp.z < -0.45f) deckFront++; }
                 float surface = onPlate ? 1.025f : 0.9f;
                 int layer = Mathf.FloorToInt((lp.y - surface) / 0.0068f);
                 if (layer < 0 || layer > 40) continue;
@@ -123,8 +124,8 @@ namespace ArcadeEmpire.Machines
                 if (Mathf.Abs(Vector3.Dot(c.transform.up, machine.transform.forward)) > 0.6f) standing++;
             }
             csv.AppendLine(string.Join(",", t.ToString("0"), machine.InsertedCount, machine.TotalCollected, machine.CoinsOnTray,
-                hist[0], hist[1], hist[2], hist[3], hist[4], hist[5], hist[6], maxLayer, standing, chute, awake));
-            Note($"t={t:0}s inserees={machine.InsertedCount} tombees={machine.TotalCollected} plateau={machine.CoinsOnTray} couches=[{string.Join(" ", hist)}] max={maxLayer} debout={standing} couloir={chute} eveillees={awake}");
+                hist[0], hist[1], hist[2], hist[3], hist[4], hist[5], hist[6], maxLayer, standing, chute, awake, deckN, deckN > 0 ? (deckZ / deckN).ToString("0.000") : "0", deckFront));
+            Note($"t={t:0}s inserees={machine.InsertedCount} tombees={machine.TotalCollected} plateau={machine.CoinsOnTray} couches=[{string.Join(" ", hist)}] max={maxLayer} debout={standing} couloir={chute} eveillees={awake} bas={deckN} z_moy={(deckN > 0 ? deckZ / deckN : 0f):0.000} bord={deckFront}");
         }
 
         // vues : 0 face (joueur), 1 trois-quarts, 2 dessus, 3 profil

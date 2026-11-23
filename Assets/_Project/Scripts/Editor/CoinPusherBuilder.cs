@@ -37,11 +37,11 @@ namespace ArcadeEmpire.EditorTools
             var tokenMat = RoomBuilder.Mat("Pusher_Token", new Color(0.2f, 0.9f, 0.5f), 0.6f);
             var jackpotMat = RoomBuilder.Mat("Pusher_Jackpot", new Color(0.8f, 0.3f, 1f), 0.6f);
 
-            coinPhys = EnsurePhysicsMaterial("Coin_Physics", 0.18f, 0.14f, 0.03f);
-            var platePhys = EnsurePhysicsMaterial("Plate_Physics", 0.14f, 0.1f, 0.03f);
-            var slidePhys = EnsurePhysicsMaterial("Slide_Physics", 0.03f, 0.03f, 0.02f);   // quasi sans frottement : les pièces ne restent pas collées
+            coinPhys = EnsurePhysicsMaterial("Coin_Physics", 0.42f, 0.36f, 0.03f);   // laiton contre laiton : les pièces s'accrochent et avancent en bloc
+            var platePhys = EnsurePhysicsMaterial("Plate_Physics", 0.09f, 0.07f, 0.03f, PhysicsMaterialCombine.Minimum);
+            var slidePhys = EnsurePhysicsMaterial("Slide_Physics", 0.03f, 0.03f, 0.02f, PhysicsMaterialCombine.Minimum);   // quasi sans frottement : les pièces ne restent pas collées
             
-            var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.12f, 0.1f, 0.03f);
+            var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.07f, 0.055f, 0.03f, PhysicsMaterialCombine.Minimum);   // métal poli : les pièces glissent sur le plateau
             coinHull = EnsureCoinHull();
 
             var root = new GameObject("CoinPusher_Classic").transform;
@@ -712,7 +712,7 @@ namespace ArcadeEmpire.EditorTools
         static PhysicsMaterial coinPhys;
         static Mesh coinHull;
 
-        static PhysicsMaterial EnsurePhysicsMaterial(string name, float staticF, float dynamicF, float bounce)
+        static PhysicsMaterial EnsurePhysicsMaterial(string name, float staticF, float dynamicF, float bounce, PhysicsMaterialCombine combine = PhysicsMaterialCombine.Average)
         {
             string path = MatDir + "/" + name + ".asset";
             var m = AssetDatabase.LoadAssetAtPath<PhysicsMaterial>(path);
@@ -722,7 +722,7 @@ namespace ArcadeEmpire.EditorTools
                 AssetDatabase.CreateAsset(m, path);
             }
             m.staticFriction = staticF; m.dynamicFriction = dynamicF; m.bounciness = bounce;
-            m.frictionCombine = PhysicsMaterialCombine.Average;
+            m.frictionCombine = combine;
             m.bounceCombine = PhysicsMaterialCombine.Average;
             EditorUtility.SetDirty(m);
             return m;
