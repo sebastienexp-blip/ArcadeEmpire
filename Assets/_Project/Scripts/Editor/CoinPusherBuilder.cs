@@ -172,10 +172,16 @@ namespace ArcadeEmpire.EditorTools
             // racle les pièces quand elle recule : elles tombent alors devant elle sur le plateau fixe, et la plaque les pousse vers le bord.
             // Au repos, la plaque est sortie : ses rangées de pièces sont devant le capot.
             float plateTop = 0.965f + 0.06f;
+            // zones réservées (x, z, rayon de l'objet) : aucune pièce ne doit chevaucher un objet spécial
             var reserved = new List<Vector3>();
+            System.Action<Vector3, float> reserve = (pos, r) => reserved.Add(new Vector3(pos.x, r, pos.z));
             System.Func<float, float, bool> isReserved = (px, pz) =>
             {
-                foreach (var r in reserved) if ((r.x - px) * (r.x - px) + (r.z - pz) * (r.z - pz) < 0.0081f) return true;
+                foreach (var r in reserved)
+                {
+                    float lim = r.y + CoinD * 0.5f + 0.004f;
+                    if ((r.x - px) * (r.x - px) + (r.z - pz) * (r.z - pz) < lim * lim) return true;
+                }
                 return false;
             };
 
@@ -183,9 +189,7 @@ namespace ArcadeEmpire.EditorTools
             var bonusPlan = new[]
             {
                 (new Vector3(-0.34f, plateTop + 0.0065f, 0.115f), PusherBonus.Kind.CoinRain, new Color(0.2f, 0.9f, 1f)),
-                (new Vector3(0.36f, plateTop + 0.0065f, 0.01f), PusherBonus.Kind.CoinRain, new Color(0.2f, 0.9f, 1f)),
                 (new Vector3(0.0f, plateTop + 0.0065f, 0.115f), PusherBonus.Kind.DoubleGains, new Color(1f, 0.5f, 0.1f)),
-                (new Vector3(-0.12f, plateTop + 0.0065f, 0.01f), PusherBonus.Kind.TicketBurst, new Color(1f, 0.25f, 0.65f)),
                 (new Vector3(0.3f, plateTop + 0.0065f, 0.115f), PusherBonus.Kind.Wheel, new Color(0.7f, 0.3f, 1f)),
                 (new Vector3(-0.27f, plateTop + 0.0065f, 0.0f), PusherBonus.Kind.Wheel, new Color(0.7f, 0.3f, 1f)),
                 (new Vector3(0.27f, 0.9055f, -0.36f), PusherBonus.Kind.Gem, new Color(0.35f, 0.7f, 1f)),
@@ -195,49 +199,41 @@ namespace ArcadeEmpire.EditorTools
                 ("capsule_purple", new Vector3(-0.46f, plateTop + 0.05f, 0.14f), 0.085f),
                 ("mini_toy_green", new Vector3(0.47f, plateTop + 0.05f, 0.14f), 0.085f),
                 ("figurine_gold", new Vector3(0.18f, plateTop + 0.06f, 0.2f), 0.1f),
-                ("plush_blue", new Vector3(-0.2f, plateTop + 0.05f, 0.2f), 0.09f),
-                ("plush_green", new Vector3(0.58f, plateTop + 0.05f, 0.02f), 0.09f),
-                ("capsule_cyan", new Vector3(-0.58f, plateTop + 0.05f, 0.02f), 0.085f),
-                ("mini_toy_pink", new Vector3(0.2f, plateTop + 0.05f, 0.02f), 0.085f),
                 ("plush_pink", new Vector3(-0.28f, 0.96f, -0.3f), 0.1f),
-                ("plush_yellow", new Vector3(0.5f, 0.96f, -0.4f), 0.1f),
                 ("figurine_silver", new Vector3(-0.5f, 0.96f, -0.4f), 0.1f),
             };
             var tokenPlan = new[]
             {
-                (new Vector3(-0.45f, 0.9055f, -0.22f), tokenMat, 0.09f, tokenSmall),
                 (new Vector3(0.35f, 0.9055f, -0.22f), tokenMat, 0.09f, tokenSmall),
-                (new Vector3(-0.3f, 0.9055f, -0.46f), tokenMat, 0.09f, tokenSmall),
                 (new Vector3(-0.2f, 0.9055f, -0.2f), jackpotMat, 0.1f, tokenJackpot),
             };
             // faux billets en plastique (épais de 6 mm : le capot les racle comme les pièces) : valeur selon la couleur
             var billPlan = new[]
             {
-                (new Vector3(-0.5f, plateTop + 0.0035f, 0.2f), 0, 20), (new Vector3(0.45f, plateTop + 0.0035f, 0.2f), 1, 35),
-                (new Vector3(-0.1f, plateTop + 0.0035f, 0.05f), 2, 50), (new Vector3(0.33f, plateTop + 0.0035f, 0.1f), 0, 20),
-                (new Vector3(-0.35f, plateTop + 0.0035f, 0.03f), 3, 100), (new Vector3(0.05f, plateTop + 0.0035f, 0.2f), 1, 35),
-                (new Vector3(0.3f, 0.9035f, -0.45f), 2, 50), (new Vector3(0.5f, 0.9035f, -0.28f), 0, 20),
+                (new Vector3(-0.1f, plateTop + 0.0035f, 0.05f), 2, 50), (new Vector3(0.2f, plateTop + 0.0035f, 0.0f), 0, 20),
+                (new Vector3(-0.6f + 0.06f, plateTop + 0.0035f, -0.02f), 3, 100),
+                (new Vector3(0.3f, 0.9035f, -0.45f), 2, 50),
             };
-            foreach (var b in bonusPlan) reserved.Add(b.Item1);
-            foreach (var pz in prizePlan) reserved.Add(pz.Item2);
-            foreach (var t in tokenPlan) reserved.Add(t.Item1);
-            foreach (var bl in billPlan) reserved.Add(bl.Item1);
+            foreach (var b in bonusPlan) reserve(b.Item1, 0.0525f);
+            foreach (var pz in prizePlan) reserve(pz.Item2, pz.Item3 * 0.55f);
+            foreach (var t in tokenPlan) reserve(t.Item1, t.Item3 * 0.5f);
+            foreach (var bl in billPlan) reserve(bl.Item1, 0.066f);
             var ballPlan = new[] { new Vector3(-0.05f, plateTop + 0.036f, -0.08f), new Vector3(0.42f, plateTop + 0.036f, -0.08f) };
-            foreach (var bp in ballPlan) reserved.Add(bp);
-            reserved.Add(new Vector3(0.6f, 0f, -0.5f));   // pied de l'ascenseur à balles
+            foreach (var bp in ballPlan) reserve(bp, 0.035f);
+            reserve(new Vector3(0.6f, 0f, -0.5f), 0.045f);   // pied de l'ascenseur à balles
             var coinMatLight = RoomBuilder.Mat("Pusher_Coin_Light", new Color(0.82f, 0.52f, 0.3f), 0.8f);
 
             // plateau fixe : tapis serré (empilement hexagonal) jusqu'au bord, comme une machine en régime normal :
             // la poussée de la plaque se transmet à travers le tapis et fait tomber les pièces du bord.
             int row = 0;
-            for (float z = -0.172f; z >= -0.541f; z -= 0.0537f, row++)
-                for (float x = -0.6f + (row % 2) * 0.031f; x <= 0.6f; x += 0.063f)
+            for (float z = -0.173f; z >= -0.541f; z -= 0.0572f, row++)
+                for (float x = -0.6f + (row % 2) * 0.033f; x <= 0.6f; x += 0.066f)
                     for (int layer = 0; layer < 3; layer++)
                     {
                         if (layer == 1 && rnd.NextDouble() < 0.2) continue;
                         if (layer == 2 && rnd.NextDouble() < 0.65) continue;
-                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.006f, jz = (float)(rnd.NextDouble() - 0.5) * 0.006f;
-                        float ox = layer == 1 ? 0.031f : (layer == 2 ? -0.016f : 0f), oz = layer == 1 ? 0.018f : (layer == 2 ? 0.027f : 0f);
+                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.003f, jz = (float)(rnd.NextDouble() - 0.5) * 0.003f;
+                        float ox = layer == 1 ? 0.033f : (layer == 2 ? -0.016f : 0f), oz = layer == 1 ? 0.019f : (layer == 2 ? 0.029f : 0f);
                         float px = Mathf.Clamp(x + jx + ox, -0.615f, 0.615f), pzz = Mathf.Clamp(z + jz + oz, -0.54f, -0.172f);
                         if (isReserved(px, pzz)) continue;
                         index++;
@@ -250,14 +246,14 @@ namespace ArcadeEmpire.EditorTools
 
             // plaque sortie : rangées bien alignées devant le capot (1 à 2 couches)
             for (int layer = 0; layer < 3; layer++)
-                for (float z = 0.262f; z >= -0.11f; z -= 0.062f)
-                    for (float x = -0.57f; x <= 0.58f; x += 0.064f)
+                for (float z = 0.262f; z >= -0.11f; z -= 0.066f)
+                    for (float x = -0.585f; x <= 0.59f; x += 0.066f)
                     {
                         if (layer >= 1 && rnd.NextDouble() < 0.4) continue;
-                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.008f, jz = (float)(rnd.NextDouble() - 0.5) * 0.008f;
-                        if (isReserved(x + jx, z + jz)) continue;
+                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.003f, jz = (float)(rnd.NextDouble() - 0.5) * 0.003f;
+                        if (isReserved(x + jx + (layer == 1 ? 0.033f : 0f), z + jz)) continue;
                         index++;
-                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.025f : 0f), plateTop + 0.0036f + layer * 0.0072f, z + jz);
+                        Vector3 p = new Vector3(x + jx + (layer == 1 ? 0.033f : 0f), plateTop + 0.0036f + layer * 0.0072f, z + jz);
                         float yaw = (float)(rnd.NextDouble() * 360.0);
                         BuildCoin("Coin_" + index, coins, p, yaw, rnd.NextDouble() < 0.2 ? coinMatLight : coinMat, CoinD, CoinT, null);
                     }
