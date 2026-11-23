@@ -141,6 +141,6 @@ jobs:
           if [ "${{ matrix.name }}" = "android" ]; then T=apk-derniere; F=build/Android/ArcadeEmpire.apk;
           else T=pc-derniere; (cd build/Windows && zip -qr ../../ArcadeEmpire-Windows.zip .); F=ArcadeEmpire-Windows.zip; fi
           # releases fixes (créées une fois) : on remplace seulement le fichier, sans recréer de tag
-          gh release view -R ${{ github.repository }} $T >/dev/null 2>&1 || gh release create -R ${{ github.repository }} $T --verify-tag --prerelease --title "$T" --notes "Build automatique"
+          gh release view -R ${{ github.repository }} $T >/dev/null 2>&1 || gh release create -R ${{ github.repository }} $T --target ${{ github.sha }} --prerelease --title "$T" --notes "Build automatique"
           gh release upload -R ${{ github.repository }} $T "$F" --clobber
           gh release edit -R ${{ github.repository }} $T --title "Arcade Empire 0.1.${GITHUB_RUN_NUMBER} (${{ matrix.name }})" --notes "Build automatique n°${GITHUB_RUN_NUMBER} (commit ${GITHUB_SHA::7})"

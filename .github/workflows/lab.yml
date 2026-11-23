@@ -43,5 +43,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           Compress-Archive -Path lab\* -DestinationPath labo.zip -Force
-          gh release view labo -R ${{ github.repository }} 2>$null; if ($LASTEXITCODE -ne 0) { gh release create labo -R ${{ github.repository }} --verify-tag --prerelease --title "Labo coin pusher" --notes "Résultats du labo automatique" }
+          gh release view labo -R ${{ github.repository }} 2>$null; if ($LASTEXITCODE -ne 0) { gh release create labo -R ${{ github.repository }} --target ${{ github.sha }} --prerelease --title "Labo coin pusher" --notes "Résultats du labo automatique" }
           gh release upload labo labo.zip -R ${{ github.repository }} --clobber
