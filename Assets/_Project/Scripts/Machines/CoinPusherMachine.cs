@@ -33,7 +33,7 @@ namespace ArcadeEmpire.Machines
         [SerializeField] private float dropY = 1.45f;
         [SerializeField] private float dropZ = 0.27f;
         [SerializeField] private float plateY = 0.965f;
-        [SerializeField] private float plateRetractedZ = 0.37f;   // course de 20 cm : la plaque garde un tapis de pièces (comme une vraie)
+        [SerializeField] private float plateRetractedZ = 0.39f;   // course de 20 cm : la plaque garde un tapis de pièces (comme une vraie)
         [SerializeField] private float plateExtendedZ = 0.17f;
         [Tooltip("Inclinaison de la plaque vers l'avant (degrés) : les pièces tombées dessus glissent vers le plateau inférieur.")]
         [SerializeField] private float plateTilt = 0f;
@@ -91,12 +91,17 @@ namespace ArcadeEmpire.Machines
         public enum Outcome { CoinRain, Gains3, Tickets, Gem, BillRain, Turbo, Jackpot, FreeCoins }
         private PusherMechanics mech;
         private Transform[] billTemplates;
-        private bool wheelBusy;
+        private bool wheelBusy, ballWheel;
+        private Transform liftTube;
+        // jackpot progressif : +1 à chaque pièce insérée, gagné en entier sur la case JACKPOT de la roue
+        private const int PotBase = 200;
+        public int JackpotPot { get; private set; } = PotBase;
+        private int lastPotShown = -1;
 
         /// <summary>Mécanismes annexes (vibreur, pousseurs, hélice, voies, roue) et modèles de billets, assignés par le builder.</summary>
-        public void SetupMechanics(PusherMechanics m, Transform[] bills)
+        public void SetupMechanics(PusherMechanics m, Transform[] bills, Transform lift = null)
         {
-            mech = m; billTemplates = bills;
+            mech = m; billTemplates = bills; liftTube = lift;
             if (m != null) m.machine = this;
         }
         public int PendingWinnings => pending;
@@ -225,7 +230,7 @@ namespace ArcadeEmpire.Machines
             int shown = Mathf.RoundToInt(displayedPending);
             long credit = CurrencyManager.Instance != null ? CurrencyManager.Instance.Get(CurrencyType.Coins) : 0;
             if (credit != lastCredit) { lastCredit = credit; creditText.text = "CRÉDIT\n" + credit; }
-            if (inserted != lastInserted) { lastInserted = inserted; insertedText.text = "INSÉRÉES\n" + inserted; }
+            if (JackpotPot != lastPotShown) { lastPotShown = JackpotPot; insertedText.text = "JACKPOT\n" + JackpotPot; }
             int mult = GainMultiplier;
             if (shown != lastPendingShown || mult != lastMult) { lastPendingShown = shown; lastMult = mult; gainsText.text = (mult > 1 ? "GAINS x" + mult + "\n" : "GAINS\n") + shown; }
         }
@@ -264,6 +269,7 @@ namespace ArcadeEmpire.Machines
             runUntil = Mathf.Min(Mathf.Max(runUntil, Time.time) + RunSecondsPerCoin, Time.time + 60f);
             SpawnCoin();
             inserted++;
+            JackpotPot++;
             if (inserted % 20 == 0) StartWheel();   // tous les 20 pièces insérées, la roue bonus se lance
             PlayVoice(PusherAudio.Id.Insert, transform.TransformPoint(aimX, dropY, dropZ), 0.55f);
             flash = Mathf.Max(flash, 0.25f);
@@ -597,20 +603,28 @@ namespace ArcadeEmpire.Machines
 
         // ------------------------------------------------------------------ roue bonus et effets spectaculaires
         private static readonly int[] WheelWeights = { 18, 14, 14, 6, 16, 12, 4, 16 };
+        private static readonly int[] BallWheelWeights = { 15, 14, 10, 10, 15, 10, 16, 10 };   // balle jackpot : bien plus de chances de jackpot
 
-        private void StartWheel()
+        private int queuedBallSpins;
+        private System.Collections.IEnumerator DelayedBallSpin() { yield return new WaitForSeconds(2f); StartWheel(true); }
+
+        private void StartWheel() => StartWheel(false);
+
+        private void StartWheel(bool fromBall)
         {
-            if (wheelBusy || mech == null) return;
+            if (mech == null) return;
+            if (wheelBusy) { if (fromBall) queuedBallSpins++; return; }
             wheelBusy = true;
-            int total = 0; foreach (int w in WheelWeights) total += w;
+            int[] weights = fromBall ? BallWheelWeights : WheelWeights;
+            int total = 0; foreach (int w in weights) total += w;
             int r = Random.Range(0, total), seg = 0;
-            for (; seg < WheelWeights.Length - 1; seg++) { if (r < WheelWeights[seg]) break; r -= WheelWeights[seg]; }
+            for (; seg < weights.Length - 1; seg++) { if (r < weights[seg]) break; r -= weights[seg]; }
             StatusText = "ROUE BONUS : ça tourne...";
             bonusMessageUntil = Time.time + 6f;
             mech.Show(5f);
             flash = 1f;
             PlayVoice(PusherAudio.Id.Payout, transform.TransformPoint(0f, 1.3f, 0.3f), 0.8f);
-            mech.SpinWheel(seg, 4.5f, () => { wheelBusy = false; ApplyOutcome((Outcome)seg); });
+            mech.SpinWheel(seg, 4.5f, () => { wheelBusy = false; ApplyOutcome((Outcome)seg); if (queuedBallSpins > 0) { queuedBallSpins--; StartCoroutine(DelayedBallSpin()); } });
         }
 
         private void ApplyOutcome(Outcome o)
@@ -627,8 +641,11 @@ namespace ArcadeEmpire.Machines
                 case Outcome.Turbo: turboUntil = Time.time + 20f; runUntil = Mathf.Max(runUntil, Time.time + 20f); msg = "TURBO : la plaque s'emballe !"; break;
                 case Outcome.Jackpot:
                     runUntil = Mathf.Max(runUntil, Time.time + 25f); tripleUntil = Time.time + 20f;
-                    StartCoroutine(CeilingRain(50, 0.06f)); StartCoroutine(BillRain(8)); mech.Show(10f);
-                    msg = "JACKPOT !!! Pluie géante + gains x3"; break;
+                    pending += JackpotPot;
+                    msg = $"JACKPOT !!! +{JackpotPot} pièces, pluie géante et gains x3";
+                    JackpotPot = PotBase;
+                    StartCoroutine(CeilingRain(60, 0.05f)); StartCoroutine(BillRain(8)); mech.Show(10f);
+                    break;
                 default: pending += 20 * GainMultiplier; msg = "+20 PIÈCES OFFERTES !"; break;
             }
             StatusText = "ROUE : " + msg;
@@ -636,6 +653,53 @@ namespace ArcadeEmpire.Machines
             flash = 1f;
             mech.Show(3f);
             PlayVoice(PusherAudio.Id.Payout, transform.TransformPoint(0f, 1.2f, 0f), 1f);
+        }
+
+        /// <summary>Une balle jackpot est tombée : ascenseur, roue « spéciale balle », puis la balle retombe sur la plaque.</summary>
+        public void OnBallCollected(PusherBall ball)
+        {
+            if (ball == null || ball.InLift) return;
+            ball.InLift = true;
+            flash = 1f;
+            StatusText = "BALLE JACKPOT !";
+            bonusMessageUntil = Time.time + 3f;
+            if (mech != null) mech.Show(4f);
+            PlayVoice(PusherAudio.Id.Payout, ball.transform.position, 1f, 1.2f);
+            StartCoroutine(BallLift(ball));
+        }
+
+        private System.Collections.IEnumerator BallLift(PusherBall ball)
+        {
+            yield return new WaitForSeconds(0.5f);
+            ball.Body.isKinematic = true;
+            if (ball.Col != null) ball.Col.enabled = false;
+            Vector3 tube = liftTube != null ? transform.InverseTransformPoint(liftTube.position) : new Vector3(0.6f, 1.2f, -0.5f);
+            Vector3[] path =
+            {
+                transform.InverseTransformPoint(ball.transform.position),
+                new Vector3(tube.x, 0.93f, tube.z),
+                new Vector3(tube.x, 1.44f, tube.z),
+                new Vector3(Random.Range(-0.45f, 0.45f), 1.42f, Random.Range(-0.02f, 0.12f)),
+            };
+            float[] durations = { 0.5f, 1.6f, 0.7f };
+            for (int k = 0; k < durations.Length; k++)
+            {
+                float t = 0f;
+                while (t < 1f)
+                {
+                    t += Time.deltaTime / durations[k];
+                    float e = Mathf.SmoothStep(0f, 1f, t);
+                    ball.transform.position = transform.TransformPoint(Vector3.Lerp(path[k], path[k + 1], e));
+                    ball.transform.Rotate(Vector3.right, 540f * Time.deltaTime, Space.Self);
+                    yield return null;
+                }
+                if (k == 1) { StartWheel(true); PlayVoice(PusherAudio.Id.Insert, ball.transform.position, 0.8f, 0.7f); }
+            }
+            if (ball.Col != null) ball.Col.enabled = true;
+            ball.Body.isKinematic = false;
+            ball.Body.linearVelocity = Vector3.down * 0.3f;
+            ball.InLift = false;
+            runUntil = Mathf.Max(runUntil, Time.time + 10f);
         }
 
         /// <summary>Pluie de pièces qui tombent du plafond, partout sur le plateau (retournées au hasard).</summary>

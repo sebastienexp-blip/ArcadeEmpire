@@ -19,6 +19,8 @@ namespace ArcadeEmpire.Machines
             if (machine == null) return;
             PusherCoin coin = other.GetComponentInParent<PusherCoin>();
             if (coin != null) { machine.OnCoinCollected(coin, lane); return; }
+            PusherBall ball = other.GetComponentInParent<PusherBall>();
+            if (ball != null) { machine.OnBallCollected(ball); return; }
             PusherBonus bonus = other.GetComponentInParent<PusherBonus>();
             if (bonus != null) { machine.OnBonusCollected(bonus); return; }
             PrizeItem prize = other.GetComponentInParent<PrizeItem>();

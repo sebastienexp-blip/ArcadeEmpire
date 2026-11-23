@@ -24,6 +24,7 @@ namespace ArcadeEmpire.Machines
     /// <summary>Rend un bonus bien visible : étiquette flottante qui regarde la caméra, légère lévitation du texte et pulsation lumineuse.</summary>
     public class PusherBonusVisual : MonoBehaviour
     {
+        public string customText;
         private Transform label;
         private Material pulse;
         private Color baseEmission;
@@ -50,7 +51,7 @@ namespace ArcadeEmpire.Machines
             var trt = t.GetComponent<RectTransform>(); trt.anchorMin = Vector2.zero; trt.anchorMax = Vector2.one; trt.offsetMin = trt.offsetMax = Vector2.zero;
             var tx = t.GetComponent<Text>();
             tx.font = UiKit.Font; tx.fontSize = 44; tx.fontStyle = FontStyle.Bold; tx.alignment = TextAnchor.MiddleCenter;
-            tx.color = Color.Lerp(c, Color.white, 0.35f); tx.text = PusherBonus.ShortLabel(bonus != null ? bonus.kind : PusherBonus.Kind.Gem, bonus != null ? bonus.value : 0);
+            tx.color = Color.Lerp(c, Color.white, 0.35f); tx.text = !string.IsNullOrEmpty(customText) ? customText : PusherBonus.ShortLabel(bonus != null ? bonus.kind : PusherBonus.Kind.Gem, bonus != null ? bonus.value : 0);
             tx.raycastTarget = false;
             label = go.transform;
             if (rend != null)

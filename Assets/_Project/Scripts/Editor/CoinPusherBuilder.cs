@@ -27,7 +27,8 @@ namespace ArcadeEmpire.EditorTools
 
             var body = RoomBuilder.Mat("Pusher_Body", new Color(0.09f, 0.08f, 0.13f), 0.5f);
             var tray = RoomBuilder.Mat("Pusher_Tray", new Color(0.08f, 0.45f, 0.58f), 0.3f);
-            var plateMat = RoomBuilder.Mat("Pusher_PlateSteel", new Color(0.2f, 0.22f, 0.32f), 0.93f);   // acier poli sombre
+            var plateMat = RoomBuilder.Mat("Pusher_PlateSteel", new Color(0.55f, 0.58f, 0.68f), 0.9f);   // acier poli
+            plateMat.SetFloat("_Metallic", 0.85f);
             var pink = RoomBuilder.Neon("Neon_Pink", new Color(1f, 0.1f, 0.6f));
             var cyan = RoomBuilder.Neon("Neon_Cyan", new Color(0.1f, 0.9f, 1f));
             var yellow = RoomBuilder.Neon("Neon_Yellow", new Color(1f, 0.85f, 0.1f));
@@ -221,27 +222,31 @@ namespace ArcadeEmpire.EditorTools
             foreach (var pz in prizePlan) reserved.Add(pz.Item2);
             foreach (var t in tokenPlan) reserved.Add(t.Item1);
             foreach (var bl in billPlan) reserved.Add(bl.Item1);
+            var ballPlan = new[] { new Vector3(-0.05f, plateTop + 0.036f, -0.08f), new Vector3(0.42f, plateTop + 0.036f, -0.08f) };
+            foreach (var bp in ballPlan) reserved.Add(bp);
+            reserved.Add(new Vector3(0.6f, 0f, -0.5f));   // pied de l'ascenseur à balles
             var coinMatLight = RoomBuilder.Mat("Pusher_Coin_Light", new Color(0.82f, 0.52f, 0.3f), 0.8f);
 
-            // plateau fixe : gros tas bombé près du bord avant (la plaque sortie occupe l'arrière)
-            for (float z = -0.47f; z <= -0.2f; z += 0.066f)
-                for (float x = -0.55f; x <= 0.56f; x += 0.068f)
-                {
-                    float bump = Mathf.Exp(-(x * x) / 0.16f - ((z + 0.3f) * (z + 0.3f)) / 0.05f);
-                    int layers = 1 + Mathf.RoundToInt(bump * 6f * (0.6f + 0.4f * (float)rnd.NextDouble()));
-                    for (int layer = 0; layer < layers; layer++)
+            // plateau fixe : tapis serré (empilement hexagonal) jusqu'au bord, comme une machine en régime normal :
+            // la poussée de la plaque se transmet à travers le tapis et fait tomber les pièces du bord.
+            int row = 0;
+            for (float z = -0.172f; z >= -0.541f; z -= 0.0537f, row++)
+                for (float x = -0.6f + (row % 2) * 0.031f; x <= 0.6f; x += 0.063f)
+                    for (int layer = 0; layer < 3; layer++)
                     {
-                        if (layer > 0 && rnd.NextDouble() < 0.15) continue;
-                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.025f, jz = (float)(rnd.NextDouble() - 0.5) * 0.025f;
-                        if (isReserved(x + jx, z + jz)) continue;
+                        if (layer == 1 && rnd.NextDouble() < 0.2) continue;
+                        if (layer == 2 && rnd.NextDouble() < 0.65) continue;
+                        float jx = (float)(rnd.NextDouble() - 0.5) * 0.006f, jz = (float)(rnd.NextDouble() - 0.5) * 0.006f;
+                        float ox = layer == 1 ? 0.031f : (layer == 2 ? -0.016f : 0f), oz = layer == 1 ? 0.018f : (layer == 2 ? 0.027f : 0f);
+                        float px = Mathf.Clamp(x + jx + ox, -0.615f, 0.615f), pzz = Mathf.Clamp(z + jz + oz, -0.54f, -0.172f);
+                        if (isReserved(px, pzz)) continue;
                         index++;
-                        Vector3 p = new Vector3(x + jx + (layer % 2 == 1 ? 0.022f : 0f), 0.9035f + layer * 0.0072f, z + jz);
+                        Vector3 p = new Vector3(px, 0.9036f + layer * 0.0072f, pzz);
                         float yaw = (float)(rnd.NextDouble() * 360.0);
                         var c = BuildCoin("Coin_" + index, coins, p, yaw, rnd.NextDouble() < 0.2 ? coinMatLight : coinMat, CoinD, CoinT, null);
-                        float lean = layer == 0 ? 0f : 7f;
+                        float lean = layer == 0 ? 0f : 4f;
                         c.transform.localRotation = Quaternion.Euler((float)(rnd.NextDouble() - 0.5) * lean, yaw, (float)(rnd.NextDouble() - 0.5) * lean);
                     }
-                }
 
             // plaque sortie : rangées bien alignées devant le capot (1 à 2 couches)
             for (int layer = 0; layer < 3; layer++)
@@ -261,11 +266,35 @@ namespace ArcadeEmpire.EditorTools
             foreach (var bl in billPlan) BillAt(coins, "Bill_" + (++index), bl.Item1, (float)(rnd.NextDouble() * 360.0), bl.Item2, bl.Item3);
             foreach (var b in bonusPlan) BonusAt(coins, "Bonus_" + b.Item2 + "_" + (++index), b.Item1, b.Item2, b.Item3);
             foreach (var pz in prizePlan) PrizeAt(coins, pz.Item1, pz.Item2, pz.Item3);
+            var ballMat = RoomBuilder.Mat("Pusher_JackpotBall", new Color(1f, 0.72f, 0.12f), 0.96f);
+            for (int bi = 0; bi < ballPlan.Length; bi++)   // balles jackpot (chrome doré)
+            {
+                var ball = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                ball.name = "JackpotBall_" + bi;
+                ball.transform.SetParent(coins, false);
+                ball.transform.localPosition = ballPlan[bi];
+                ball.transform.localScale = Vector3.one * 0.07f;
+                ball.GetComponent<MeshRenderer>().sharedMaterial = ballMat;
+                var sc = ball.GetComponent<SphereCollider>(); sc.sharedMaterial = coinPhys; sc.contactOffset = 0.002f;
+                var brb = ball.AddComponent<Rigidbody>();
+                brb.mass = 0.08f; brb.angularDamping = 0.4f; brb.linearDamping = 0.05f;
+                brb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                brb.solverIterations = 12; brb.maxDepenetrationVelocity = 1.2f;
+                ball.AddComponent<PusherBall>();
+                ball.AddComponent<PusherBonusVisual>().customText = "JACKPOT";
+            }
 
             // --- Habillage détaillé : coque FBX texturée ; les primitives restent comme volumes physiques invisibles
             var pal = ModelLib.Palette(null);
+            // carrosserie laquée (violet profond) et chromes : fini « borne neuve » au lieu du métal brut texturé
+            var cab = ModelLib.Palette(null);
+            var lacquer = RoomBuilder.Mat("Pusher_Lacquer", new Color(0.26f, 0.05f, 0.36f), 0.9f);
+            lacquer.SetFloat("_Metallic", 0.35f);
+            var chrome = RoomBuilder.Mat("Pusher_Chrome", new Color(0.92f, 0.93f, 0.97f), 0.95f);
+            chrome.SetFloat("_Metallic", 1f);
+            cab["Main"] = lacquer; cab["Paint"] = lacquer; cab["Metal"] = chrome;
             ModelLib.Textured(tray, "felt", null, 3f, 0f, 0.15f);
-            var shell = ModelLib.Spawn("pusher_shell", root, pal);
+            var shell = ModelLib.Spawn("pusher_shell", root, cab);
             if (shell != null)
             {
                 var hide = new HashSet<string> { "BaseLower", "Bin_L", "Bin_R", "Bin_Front", "Wall_Back", "Top", "Marquee", "FrontPillar_L", "FrontPillar_R", "Podium", "Deck" };
@@ -369,10 +398,28 @@ namespace ArcadeEmpire.EditorTools
                 tgo.SetActive(false);
                 billTemplates[bt] = tgo.transform;
             }
-            machine.SetupMechanics(mech, billTemplates);
+            // --- Ascenseur à balles : tube en verre dans le coin avant droit (poteau physique : les pièces le contournent)
+            var tubeGo = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            tubeGo.name = "BallLift";
+            tubeGo.transform.SetParent(root, false);
+            tubeGo.transform.localPosition = new Vector3(0.6f, 1.19f, -0.5f);
+            tubeGo.transform.localScale = new Vector3(0.09f, 0.29f, 0.09f);
+            tubeGo.GetComponent<MeshRenderer>().sharedMaterial = glass;
+            GameObjectUtility.SetStaticEditorFlags(tubeGo, 0);
+            foreach (float ry in new[] { 0.905f, 1.19f, 1.475f })
+            {
+                var ring = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                ring.name = "BallLiftRing";
+                Object.DestroyImmediate(ring.GetComponent<Collider>());
+                ring.transform.SetParent(root, false);
+                ring.transform.localPosition = new Vector3(0.6f, ry, -0.5f);
+                ring.transform.localScale = new Vector3(0.1f, 0.006f, 0.1f);
+                ring.GetComponent<MeshRenderer>().sharedMaterial = yellow;
+            }
+            machine.SetupMechanics(mech, billTemplates, tubeGo.transform);
 
             // --- Décor : guirlande chenillard, lumières d'ambiance, liserés lumineux
-            mech.marquee = BuildMarquee(root, yellow, RoomBuilder.Mat("Pusher_BulbOff", new Color(0.25f, 0.18f, 0.04f), 0.3f));
+            mech.marquee = BuildMarquee(root, yellow, RoomBuilder.Mat("Pusher_BulbOff", new Color(0.42f, 0.36f, 0.24f), 0.6f));
             B("BaseGlow", root, new Vector3(0, 0.06f, -0.935f), new Vector3(1.44f, 0.02f, 0.012f), cyan, false);
             B("DeckEdgeGlow", root, new Vector3(0, 0.893f, -0.575f), new Vector3(1.3f, 0.012f, 0.012f), pink, false);
             var ambientList = new List<Light>();
