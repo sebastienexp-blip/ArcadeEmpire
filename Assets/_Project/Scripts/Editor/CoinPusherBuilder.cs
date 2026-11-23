@@ -33,7 +33,7 @@ namespace ArcadeEmpire.EditorTools
             var cyan = RoomBuilder.Neon("Neon_Cyan", new Color(0.1f, 0.9f, 1f));
             var yellow = RoomBuilder.Neon("Neon_Yellow", new Color(1f, 0.85f, 0.1f));
             var glass = ClawGlass();
-            var coinMat = RoomBuilder.Mat("Pusher_Coin", new Color(0.68f, 0.4f, 0.2f), 0.8f);
+            var coinMat = RoomBuilder.Mat("Pusher_Coin", new Color(0.95f, 0.74f, 0.32f), 0.85f);   // médailles laiton doré
             var tokenMat = RoomBuilder.Mat("Pusher_Token", new Color(0.2f, 0.9f, 0.5f), 0.6f);
             var jackpotMat = RoomBuilder.Mat("Pusher_Jackpot", new Color(0.8f, 0.3f, 1f), 0.6f);
 
@@ -221,7 +221,7 @@ namespace ArcadeEmpire.EditorTools
             var ballPlan = new[] { new Vector3(-0.05f, plateTop + 0.036f, -0.08f), new Vector3(0.42f, plateTop + 0.036f, -0.08f) };
             foreach (var bp in ballPlan) reserve(bp, 0.035f);
             reserve(new Vector3(0.6f, 0f, -0.5f), 0.045f);   // pied de l'ascenseur à balles
-            var coinMatLight = RoomBuilder.Mat("Pusher_Coin_Light", new Color(0.82f, 0.52f, 0.3f), 0.8f);
+            var coinMatLight = RoomBuilder.Mat("Pusher_Coin_Light", new Color(0.84f, 0.86f, 0.92f), 0.88f);   // médailles argentées
 
             // plateau fixe : tapis serré (empilement hexagonal) jusqu'au bord, comme une machine en régime normal :
             // la poussée de la plaque se transmet à travers le tapis et fait tomber les pièces du bord.
@@ -415,11 +415,11 @@ namespace ArcadeEmpire.EditorTools
             machine.SetupMechanics(mech, billTemplates, tubeGo.transform);
 
             // --- Décor : guirlande chenillard, lumières d'ambiance, liserés lumineux
-            mech.marquee = BuildMarquee(root, yellow, RoomBuilder.Mat("Pusher_BulbOff", new Color(0.42f, 0.36f, 0.24f), 0.6f));
+            mech.marquee = BuildMarquee(root, yellow, RoomBuilder.Mat("Pusher_BulbOff", new Color(0.75f, 0.7f, 0.6f), 0.7f));
             B("BaseGlow", root, new Vector3(0, 0.06f, -0.935f), new Vector3(1.44f, 0.02f, 0.012f), cyan, false);
             B("DeckEdgeGlow", root, new Vector3(0, 0.893f, -0.575f), new Vector3(1.3f, 0.012f, 0.012f), pink, false);
             var ambientList = new List<Light>();
-            foreach (var lp in new[] { (-0.45f, new Color(0.2f, 0.9f, 1f)), (0.45f, new Color(1f, 0.25f, 0.7f)) })
+            foreach (var lp in new[] { (-0.45f, new Color(1f, 0.9f, 0.78f)), (0.45f, new Color(0.9f, 0.92f, 1f)) })   // éclairage blanc chaud : les pièces gardent leur vraie couleur
             {
                 var lg = new GameObject("AmbientLight").AddComponent<Light>();
                 lg.transform.SetParent(root, false);

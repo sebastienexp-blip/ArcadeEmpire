@@ -70,7 +70,7 @@ namespace ArcadeEmpire.Machines
             Sample(0f);
 
             float t0 = Time.time, nextIns = 0f, nextSample = 5f;
-            bool seqDone = false, wheelDone = false, midDone = false;
+            bool seqDone = false, wheelDone = false, midDone = false, ballDone = false;
             int slot = 0;
             while (Time.time - t0 < seconds)
             {
@@ -92,6 +92,20 @@ namespace ArcadeEmpire.Machines
                     yield return new WaitForSeconds(2.6f); Capture("roue_3_resultat", 0);
                     Note("Roue : " + machine.StatusText);
                     yield return new WaitForSeconds(1.5f); Capture("roue_4_effet", 1);
+                }
+                if (!ballDone && t > seconds * 0.82f)
+                {
+                    ballDone = true;
+                    var ball = FindAnyObjectByType<PusherBall>();
+                    if (ball != null)
+                    {
+                        machine.OnBallCollected(ball);
+                        yield return new WaitForSeconds(1.3f); Capture("balle_1_ascenseur", 1);
+                        yield return new WaitForSeconds(0.8f); Capture("balle_2_haut", 0);
+                        yield return new WaitForSeconds(4.6f); Capture("balle_3_roue", 0);
+                        Note("Balle jackpot : " + machine.StatusText);
+                    }
+                    else Note("Pas de balle jackpot trouvée");
                 }
                 yield return null;
             }
