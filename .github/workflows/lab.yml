@@ -10,7 +10,7 @@ on:
         default: "200"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   lab:
@@ -37,8 +37,11 @@ jobs:
           if (Test-Path "$out\journal.txt") { Get-Content "$out\journal.txt" }
           else { Get-Content "$out\player.log" -Tail 80 }
 
-      - uses: actions/upload-artifact@v4
+      - name: Publier les résultats (release « labo »)
         if: always()
-        with:
-          name: labo
-          path: lab
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          Compress-Archive -Path lab\* -DestinationPath labo.zip -Force
+          gh release delete labo -R ${{ github.repository }} -y --cleanup-tag 2>$null
+          gh release create labo labo.zip -R ${{ github.repository }} --title "Labo coin pusher" --notes "Résultats du labo automatique" --prerelease --target ${{ github.sha }}
