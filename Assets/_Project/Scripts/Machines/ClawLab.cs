@@ -19,6 +19,7 @@ namespace ArcadeEmpire.Machines
         private Camera cam;
         private RenderTexture rt;
         private readonly StringBuilder log = new StringBuilder();
+        private readonly Dictionary<PrizeItem, int> tries = new Dictionary<PrizeItem, int>();
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Init()
@@ -73,6 +74,7 @@ namespace ArcadeEmpire.Machines
 
                 PrizeItem target = PickTarget();
                 if (target == null) { Note("Plus de lots"); break; }
+                tries[target] = (tries.TryGetValue(target, out int nt) ? nt : 0) + 1;
                 string targetName = target.name + " (" + (target.reward != null ? target.reward.displayName : "?") + ")";
                 Vector3 tl = machine.transform.InverseTransformPoint(target.transform.position);
                 Vector2 aimError = Random.insideUnitCircle * 0.04f;   // visée humaine : jusqu'à 4 cm d'erreur
@@ -129,7 +131,8 @@ namespace ArcadeEmpire.Machines
             {
                 Vector3 l = machine.transform.InverseTransformPoint(p.transform.position);
                 if (l.x < machine.PlayMin.x - 0.02f || l.x > machine.PlayMax.x + 0.02f || l.z < machine.PlayMin.y - 0.02f || l.z > machine.PlayMax.y + 0.02f) continue;
-                float score = l.y * 3f - Vector2.Distance(new Vector2(l.x, l.z), machine.ChuteXZ) * 0.5f + Random.Range(0f, 0.15f);
+                tries.TryGetValue(p, out int n);
+                float score = l.y * 3f - Vector2.Distance(new Vector2(l.x, l.z), machine.ChuteXZ) * 0.5f + Random.Range(0f, 0.15f) - n * 0.35f;
                 if (score > bestScore) { bestScore = score; best = p; }
             }
             return best;
