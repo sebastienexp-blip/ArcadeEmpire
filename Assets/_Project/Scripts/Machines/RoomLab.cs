@@ -138,7 +138,9 @@ namespace ArcadeEmpire.Machines
         private IEnumerator Shot(string name, System.Text.StringBuilder log)
         {
             yield return new WaitForEndOfFrame();
-            var tex = ScreenCapture.CaptureScreenshotAsTexture();
+            RenderTexture.active = null;
+            var tex = new Texture2D(Screen.width, Screen.height, TextureFormat.RGB24, false);
+            tex.ReadPixels(new Rect(0, 0, Screen.width, Screen.height), 0, 0); tex.Apply();
             File.WriteAllBytes(Path.Combine(outDir, name + ".png"), tex.EncodeToPNG());
             log.AppendLine($"capture {name} ({tex.width}x{tex.height})");
             Destroy(tex);
