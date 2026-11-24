@@ -461,6 +461,7 @@ namespace ArcadeEmpire.Machines
             StatusText = lostMessage;
             PlayLocal(ClawAudio.Id.Slip, 0.6f);
             PlayLocal(ClawAudio.Id.Fail, 0.4f);
+            StartCoroutine(AnimateClaw(closedAngle, 0.2f));   // plus rien entre les branches : elles se referment
         }
 
         // force de serrage : pleine à la prise, réduite une fois en haut (réglage « strength at top » des vraies machines)
@@ -527,10 +528,10 @@ namespace ArcadeEmpire.Machines
             StatusText = "Prise…";
             PlayLocal(ClawAudio.Id.Grip, 0.6f);
             // les branches se referment AUTOUR du lot (elles s'arrêtent sur lui) ; à vide elles se ferment complètement
-            bool somethingInside = PeekPrize() != null;
-            yield return AnimateClaw(somethingInside ? Mathf.Lerp(closedAngle, openAngle, 0.38f) : closedAngle, 0.7f);
+            yield return CloseUntilContact(0.75f);
+            yield return new WaitForFixedUpdate();
             TryGrab();
-            if (held == null && somethingInside) yield return AnimateClaw(closedAngle, 0.25f);   // la prise a raté : les branches glissent
+            if (held == null && clawAngle > closedAngle + 0.5f) yield return AnimateClaw(closedAngle, 0.25f);   // la prise a raté : les branches glissent et se referment
             if (held != null)   // décollage lent du tas (la pince force à pleine puissance), puis montée normale
                 yield return MoveHeadTo(new Vector3(headLocal.x, Mathf.Min(raisedY, headLocal.y + 0.06f), headLocal.z), verticalSpeed * 0.35f);
 
@@ -594,20 +595,81 @@ namespace ArcadeEmpire.Machines
             clawAngle = targetAngle;
         }
 
+        // ------------------------------------------------------------------ prise réaliste
+        // Une vraie pince ne soulève un lot que si ses branches l'ENSERRENT : au moins deux branches en contact avec lui,
+        // son centre de gravité à l'intérieur du cercle des branches, et les pointes passées SOUS son centre (elles le portent).
+        // Toucher le bord, le dessus ou seulement le frôler avec le bout d'une branche ne suffit jamais.
+
+        private Collider[] prongCols;
+
+        private Collider ProngCollider(int i)
+        {
+            if (prongCols == null || prongCols.Length != prongs.Length)
+            {
+                prongCols = new Collider[prongs.Length];
+                for (int k = 0; k < prongs.Length; k++) { var t = prongs[k].Find("Prong"); prongCols[k] = t != null ? t.GetComponent<Collider>() : null; }
+            }
+            return prongCols[i];
+        }
+
+        private Vector3 ProngTip(int i) => prongs[i].TransformPoint(0f, -0.2f, 0f);
+
+        /// <summary>Distance de la branche i au lot (0 = elle le touche ou s'y enfonce).</summary>
+        private float ProngGap(int i, PrizeItem p)
+        {
+            var pc = ProngCollider(i);
+            float best = float.MaxValue;
+            foreach (var c in p.GetComponentsInChildren<Collider>())
+            {
+                if (pc != null && Physics.ComputePenetration(pc, pc.transform.position, pc.transform.rotation, c, c.transform.position, c.transform.rotation, out _, out _)) return 0f;
+                // segment de la branche : du milieu à la pointe
+                Vector3 a = prongs[i].TransformPoint(0f, -0.1f, 0f), b = ProngTip(i);
+                for (int k = 0; k <= 4; k++)
+                {
+                    Vector3 q = Vector3.Lerp(a, b, k / 4f);
+                    best = Mathf.Min(best, Vector3.Distance(q, c.ClosestPoint(q)));
+                }
+            }
+            return best;
+        }
+
+        /// <summary>Lots touchés par les branches (pas par le câble ni le boîtier).</summary>
+        private PrizeItem ProngTouching(out int count)
+        {
+            count = 0;
+            PrizeItem best = null; int bestN = 0;
+            var seen = new System.Collections.Generic.HashSet<PrizeItem>();
+            foreach (Collider c in Physics.OverlapSphere(holdPoint.position, 0.2f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                PrizeItem p = c.GetComponentInParent<PrizeItem>();
+                if (p == null || !p.IsFree || !seen.Add(p)) continue;
+                int n = 0;
+                for (int i = 0; i < prongs.Length; i++) if (ProngGap(i, p) < 0.006f) n++;
+                if (n > bestN) { bestN = n; best = p; }
+            }
+            count = bestN;
+            return best;
+        }
+
+        /// <summary>Les branches se referment jusqu'à rencontrer un lot (elles s'arrêtent dessus, comme les vraies), sinon complètement.</summary>
+        private IEnumerator CloseUntilContact(float duration)
+        {
+            float start = clawAngle, t = 0f;
+            while (t < duration)
+            {
+                t += Time.deltaTime;
+                clawAngle = Mathf.Lerp(start, closedAngle, Mathf.SmoothStep(0f, 1f, t / duration));
+                yield return null;
+                ProngTouching(out int n);
+                if (n >= 2) { clawAngle -= 3f; yield break; }   // dernier petit serrage contre le lot
+            }
+            clawAngle = closedAngle;
+        }
+
         private void TryGrab()
         {
             Vector3 axis = holdPoint.position;
-            Collider[] hits = Physics.OverlapSphere(axis, 0.12f, ~0, QueryTriggerInteraction.Ignore);
-            PrizeItem best = null;
-            float bestDist = float.MaxValue;
-            foreach (Collider c in hits)
-            {
-                PrizeItem p = c.GetComponentInParent<PrizeItem>();
-                if (p == null || !p.IsFree) continue;
-                Vector3 d = p.transform.TransformPoint(PrizeCenter(p)) - axis; d.y = 0f;
-                if (d.sqrMagnitude < bestDist) { bestDist = d.sqrMagnitude; best = p; }
-            }
-
+            PrizeItem best = ProngTouching(out int contacts);
             if (best == null)
             {
                 lostMessage = "Les branches se sont refermées dans le vide…";
@@ -615,29 +677,67 @@ namespace ArcadeEmpire.Machines
                 return;
             }
 
-            // qualité de la prise : centrage par rapport à la taille du lot, masse, matière, force de la pince
-            float radius = PrizeRadius(best);
-            float centering = 1f - Mathf.Clamp01(Mathf.Sqrt(bestDist) / (radius + 0.025f));
-            float mass = best.Body != null ? best.Body.mass : 0.15f;
-            float massFactor = Mathf.Clamp(0.17f / mass, 0.55f, 1.3f);
-            float quality = centering * (0.6f + 0.4f * massFactor) * Slipperiness(best.reward) * EffectiveGrip * Random.Range(0.85f, 1.15f);
+            Vector3 com = best.Body != null ? best.Body.worldCenterOfMass : best.transform.TransformPoint(PrizeCenter(best));
+            Bounds pb = PrizeBounds(best);
+            float halfH = Mathf.Max(0.02f, pb.extents.y);
 
-            if (quality < 0.16f)
+            // cercle formé par les pointes et position des pointes par rapport au centre de gravité
+            float tipR = 0f; int under = 0; float wrap = 0f;
+            for (int i = 0; i < prongs.Length; i++)
             {
-                lostMessage = centering < 0.3f ? "Raté : les branches n'ont pris que le bord du lot !" : "Raté, le lot est trop lourd ou trop glissant !";
-                StatusText = lostMessage;
+                Vector3 tip = ProngTip(i);
+                Vector3 h = tip - axis; h.y = 0f; tipR += h.magnitude / prongs.Length;
+                if (ProngGap(i, best) < 0.012f)
+                {
+                    float below = (com.y - tip.y) / halfH;   // > 0 : la pointe est passée sous le centre
+                    if (below > 0.05f) under++;
+                    wrap += Mathf.Clamp01(below) / prongs.Length;
+                }
+            }
+            Vector3 dc = com - axis; dc.y = 0f;
+            float off = dc.magnitude;
+            float reach = Mathf.Max(0.03f, tipR + 0.02f);
+
+            string fail = null;
+            if (contacts < 2) fail = "Une seule branche a touché le lot : il a glissé !";
+            else if (off > reach * 0.85f) fail = "Raté : les branches n'ont pris que le bord du lot !";
+            else if (under < 2) fail = "Les branches ont serré le dessus du lot sans passer dessous…";
+            if (fail != null)
+            {
+                lostMessage = fail; StatusText = fail;
                 PlayLocal(ClawAudio.Id.Slip, 0.5f);
+                // le lot bouge un peu sous les branches (on l'a quand même touché)
+                if (best.Body != null) best.Body.AddForce((dc.sqrMagnitude > 1e-6f ? dc.normalized : Vector3.forward) * 0.25f + Vector3.up * 0.4f, ForceMode.VelocityChange);
                 return;
             }
 
+            // qualité : centrage, profondeur sous le lot, 3 branches mieux que 2, masse, matière, force de la pince
+            float centering = 1f - Mathf.Clamp01(off / reach);
+            float mass = best.Body != null ? best.Body.mass : 0.15f;
+            float massFactor = Mathf.Clamp(0.17f / mass, 0.55f, 1.3f);
+            float quality = (0.35f + 0.65f * centering) * (0.45f + 0.55f * Mathf.Clamp01(wrap * 1.6f)) * (contacts >= 3 ? 1f : 0.78f)
+                            * (0.6f + 0.4f * massFactor) * Slipperiness(best.reward) * EffectiveGrip * Random.Range(0.88f, 1.12f);
+
             float weight = mass * Physics.gravity.magnitude;
-            gripForce = weight * (2.5f + 6f * quality) * EffectiveGrip;     // force à la prise (pleine puissance)
-            holdForce = weight * (0.85f + 2.2f * quality) * EffectiveGrip * Random.Range(0.8f, 1.15f);   // force une fois en haut (varie d'une partie à l'autre)
-            best.AttachJoint(head, axis, gripForce, clawColliders);
+            gripForce = weight * (2.5f + 6f * quality) * EffectiveGrip;
+            holdForce = weight * (0.85f + 2.2f * quality) * EffectiveGrip * Random.Range(0.8f, 1.15f);
+            // le lot est tenu par son centre de gravité et ramené dans l'axe de la pince (les branches le centrent en serrant)
+            Vector3 hold = new Vector3(axis.x, Mathf.Min(com.y, axis.y), axis.z);
+            best.AttachJoint(head, com, gripForce, clawColliders, hold);
             held = best;
             LabGrabs++;
             PlayLocal(ClawAudio.Id.Grip, 0.5f, 1.2f);
-            StatusText = "Attrapé !";
+            StatusText = contacts >= 3 ? "Attrapé à pleines branches !" : "Attrapé !";
+        }
+
+        private static Bounds PrizeBounds(PrizeItem p)
+        {
+            var b = new Bounds(p.transform.position, Vector3.zero); bool any = false;
+            foreach (var c in p.GetComponentsInChildren<Collider>())
+            {
+                if (!any) { b = c.bounds; any = true; } else b.Encapsulate(c.bounds);
+            }
+            return b;
         }
 
         private static Vector3 PrizeCenter(PrizeItem p)
@@ -685,10 +785,16 @@ namespace ArcadeEmpire.Machines
             winsThisSession++;
             flash = 1f;
             PlayLocal(ClawAudio.Id.Fanfare, 0.7f);
+            Vector3 chuteWorld = transform.TransformPoint(chuteXZ.x, 0.9f, chuteXZ.y);
+            ArcadeEmpire.Core.Fx.Confetti(chuteWorld + Vector3.up * 0.4f);
+            ArcadeEmpire.Core.Fx.Sparkle(chuteWorld, UiCardsColor(prize.reward.rarity), 40);
+            ArcadeEmpire.UI.FloatingText.Show(chuteWorld + Vector3.up * 0.8f, $"{prize.reward.displayName}  +{prize.reward.ticketValue} tickets", UiCardsColor(prize.reward.rarity), 30);
             PlayClip(PusherAudio.Get(PusherAudio.Id.Collect), transform.TransformPoint(chuteXZ.x, 0.4f, chuteXZ.y), 0.6f);
             StatusText = $"GAGNÉ : {prize.reward.displayName} ({RarityName(prize.reward.rarity)}) !   +{prize.reward.ticketValue} tickets";
             Destroy(prize.gameObject, 0.7f);
         }
+
+        private static Color UiCardsColor(Rarity r) => ArcadeEmpire.UI.UiCards.RarityColor(r) * 1.2f;
 
         public static string RarityName(Rarity r)
         {

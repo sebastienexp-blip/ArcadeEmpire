@@ -32,7 +32,17 @@ namespace ArcadeEmpire.Building
                 case Kind.Inventory: UIState.Request("inventory"); break;
                 case Kind.GoHome:
                 case Kind.GoArcade:
-                    if (player != null && destination != null) player.TeleportTo(destination.position, destination.rotation);
+                    if (player != null && destination != null)
+                    {
+                        Color c = kind == Kind.GoHome ? new Color(0.5f, 0.75f, 1f) : new Color(1f, 0.5f, 0.8f);
+                        ArcadeEmpire.Core.Fx.TeleportBurst(player.transform.position, c);
+                        Transform dst = destination;
+                        ScreenFader.Instance.FadeThrough(() =>
+                        {
+                            player.TeleportTo(dst.position, dst.rotation);
+                            ArcadeEmpire.Core.Fx.TeleportBurst(dst.position, c);
+                        });
+                    }
                     break;
             }
         }

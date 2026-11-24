@@ -38,7 +38,10 @@ namespace ArcadeEmpire.Machines
         /// collisions avec les autres lots ; la liaison casse si l'effort dépasse la force de serrage (lot mal centré, secousses,
         /// arrachement du tas, pince affaiblie en haut) — exactement comme une vraie pince qui laisse glisser.
         /// </summary>
-        public void AttachJoint(Rigidbody headBody, Vector3 worldAnchor, float breakForce, Collider[] clawColliders)
+        public void AttachJoint(Rigidbody headBody, Vector3 worldAnchor, float breakForce, Collider[] clawColliders) => AttachJoint(headBody, worldAnchor, breakForce, clawColliders, worldAnchor);
+
+        /// <summary>Tenu par worldAnchor (centre de gravité du lot), ramené en douceur vers holdWorld (l'axe de la pince).</summary>
+        public void AttachJoint(Rigidbody headBody, Vector3 worldAnchor, float breakForce, Collider[] clawColliders, Vector3 holdWorld)
         {
             IsHeld = true;
             foreach (Collider c in cols)
@@ -51,10 +54,11 @@ namespace ArcadeEmpire.Machines
             joint = gameObject.AddComponent<ConfigurableJoint>();
             joint.connectedBody = headBody;
             joint.anchor = transform.InverseTransformPoint(worldAnchor);
-            joint.autoConfigureConnectedAnchor = true;
+            joint.autoConfigureConnectedAnchor = false;
+            joint.connectedAnchor = headBody.transform.InverseTransformPoint(holdWorld);
             joint.xMotion = joint.yMotion = joint.zMotion = ConfigurableJointMotion.Limited;
             joint.linearLimit = new SoftJointLimit { limit = 0.012f };
-            joint.linearLimitSpring = new SoftJointLimitSpring { spring = 900f, damper = 30f };
+            joint.linearLimitSpring = new SoftJointLimitSpring { spring = 600f, damper = 40f };   // ramené dans l'axe sans à-coup
             joint.angularXMotion = joint.angularYMotion = joint.angularZMotion = ConfigurableJointMotion.Limited;
             joint.lowAngularXLimit = new SoftJointLimit { limit = -25f };
             joint.highAngularXLimit = new SoftJointLimit { limit = 25f };

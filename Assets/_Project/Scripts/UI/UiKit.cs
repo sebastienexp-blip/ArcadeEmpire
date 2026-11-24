@@ -198,6 +198,7 @@ namespace ArcadeEmpire.UI
             var r = go.GetComponent<RectTransform>();
             r.anchorMin = r.anchorMax = r.pivot = new Vector2(0.5f, 0.5f);
             r.sizeDelta = size;
+            go.AddComponent<UiPopIn>();
             var v = go.GetComponent<VerticalLayoutGroup>();
             v.padding = new RectOffset(20, 20, 14, 14);
             v.spacing = 6f;

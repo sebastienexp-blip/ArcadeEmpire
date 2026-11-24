@@ -150,6 +150,8 @@ namespace ArcadeEmpire.UI
             toastBox = Box(r, "Toast", new Vector2(0.5f, 1), new Vector2(0.5f, 1), new Vector2(0, -112), new Vector2(900, 60), new Color(0.12f, 0.1f, 0.3f, 0.95f)).gameObject;
             toastIcon = Image(toastBox.transform, "Icon", UiTheme.Icon("trophy"), new Vector2(0, 0.5f), new Vector2(0, 0.5f), new Vector2(40, 0), new Vector2(44, 44), Color.white);
             toastText = Text(toastBox.transform, "ToastText", 24, TextAnchor.MiddleCenter, Vector2.zero, Vector2.zero, UiTheme.Gold, true);
+            toastBox.AddComponent<UiPopIn>().duration = 0.3f;
+            promptBox.AddComponent<UiPopIn>().duration = 0.18f;
 
             // ---- aide permanente (bas gauche)
             keysBox = new GameObject("Keys", typeof(RectTransform), typeof(HorizontalLayoutGroup));
@@ -301,6 +303,19 @@ namespace ArcadeEmpire.UI
             return t;
         }
 
+        private long lastCoins = -1, lastTickets = -1, lastTokens = -1, lastKeysHud = -1;
+        /// <summary>Fait « pulser » la pastille d'une monnaie quand elle augmente.</summary>
+        private static void Bump(ref long last, long now, Text t)
+        {
+            if (last >= 0 && now > last && t != null)
+            {
+                var pill = t.transform.parent;
+                var p = pill.GetComponent<UiPunch>(); if (p == null) p = pill.gameObject.AddComponent<UiPunch>();
+                p.Punch();
+            }
+            last = now;
+        }
+
         // ------------------------------------------------------------------ mise à jour
         private static string Compact(long v)
         {
@@ -318,6 +333,11 @@ namespace ArcadeEmpire.UI
 
             var cm = CurrencyManager.Instance;
             var pm = ProgressionManager.Instance;
+            if (cm != null)
+            {
+                Bump(ref lastCoins, cm.Get(CurrencyType.Coins), coinsText); Bump(ref lastTickets, cm.Get(CurrencyType.Tickets), ticketsText);
+                Bump(ref lastTokens, cm.Get(CurrencyType.PremiumTokens), tokensText); Bump(ref lastKeysHud, cm.Get(CurrencyType.Keys), keysText);
+            }
             coinsText.text = cm != null ? Compact(cm.Get(CurrencyType.Coins)) : "—";
             ticketsText.text = cm != null ? Compact(cm.Get(CurrencyType.Tickets)) : "—";
             tokensText.text = cm != null ? Compact(cm.Get(CurrencyType.PremiumTokens)) : "—";

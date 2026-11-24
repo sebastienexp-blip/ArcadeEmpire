@@ -60,12 +60,22 @@ namespace ArcadeEmpire.Core
         }
 
         private void OnTeleport() => SoundBank.Play2D("teleport", 0.75f);
-        private void OnLevel(int level, long coins, int tokens) => SoundBank.Play2D("levelup", 0.8f);
+        private void OnLevel(int level, long coins, int tokens)
+        {
+            SoundBank.Play2D("levelup", 0.8f);
+            var p = FindPlayer();
+            if (p != null) { Fx.Sparkle(p.position + Vector3.up * 1f, new Color(0.4f, 0.9f, 1f), 60, 2f, 0.08f); ArcadeEmpire.UI.FloatingText.Show(p.position + Vector3.up * 2.1f, $"NIVEAU {level} !", new Color(0.5f, 0.95f, 1f), 48); }
+        }
 
         private void OnBalance(CurrencyType type, long balance)
         {
             if (type != CurrencyType.Keys) return;
-            if (lastKeys >= 0 && balance > lastKeys) SoundBank.Play2D("key", 0.75f);
+            if (lastKeys >= 0 && balance > lastKeys)
+            {
+                SoundBank.Play2D("key", 0.75f);
+                var p = FindPlayer();
+                if (p != null && !AtHome) Fx.Sparkle(p.position + Vector3.up * 1.4f, new Color(1f, 0.85f, 0.3f), 24);
+            }
             lastKeys = balance;
         }
 

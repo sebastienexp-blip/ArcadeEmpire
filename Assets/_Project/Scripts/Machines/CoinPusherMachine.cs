@@ -548,6 +548,9 @@ namespace ArcadeEmpire.Machines
             }
             RaiseCoinsWon(this, n);
             PlayVoice(PusherAudio.Id.Payout, transform.TransformPoint(0f, 0.7f, -0.8f), Mathf.Clamp(0.4f + n * 0.03f, 0.4f, 0.9f));
+            Vector3 tray = transform.TransformPoint(0f, 0.8f, -0.8f);
+            ArcadeEmpire.Core.Fx.Sparkle(tray, new Color(1f, 0.82f, 0.25f), Mathf.Clamp(10 + n, 12, 80));
+            ArcadeEmpire.UI.FloatingText.Show(tray + Vector3.up * 0.4f, $"+{n} pièces", new Color(1f, 0.85f, 0.3f), n >= 50 ? 44 : 34);
             flash = 1f;
             RefreshStatus();
         }
@@ -654,6 +657,8 @@ namespace ArcadeEmpire.Machines
             bonusMessageUntil = Time.time + 4.5f;
             flash = 1f;
             mech.Show(3f);
+            ArcadeEmpire.UI.FloatingText.Show(transform.TransformPoint(0f, 1.7f, 0f), msg, o == Outcome.Jackpot ? new Color(1f, 0.85f, 0.2f) : new Color(0.5f, 0.95f, 1f), o == Outcome.Jackpot ? 46 : 34);
+            if (o == Outcome.Jackpot) { ArcadeEmpire.Core.Fx.Confetti(transform.TransformPoint(0f, 1.6f, 0f), 140); ArcadeEmpire.Core.Fx.Sparkle(transform.TransformPoint(0f, 1.3f, 0f), new Color(1f, 0.8f, 0.2f), 120, 2.4f, 0.09f); }
             if (o == Outcome.Jackpot) ArcadeEmpire.Core.SoundBank.PlayAt("jackpot", transform.TransformPoint(0f, 1.2f, 0f), 1f);
             else if (o == Outcome.CoinRain || o == Outcome.BillRain) ArcadeEmpire.Core.SoundBank.PlayAt("coin_cascade", transform.TransformPoint(0f, 1.2f, 0f), 0.9f);
             else ArcadeEmpire.Core.SoundBank.PlayAt("win", transform.TransformPoint(0f, 1.2f, 0f), 0.8f);
@@ -670,6 +675,8 @@ namespace ArcadeEmpire.Machines
             bonusMessageUntil = Time.time + 3f;
             if (mech != null) mech.Show(4f);
             ArcadeEmpire.Core.SoundBank.PlayAt("ball_roll", ball.transform.position, 0.9f);
+            ArcadeEmpire.Core.Fx.Sparkle(ball.transform.position, new Color(1f, 0.85f, 0.3f), 40, 1.8f);
+            ArcadeEmpire.UI.FloatingText.Show(ball.transform.position + Vector3.up * 0.3f, "BALLE JACKPOT  +1 clé dorée", new Color(1f, 0.9f, 0.4f), 32);
             StartCoroutine(BallLift(ball));
         }
 

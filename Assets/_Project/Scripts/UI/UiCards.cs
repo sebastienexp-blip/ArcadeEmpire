@@ -35,6 +35,7 @@ namespace ArcadeEmpire.UI
             var ol = win.AddComponent<Outline>(); ol.effectColor = new Color(accent.r, accent.g, accent.b, 0.7f); ol.effectDistance = new Vector2(2f, -2f);
             var r = win.GetComponent<RectTransform>();
             r.anchorMin = new Vector2(0.04f, 0.05f); r.anchorMax = new Vector2(0.96f, 0.95f); r.offsetMin = r.offsetMax = Vector2.zero;
+            win.AddComponent<UiPopIn>();
             var v = win.GetComponent<VerticalLayoutGroup>();
             v.padding = new RectOffset(22, 22, 14, 16); v.spacing = 10f;
             v.childControlWidth = true; v.childControlHeight = true; v.childForceExpandWidth = true; v.childForceExpandHeight = false;

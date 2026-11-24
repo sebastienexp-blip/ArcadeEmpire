@@ -89,6 +89,7 @@ namespace ArcadeEmpire.EditorTools
             RenderSettings.ambientLight = new Color(0.2f, 0.19f, 0.25f);
 
             // Machines et décorations : prefabs placés à l'exécution par BuildingManager (disposition sauvegardée)
+            EnsureFxMaterial();
             ClawMachineBuilder.EnsurePrefab();
             CoinPusherBuilder.EnsurePrefab();
             DecorBuilder.EnsureAll();
@@ -142,6 +143,39 @@ namespace ArcadeEmpire.EditorTools
 
             EditorSceneManager.SaveScene(scene, ScenePath);
             AssetDatabase.SaveAssets();
+        }
+
+        /// <summary>Matériau des particules (confettis, étincelles) dans Resources, pour que son shader soit inclus dans le build.</summary>
+        static void EnsureFxMaterial()
+        {
+            ProjectSetup.EnsureFolder("Assets/_Project/Resources/FX");
+            string path = "Assets/_Project/Resources/FX/ParticleUnlit.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                var sh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+                if (sh == null) return;
+                m = new Material(sh);
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.SetFloat("_Surface", 1f); m.SetFloat("_Blend", 2f);   // transparent, additif doux
+            m.SetFloat("_SrcBlend", 5f); m.SetFloat("_DstBlend", 1f); m.SetFloat("_ZWrite", 0f);
+            m.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+            m.SetOverrideTag("RenderType", "Transparent");
+            m.renderQueue = 3000;
+            m.SetColor("_BaseColor", Color.white);
+            EditorUtility.SetDirty(m);
+            string p2 = "Assets/_Project/Resources/FX/ParticleLit.mat";   // confettis opaques (couleurs franches)
+            var m2 = AssetDatabase.LoadAssetAtPath<Material>(p2);
+            if (m2 == null)
+            {
+                var sh = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+                if (sh == null) return;
+                m2 = new Material(sh);
+                AssetDatabase.CreateAsset(m2, p2);
+            }
+            m2.SetColor("_BaseColor", Color.white);
+            EditorUtility.SetDirty(m2);
         }
 
         /// <summary>Matériau transparent (asset, donc inclus dans le build) pour l'aperçu de placement.</summary>
@@ -232,10 +266,25 @@ namespace ArcadeEmpire.EditorTools
         {
             string path = MatDir + "/ArcadeVolume.asset";
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(path);
-            if (profile != null) return profile;
-
-            profile = ScriptableObject.CreateInstance<VolumeProfile>();
-            AssetDatabase.CreateAsset(profile, path);
+            if (profile == null)
+            {
+                profile = ScriptableObject.CreateInstance<VolumeProfile>();
+                AssetDatabase.CreateAsset(profile, path);
+            }
+            // rendu plus « cinéma » : vignette douce, contraste et saturation, couleurs chaudes des néons
+            if (!profile.Has<Vignette>())
+            {
+                var vig = profile.Add<Vignette>(true);
+                vig.intensity.Override(0.26f); vig.smoothness.Override(0.45f); vig.color.Override(new Color(0.05f, 0.02f, 0.1f));
+                AssetDatabase.AddObjectToAsset(vig, profile);
+            }
+            if (!profile.Has<ColorAdjustments>())
+            {
+                var ca = profile.Add<ColorAdjustments>(true);
+                ca.contrast.Override(12f); ca.saturation.Override(14f); ca.postExposure.Override(0.1f);
+                AssetDatabase.AddObjectToAsset(ca, profile);
+            }
+            if (profile.Has<Bloom>()) { EditorUtility.SetDirty(profile); return profile; }
 
             var bloom = profile.Add<Bloom>(true);
             bloom.threshold.Override(0.9f);
