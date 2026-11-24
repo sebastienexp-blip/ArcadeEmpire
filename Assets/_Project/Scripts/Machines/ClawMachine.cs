@@ -464,8 +464,21 @@ namespace ArcadeEmpire.Machines
         }
 
         // force de serrage : pleine à la prise, réduite une fois en haut (réglage « strength at top » des vraies machines)
-        private const float TopStrength = 0.72f;
-        private float gripForce;
+        private float gripForce, holdForce;
+
+        /// <summary>Lot que les branches vont enserrer (le plus proche de l'axe), sans le prendre.</summary>
+        private PrizeItem PeekPrize()
+        {
+            PrizeItem best = null; float bestDist = float.MaxValue;
+            foreach (Collider c in Physics.OverlapSphere(holdPoint.position, 0.12f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                PrizeItem p = c.GetComponentInParent<PrizeItem>();
+                if (p == null || !p.IsFree) continue;
+                Vector3 d = p.transform.TransformPoint(PrizeCenter(p)) - holdPoint.position; d.y = 0f;
+                if (d.sqrMagnitude < bestDist && d.magnitude < PrizeRadius(p) + 0.03f) { bestDist = d.sqrMagnitude; best = p; }
+            }
+            return best;
+        }
 
         /// <summary>Descend jusqu'à toucher le tas (détection de contact comme le « mou » du câble), puis un petit peu plus.</summary>
         private IEnumerator DescendUntilContact()
@@ -512,11 +525,16 @@ namespace ArcadeEmpire.Machines
 
             StatusText = "Prise…";
             PlayLocal(ClawAudio.Id.Grip, 0.6f);
-            yield return AnimateClaw(closedAngle, 0.7f);
+            // les branches se referment AUTOUR du lot (elles s'arrêtent sur lui) ; à vide elles se ferment complètement
+            bool somethingInside = PeekPrize() != null;
+            yield return AnimateClaw(somethingInside ? Mathf.Lerp(closedAngle, openAngle, 0.38f) : closedAngle, 0.7f);
             TryGrab();
+            if (held == null && somethingInside) yield return AnimateClaw(closedAngle, 0.25f);   // la prise a raté : les branches glissent
+            if (held != null)   // décollage lent du tas (la pince force à pleine puissance), puis montée normale
+                yield return MoveHeadTo(new Vector3(headLocal.x, Mathf.Min(raisedY, headLocal.y + 0.06f), headLocal.z), verticalSpeed * 0.35f);
 
             yield return MoveHeadTo(new Vector3(headLocal.x, raisedY, headLocal.z), held != null ? verticalSpeed * 0.75f : verticalSpeed);
-            if (held != null) held.SetBreakForce(gripForce * TopStrength);   // en haut, la pince serre moins fort
+            if (held != null) held.SetBreakForce(holdForce);   // en haut, la pince serre moins fort (réglage des vraies machines)
             yield return new WaitForSeconds(0.35f);
 
             StatusText = held != null ? "Direction la trappe…" : (lostMessage ?? StatusText);
@@ -611,7 +629,8 @@ namespace ArcadeEmpire.Machines
             }
 
             float weight = mass * Physics.gravity.magnitude;
-            gripForce = weight * (1.4f + 3.2f * quality);
+            gripForce = weight * (2.5f + 6f * quality) * EffectiveGrip;     // force à la prise (pleine puissance)
+            holdForce = weight * (1.1f + 2.6f * quality) * EffectiveGrip;   // force une fois en haut
             best.AttachJoint(head, axis, gripForce, clawColliders);
             held = best;
             LabGrabs++;

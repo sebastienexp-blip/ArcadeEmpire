@@ -144,7 +144,7 @@ namespace ArcadeEmpire.Machines
             {
                 case 1: pos = new Vector3(-1.3f, 1.9f, -1.5f); look = new Vector3(0f, 1.0f, 0f); break;
                 case 2: pos = new Vector3(0f, 1.6f, -0.35f); look = new Vector3(0f, 0.6f, 0.05f); break;
-                case 3: pos = new Vector3(Mathf.Clamp(h.x + 0.45f, -0.55f, 0.55f), h.y - 0.12f, h.z - 0.42f); look = new Vector3(h.x, h.y - 0.3f, h.z); break;
+                case 3: pos = new Vector3(Mathf.Clamp(h.x + (h.x > 0f ? -0.32f : 0.32f), -0.52f, 0.52f), h.y - 0.08f, Mathf.Clamp(h.z - 0.34f, -0.49f, 0.45f)); look = new Vector3(h.x, h.y - 0.3f, h.z); break;
                 default: pos = new Vector3(0f, 1.55f, -1.75f); look = new Vector3(0f, 1.0f, 0f); break;
             }
             Vector3 wp = m.TransformPoint(pos);

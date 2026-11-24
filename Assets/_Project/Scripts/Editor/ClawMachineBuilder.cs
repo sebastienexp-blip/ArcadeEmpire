@@ -214,8 +214,14 @@ namespace ArcadeEmpire.EditorTools
             }
             ModelLib.Dress(button.transform, "arcade_button", pal, 0.65f);
             if (ModelLib.Dress(headGo.transform, "claw_head", pal, 1f, false)) headGo.transform.Find("Housing").GetComponent<Renderer>().enabled = false;
-            foreach (var pv in pivots)
-                if (ModelLib.Dress(pv, "claw_prong", pal, 1f, false)) pv.Find("Prong").GetComponent<Renderer>().enabled = false;
+            for (int i = 0; i < pivots.Length; i++)
+            {
+                var pv = pivots[i];
+                if (!ModelLib.Dress(pv, "claw_prong", pal, 1f, false)) continue;
+                pv.Find("Prong").GetComponent<Renderer>().enabled = false;
+                var vis = pv.Find("claw_prong");
+                if (vis != null) vis.localRotation = Quaternion.Euler(0f, 90f - i * 120f, 0f);   // crochet tourné vers le centre de la pince
+            }
 
             // --- Ancrage caméra devant la machine
             var anchor = new GameObject("CameraAnchor").transform;

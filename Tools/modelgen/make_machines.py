@@ -67,9 +67,12 @@ def claw_head():
 @model
 def claw_prong():
     m = Model("claw_prong", uv=1.0)
+    # vraie branche de pince : bras en acier qui s'écarte puis se recourbe en crochet vers l'intérieur (côté radial = +Z)
     m.add(sphere(0.02, seg=10, rings=7, mat="Metal"), (0, 0.0, 0))
-    m.add(tube([(0, 0, 0), (0, -0.05, 0), (0, -0.12, 0), (0, -0.18, 0)], [0.013, 0.014, 0.011, 0.007], seg=10, mat="Metal"))
-    m.add(sphere(0.011, seg=8, rings=6, mat="Rubber"), (0, -0.19, 0))
+    pts = [(0, 0, 0), (0, -0.03, 0.012), (0, -0.08, 0.024), (0, -0.13, 0.022), (0, -0.17, 0.008), (0, -0.192, -0.012), (0, -0.2, -0.032)]
+    m.add(tube(pts, [0.012, 0.012, 0.011, 0.01, 0.009, 0.008, 0.007], seg=10, mat="Metal"))
+    m.add(rbox((0.03, 0.05, 0.008), 0.4, mat="Metal"), (0, -0.07, 0.02), R=rot(-12, 0, 0))   # lame élargie
+    m.add(sphere(0.012, seg=8, rings=6, mat="Rubber"), (0, -0.2, -0.034))
     return m.finish(keep=True)
 
 
