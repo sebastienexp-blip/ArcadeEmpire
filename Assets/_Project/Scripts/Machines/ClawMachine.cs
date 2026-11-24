@@ -391,12 +391,18 @@ namespace ArcadeEmpire.Machines
             if (phase == Phase.Sequence && headLocal.y < raisedY - 0.05f) { swing = Vector2.Lerp(swing, Vector2.zero, 1f - Mathf.Exp(-6f * dt)); swingVel *= Mathf.Exp(-6f * dt); }
         }
 
+        private Vector3 physHead; private bool physHeadInit;
+
         private void FixedUpdate()
         {
             if (head == null) return;
-            float len = Mathf.Max(0.2f, AttachY - headLocal.y);
+            // headLocal avance à chaque image affichée ; la physique tourne à pas fixe. Sans lissage, la pince avance par à-coups
+            // (immobile un pas, puis un saut) : ces secousses arrachaient le lot de la prise, surtout quand l'image ralentit.
+            if (!physHeadInit) { physHead = headLocal; physHeadInit = true; }
+            physHead = Vector3.Lerp(physHead, headLocal, 1f - Mathf.Exp(-22f * Time.fixedDeltaTime));
+            float len = Mathf.Max(0.2f, AttachY - physHead.y);
             Vector3 off = new Vector3(Mathf.Sin(swing.x) * len, -(1f - Mathf.Cos(Mathf.Max(Mathf.Abs(swing.x), Mathf.Abs(swing.y)))) * len, Mathf.Sin(swing.y) * len);
-            head.MovePosition(transform.TransformPoint(headLocal + off));
+            head.MovePosition(transform.TransformPoint(physHead + off));
             head.MoveRotation(transform.rotation * Quaternion.Euler(-swing.y * Mathf.Rad2Deg, 0f, swing.x * Mathf.Rad2Deg));
         }
 
