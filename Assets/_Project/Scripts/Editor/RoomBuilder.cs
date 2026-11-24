@@ -108,6 +108,10 @@ namespace ArcadeEmpire.EditorTools
             spawn.transform.SetParent(root, false);
             spawn.transform.position = new Vector3(0, 0, -5f);
 
+            // Vitrine des lots, comptoir de rachat, téléporteur, et maison du joueur (à l'écart, x = 60)
+            var houseSpawn = HomeBuilder.BuildHouse(root, out var houseReturnPad);
+            HomeBuilder.BuildArcadeShops(root, houseSpawn, houseReturnPad);
+
             // Joueur provisoire (capsule) + caméra 3e personne + post-traitement (bloom des néons)
             var player = BuildPlayer(spawn.transform.position);
             player.gameObject.AddComponent<MachineInteractor>();

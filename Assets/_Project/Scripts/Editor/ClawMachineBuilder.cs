@@ -615,8 +615,23 @@ namespace ArcadeEmpire.EditorTools
             r.ticketValue = s.tickets;
             r.experienceValue = s.xp;
             r.shopTicketPrice = s.tickets * 4;
+            r.keyPrice = (s.model ?? "").StartsWith("console_") ? 2 : s.rarity == Rarity.Legendary ? 1 : 0;   // lots sous cadenas
+            if (r.prefab == null) r.prefab = DisplayPrefab(s.id);
             EditorUtility.SetDirty(r);
             return r;
+        }
+
+        /// <summary>Prefab d'affichage (sans physique) d'un lot : étagères de la maison, vitrine.</summary>
+        static GameObject DisplayPrefab(string id)
+        {
+            const string dir = "Assets/_Project/Prefabs/Prizes";
+            ProjectSetup.EnsureFolder(dir);
+            var go = CreatePrize(id, null);
+            if (go == null) return null;
+            foreach (var c in go.GetComponents<Collider>()) Object.DestroyImmediate(c);
+            var prefab = PrefabUtility.SaveAsPrefabAsset(go, dir + "/" + id + ".prefab");
+            Object.DestroyImmediate(go);
+            return prefab;
         }
     }
 }

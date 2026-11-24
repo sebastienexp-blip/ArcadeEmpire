@@ -28,6 +28,10 @@ namespace ArcadeEmpire.Data
         public int ticketValue = 1;
         [Tooltip("Prix en tickets dans la boutique (0 = non vendable).")]
         public int shopTicketPrice = 0;
+        [Tooltip("Clés dorées nécessaires (lots sous cadenas de la vitrine). 0 = pas de cadenas.")]
+        public int keyPrice = 0;
+        [Tooltip("Meuble de la maison (s'installe à son emplacement dans la maison une fois obtenu).")]
+        public bool furniture;
         public long experienceValue = 5;
 
         /// <summary>Prix de revente en pièces, selon la rareté.</summary>

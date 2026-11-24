@@ -59,6 +59,7 @@ namespace ArcadeEmpire.Save
         public long coins = 100;
         public long tickets;
         public long premiumTokens;
+        public long keys;
 
         // Contenu
         public List<InventoryEntry> inventory = new List<InventoryEntry>();

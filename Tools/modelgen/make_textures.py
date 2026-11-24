@@ -156,6 +156,9 @@ sign("sign_claw_sweets", "SWEET CATCHER", "CANDY & SNACKS", (255, 140, 60), (255
 sign("sign_claw_toys", "TOY BOX", "FIGURES & CAPSULES", (80, 220, 120), (60, 170, 255))
 sign("sign_pusher_ocean", "OCEAN TREASURE", "PIRATE JACKPOT", (40, 200, 255), (60, 255, 190))
 sign("sign_pusher_royal", "ROYAL GOLD", "MEGA JACKPOT", (255, 210, 60), (255, 120, 40))
+sign("sign_showcase", "VITRINE", "LOTS & CADEAUX", (255, 220, 80), (255, 90, 170))
+sign("sign_buyback", "RACHAT", "DE LOTS", (90, 255, 160), (60, 200, 255))
+sign("sign_home", "MAISON", "TELEPORTEUR", (120, 200, 255), (200, 120, 255))
 
 
 # --- Décalcomanie du pupitre

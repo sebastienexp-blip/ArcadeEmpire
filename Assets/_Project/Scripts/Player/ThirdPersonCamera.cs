@@ -51,6 +51,14 @@ namespace ArcadeEmpire.Player
 
         public void SetTarget(Transform t) => target = t;
 
+        /// <summary>Replace instantanément la caméra derrière la cible (après une téléportation).</summary>
+        public void SnapBehind()
+        {
+            if (target == null) return;
+            yaw = target.eulerAngles.y; smoothYaw = yaw;
+            transform.position = target.position - Quaternion.Euler(0f, yaw, 0f) * Vector3.forward * 4f + Vector3.up * 2.5f;
+        }
+
         /// <summary>Place la caméra sur un ancrage (machine) ; null = reprendre le suivi du joueur.</summary>
         public void SetOverride(Transform anchor)
         {

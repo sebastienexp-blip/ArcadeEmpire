@@ -636,7 +636,7 @@ namespace ArcadeEmpire.Machines
                 case Outcome.CoinRain: runUntil = Mathf.Max(runUntil, Time.time + 14f); StartCoroutine(CeilingRain(30, 0.08f)); msg = "PLUIE DE PIÈCES !"; break;
                 case Outcome.Gains3: tripleUntil = Time.time + 30f; msg = "GAINS x3 pendant 30 s !"; break;
                 case Outcome.Tickets: if (cm != null) { cm.Add(CurrencyType.Tickets, 40); cm.Add(CurrencyType.Experience, 30); } msg = "+40 TICKETS !"; break;
-                case Outcome.Gem: if (cm != null) { cm.Add(CurrencyType.PremiumTokens, 1); cm.Add(CurrencyType.Experience, 60); } msg = "GEMME PREMIUM !"; break;
+                case Outcome.Gem: if (cm != null) { cm.Add(CurrencyType.PremiumTokens, 1); cm.Add(CurrencyType.Keys, 1); cm.Add(CurrencyType.Experience, 60); } msg = "GEMME + CLÉ DORÉE !"; break;
                 case Outcome.BillRain: runUntil = Mathf.Max(runUntil, Time.time + 14f); StartCoroutine(BillRain(10)); msg = "PLUIE DE BILLETS !"; break;
                 case Outcome.Turbo: turboUntil = Time.time + 20f; runUntil = Mathf.Max(runUntil, Time.time + 20f); msg = "TURBO : la plaque s'emballe !"; break;
                 case Outcome.Jackpot:
@@ -660,6 +660,7 @@ namespace ArcadeEmpire.Machines
         {
             if (ball == null || ball.InLift) return;
             ball.InLift = true;
+            if (CurrencyManager.Instance != null) CurrencyManager.Instance.Add(CurrencyType.Keys, 1);   // balle jackpot = 1 clé dorée
             flash = 1f;
             StatusText = "BALLE JACKPOT !";
             bonusMessageUntil = Time.time + 3f;

@@ -126,6 +126,7 @@ namespace ArcadeEmpire.UI
                 case ShopManager.Result.Ok: message = $"Acheté : {r.displayName} (ajouté à l'inventaire)."; break;
                 case ShopManager.Result.LevelTooLow: message = "Niveau insuffisant."; break;
                 case ShopManager.Result.NotEnoughTickets: message = "Pas assez de tickets."; break;
+                case ShopManager.Result.NotEnoughKeys: message = "Il faut plus de clés dorées pour ouvrir ce cadenas."; break;
                 default: message = "Achat impossible."; break;
             }
         }

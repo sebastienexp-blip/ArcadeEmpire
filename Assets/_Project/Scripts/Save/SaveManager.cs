@@ -35,7 +35,7 @@ namespace ArcadeEmpire.Save
             // Start (et non Awake) : CurrencyManager.Instance est garanti disponible.
             if (CurrencyManager.Instance != null)
             {
-                CurrencyManager.Instance.LoadBalances(Data.coins, Data.tickets, Data.premiumTokens, Data.experience);
+                CurrencyManager.Instance.LoadBalances(Data.coins, Data.tickets, Data.premiumTokens, Data.experience, Data.keys);
             }
             else
             {
@@ -53,6 +53,7 @@ namespace ArcadeEmpire.Save
                 Data.coins = c.Get(CurrencyType.Coins);
                 Data.tickets = c.Get(CurrencyType.Tickets);
                 Data.premiumTokens = c.Get(CurrencyType.PremiumTokens);
+                Data.keys = c.Get(CurrencyType.Keys);
                 Data.experience = c.Get(CurrencyType.Experience);
             }
             return SaveSystem.Save(Data);
@@ -65,7 +66,7 @@ namespace ArcadeEmpire.Save
             SaveSystem.DeleteSave();
             Data = SaveSystem.Load();
             if (CurrencyManager.Instance != null)
-                CurrencyManager.Instance.LoadBalances(Data.coins, Data.tickets, Data.premiumTokens, Data.experience);
+                CurrencyManager.Instance.LoadBalances(Data.coins, Data.tickets, Data.premiumTokens, Data.experience, Data.keys);
             SaveSystem.Save(Data);
             StartCoroutine(AutoSaveRoutine());
         }

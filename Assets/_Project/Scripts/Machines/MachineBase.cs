@@ -102,6 +102,8 @@ namespace ArcadeEmpire.Machines
             if (reward == null || CurrencyManager.Instance == null) return;
             CurrencyManager.Instance.Add(CurrencyType.Tickets, reward.ticketValue);
             CurrencyManager.Instance.Add(CurrencyType.Experience, reward.experienceValue);
+            // clés dorées (cadenas de la vitrine) : toujours pour un lot épique ou légendaire, parfois pour les autres
+            if (reward.rarity >= Rarity.Epic || UnityEngine.Random.value < 0.12f) CurrencyManager.Instance.Add(CurrencyType.Keys, 1);
             AddToInventory(reward);
             OnRewardWon?.Invoke(this, reward);
             AnyRewardWon?.Invoke(this, reward);

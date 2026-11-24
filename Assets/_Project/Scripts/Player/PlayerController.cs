@@ -40,6 +40,21 @@ namespace ArcadeEmpire.Player
 
         public void SetCamera(Transform cam) => cameraTransform = cam;
 
+        /// <summary>Téléporte le joueur (maison ↔ salle) : le CharacterController est coupé le temps du déplacement.</summary>
+        public void TeleportTo(Vector3 pos, Quaternion rot)
+        {
+            if (controller == null) controller = GetComponent<CharacterController>();
+            controller.enabled = false;
+            transform.SetPositionAndRotation(pos, Quaternion.Euler(0f, rot.eulerAngles.y, 0f));
+            planarVelocity = Vector3.zero;
+            controller.enabled = true;
+            var cam = FindFirstObjectByType<ThirdPersonCamera>();
+            if (cam != null) cam.SnapBehind();
+            Teleported?.Invoke();
+        }
+
+        public static event System.Action Teleported;
+
         private void Awake()
         {
             controller = GetComponent<CharacterController>();

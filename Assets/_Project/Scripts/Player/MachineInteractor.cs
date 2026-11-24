@@ -1,3 +1,4 @@
+using ArcadeEmpire.Building;
 using ArcadeEmpire.Machines;
 using ArcadeEmpire.UI;
 using UnityEngine;
@@ -18,6 +19,9 @@ namespace ArcadeEmpire.Player
 
         public MachineBase Nearest { get; private set; }
         public MachineBase Active { get; private set; }
+        /// <summary>Point d'interaction du décor le plus proche (si aucune machine n'est à portée).</summary>
+        public InteractPoint NearestPoint { get; private set; }
+        public static bool ActionPressed;   // bouton d'action tactile / manette
 
         private void Start()
         {
@@ -35,13 +39,17 @@ namespace ArcadeEmpire.Player
 
             if (UIState.PanelOpen)
             {
-                Nearest = null;
+                Nearest = null; NearestPoint = null;
                 return;
             }
 
             Nearest = FindNearest();
+            NearestPoint = Nearest == null ? InteractPoint.FindNearest(transform.position, out _) : null;
             Keyboard kb = Keyboard.current;
-            if (Nearest != null && kb != null && kb.eKey.wasPressedThisFrame && Nearest.Enter())
+            bool act = (kb != null && kb.eKey.wasPressedThisFrame) || ActionPressed;
+            ActionPressed = false;
+            if (NearestPoint != null && act) { NearestPoint.Use(player); return; }
+            if (Nearest != null && act && Nearest.Enter())
             {
                 Active = Nearest;
                 SetPlayerVisible(false);

@@ -9,7 +9,8 @@ namespace ArcadeEmpire.Economy
         Coins = 0,          // Pièces : jouer aux machines, améliorer la salle
         Tickets = 1,        // Tickets : acheter des lots à la boutique
         PremiumTokens = 2,  // Jetons premium : obtenus uniquement en progression
-        Experience = 3      // Points d'expérience
+        Experience = 3,     // Points d'expérience
+        Keys = 4            // Clés dorées : ouvrent les cadenas de la vitrine (gros lots, meubles premium)
     }
 
     /// <summary>
@@ -63,12 +64,13 @@ namespace ArcadeEmpire.Economy
         }
 
         /// <summary>Remplace tous les soldes (chargement d'une sauvegarde).</summary>
-        public void LoadBalances(long coins, long tickets, long premiumTokens, long experience)
+        public void LoadBalances(long coins, long tickets, long premiumTokens, long experience, long keys = 0)
         {
             balances[(int)CurrencyType.Coins] = Math.Max(0, coins);
             balances[(int)CurrencyType.Tickets] = Math.Max(0, tickets);
             balances[(int)CurrencyType.PremiumTokens] = Math.Max(0, premiumTokens);
             balances[(int)CurrencyType.Experience] = Math.Max(0, experience);
+            balances[(int)CurrencyType.Keys] = Math.Max(0, keys);
             foreach (CurrencyType type in Enum.GetValues(typeof(CurrencyType)))
                 OnBalanceChanged?.Invoke(type, balances[(int)type]);
         }
