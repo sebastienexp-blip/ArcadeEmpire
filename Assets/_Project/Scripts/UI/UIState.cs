@@ -23,6 +23,11 @@ namespace ArcadeEmpire.UI
         /// <summary>Demande l'ouverture d'un panneau ("inventory", "shop", "build", "options"), par exemple depuis un bouton du HUD.</summary>
         public static void Request(string panel) { request = panel; requestFrame = UnityEngine.Time.frameCount; }
 
+        private static int closeFrame = -10;
+        /// <summary>Demande la fermeture du panneau ouvert (labo, bouton retour).</summary>
+        public static void RequestClose() => closeFrame = UnityEngine.Time.frameCount;
+        public static bool CloseRequested => UnityEngine.Time.frameCount - closeFrame <= 2;
+
         /// <summary>Retourne vrai (une seule fois) si ce panneau a été demandé.</summary>
         public static bool Consume(string panel)
         {

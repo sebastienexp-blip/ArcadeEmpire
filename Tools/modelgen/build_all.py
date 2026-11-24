@@ -1,7 +1,7 @@
 """Génère tous les modèles FBX : python3 build_all.py"""
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import make_models, make_machines, make_games, make_games2, make_games3, make_plush, make_home  # noqa : l'import enregistre les modèles
+import make_models, make_machines, make_games, make_games2, make_games3, make_plush, make_home, make_player  # noqa : l'import enregistre les modèles
 from make_models import MODELS, OUT
 from fbxlib import write_fbx, read_fbx_counts
 import numpy as np

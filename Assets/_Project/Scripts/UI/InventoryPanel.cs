@@ -57,6 +57,7 @@ namespace ArcadeEmpire.UI
             bool esc = kb != null && kb.escapeKey.wasPressedThisFrame;
             if (!open && (i || UIState.Consume("inventory")) && !inMachine && !UIState.PanelOpen) SetOpen(true);
             else if (open && (i || esc)) SetOpen(false);
+            if (open && UIState.CloseRequested) SetOpen(false);
             if (open) { currencies.text = UiCards.CurrencyLine(); messageText.text = message; }
         }
 

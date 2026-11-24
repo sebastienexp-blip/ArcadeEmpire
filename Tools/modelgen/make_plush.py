@@ -134,7 +134,7 @@ class Plush:
         return self
 
     # --- maillage
-    def build(self, uv=2.2):
+    def build(self, uv=2.2, keep=False):
         cs = np.array([c for *_, c, rr in self.prims]); rs = np.array([rr for *_, c, rr in self.prims])
         lo = (cs - rs[:, None]).min(0) - 0.08; hi = (cs + rs[:, None]).max(0) + 0.08
         vox = (hi - lo).max() / self.res
@@ -162,7 +162,7 @@ class Plush:
             m.add(part, t, R)
         for p in m.parts[-len(self.details):] if self.details else []:
             p.UV = p.UV * uv
-        return m.finish()
+        return m.finish(keep=keep)
 
 
 def _rot_to(n):
