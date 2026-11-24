@@ -273,7 +273,7 @@ namespace ArcadeEmpire.Machines
         protected override void OnPlayEnded()
         {
             phase = Phase.Idle;
-            if (IsInUse) StatusText = $"ESPACE : rejouer ({data.costPerPlay} pièces)   —   Échap : quitter";
+            if (IsInUse) StatusText = (lostMessage != null && !lastWasWin ? lostMessage + "   —   " : "") + $"ESPACE : rejouer ({data.costPerPlay} pièces)   —   Échap : quitter";
         }
 
         private IEnumerator InsertRoutine()
@@ -556,11 +556,12 @@ namespace ArcadeEmpire.Machines
                 StatusText = lostMessage ?? "Perdu… retente ta chance !";
                 PlayLocal(ClawAudio.Id.Fail, 0.5f);
             }
+            lastWasWin = justWon;
             justWon = false;
             EndPlay();
         }
 
-        private bool justWon;
+        private bool justWon, lastWasWin;
 
         private IEnumerator MoveHeadTo(Vector3 target, float speed, bool damped = false)
         {
