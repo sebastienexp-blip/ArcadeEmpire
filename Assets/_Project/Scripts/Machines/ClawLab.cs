@@ -73,6 +73,7 @@ namespace ArcadeEmpire.Machines
 
                 PrizeItem target = PickTarget();
                 if (target == null) { Note("Plus de lots"); break; }
+                string targetName = target.name + " (" + (target.reward != null ? target.reward.displayName : "?") + ")";
                 Vector3 tl = machine.transform.InverseTransformPoint(target.transform.position);
                 Vector2 goal = new Vector2(Mathf.Clamp(tl.x, machine.PlayMin.x, machine.PlayMax.x), Mathf.Clamp(tl.z, machine.PlayMin.y, machine.PlayMax.y));
                 t0 = Time.time;
@@ -80,7 +81,7 @@ namespace ArcadeEmpire.Machines
                 {
                     Vector3 h = machine.HeadLocalPos;
                     Vector2 d = goal - new Vector2(h.x, h.z);
-                    if (d.magnitude < 0.012f) break;
+                    if (target == null || d.magnitude < 0.012f) break;
                     machine.SetExternalMove(Vector2.ClampMagnitude(d / 0.12f, 1f));
                     yield return null;
                 }
@@ -104,7 +105,7 @@ namespace ArcadeEmpire.Machines
                 }
                 bool grabbed = machine.LabGrabs > grabs, won = machine.LabWins > wins;
                 if (won) okRounds++;
-                Note($"partie {r} : cible {target.name} ({target.reward?.displayName}) prise={(grabbed ? "oui" : "non")} gagnée={(won ? "OUI" : "non")}  « {machine.StatusText} »");
+                Note($"partie {r} : cible {targetName} prise={(grabbed ? "oui" : "non")} gagnée={(won ? "OUI" : "non")}  « {machine.StatusText} »");
             }
             CaptureAll("02_fin");
             Note($"Bilan : {rounds} parties, {machine.LabGrabs} prises, {machine.LabWins} gains ({100f * machine.LabWins / Mathf.Max(1, rounds):0}%), lots restants {FreePrizes().Count}/{prizes0}");
@@ -143,7 +144,7 @@ namespace ArcadeEmpire.Machines
             {
                 case 1: pos = new Vector3(-1.3f, 1.9f, -1.5f); look = new Vector3(0f, 1.0f, 0f); break;
                 case 2: pos = new Vector3(0f, 1.6f, -0.35f); look = new Vector3(0f, 0.6f, 0.05f); break;
-                case 3: pos = new Vector3(h.x + 0.35f, h.y - 0.05f, h.z - 0.75f); look = new Vector3(h.x, h.y - 0.25f, h.z); break;
+                case 3: pos = new Vector3(Mathf.Clamp(h.x + 0.45f, -0.55f, 0.55f), h.y - 0.12f, h.z - 0.42f); look = new Vector3(h.x, h.y - 0.3f, h.z); break;
                 default: pos = new Vector3(0f, 1.55f, -1.75f); look = new Vector3(0f, 1.0f, 0f); break;
             }
             Vector3 wp = m.TransformPoint(pos);

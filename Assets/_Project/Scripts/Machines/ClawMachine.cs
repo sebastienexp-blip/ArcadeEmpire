@@ -244,9 +244,11 @@ namespace ArcadeEmpire.Machines
             {
                 if (leds[i] == null) continue;
                 float wave = 0.5f + 0.5f * Mathf.Sin(Time.time * speed * 2f - i * 1.4f);
-                Color baseCol = phase == Phase.Moving || phase == Phase.Sequence ? new Color(0.2f, 0.9f, 1f) : Color.Lerp(new Color(1f, 0.2f, 0.7f), new Color(1f, 0.85f, 0.2f), (i % 2 == 0) ? wave : 1f - wave);
+                // éclairage intérieur à LED blanches (comme une vraie vitrine), légèrement teinté et animé ; dorure quand on gagne
+                Color tint = Color.Lerp(new Color(1f, 0.55f, 0.8f), new Color(0.6f, 0.85f, 1f), (i % 2 == 0) ? wave : 1f - wave);
+                Color baseCol = Color.Lerp(new Color(1f, 0.97f, 0.92f), tint, phase == Phase.Moving || phase == Phase.Sequence ? 0.12f : 0.3f);
                 leds[i].color = Color.Lerp(baseCol, new Color(1f, 0.85f, 0.2f), flash);
-                leds[i].intensity = Mathf.Lerp(0.5f + wave * 0.8f, 3f, flash);
+                leds[i].intensity = Mathf.Lerp(1.7f + wave * 0.4f, 3.2f, flash);
             }
         }
 

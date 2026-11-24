@@ -448,7 +448,7 @@ namespace ArcadeEmpire.EditorTools
         // ------------------------------------------------------------------ billets, fresque, guirlande
         static readonly Color[] BillColors = { new Color(0.25f, 0.75f, 0.35f), new Color(0.3f, 0.55f, 1f), new Color(1f, 0.4f, 0.7f), new Color(1f, 0.8f, 0.2f) };
 
-        static Material TexMat(string name, Texture2D tex, float emission)
+        internal static Material TexMat(string name, Texture2D tex, float emission)
         {
             var m = RoomBuilder.Mat(name, Color.white, 0.35f);
             m.SetTexture("_BaseMap", tex);
@@ -565,7 +565,7 @@ namespace ArcadeEmpire.EditorTools
         }
 
         /// <summary>Fresque du mur du fond : dégradé nuit, étoiles, vagues néon, bulles et soleil doré.</summary>
-        static Texture2D MuralTexture()
+        internal static Texture2D MuralTexture()
         {
             const int W = 512, H = 176;
             var rng = new System.Random(7);

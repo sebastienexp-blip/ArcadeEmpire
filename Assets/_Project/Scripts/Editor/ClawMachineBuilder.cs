@@ -176,7 +176,22 @@ namespace ArcadeEmpire.EditorTools
 
             // --- Habillage détaillé : coque FBX texturée ; les primitives de la coque restent comme volumes physiques invisibles
             var pal = ModelLib.Palette(null);
+            // carrosserie laquée rouge framboise + chromes (au lieu du métal brut texturé)
+            var lacquer = RoomBuilder.Mat("Claw_Lacquer", new Color(0.72f, 0.06f, 0.28f), 0.9f);
+            lacquer.SetFloat("_Metallic", 0.3f);
+            var chrome = RoomBuilder.Mat("Claw_Chrome", new Color(0.92f, 0.93f, 0.97f), 0.95f);
+            chrome.SetFloat("_Metallic", 1f);
+            pal["Main"] = lacquer; pal["Paint"] = lacquer; pal["Metal"] = chrome;
+            floorMat.SetColor("_BaseColor", new Color(0.12f, 0.1f, 0.35f));
             ModelLib.Textured(floorMat, "felt", null, 2f, 0f, 0.15f);
+            // fond décoré derrière la vitre arrière
+            var mural = GameObject.CreatePrimitive(PrimitiveType.Quad);
+            mural.name = "BackMural";
+            Object.DestroyImmediate(mural.GetComponent<Collider>());
+            mural.transform.SetParent(root, false);
+            mural.transform.localPosition = new Vector3(0f, 1.12f, 0.548f);
+            mural.transform.localScale = new Vector3(1.2f, 1.14f, 1f);
+            mural.GetComponent<MeshRenderer>().sharedMaterial = CoinPusherBuilder.TexMat("Claw_Mural", CoinPusherBuilder.MuralTexture(), 0.8f);
             ModelLib.Textured(metal, "metal", null, 1.5f, 0.9f, 0.7f);
             var shell = ModelLib.Spawn("claw_shell", root, pal);
             if (shell != null)
