@@ -40,7 +40,14 @@ namespace ArcadeEmpire.Building
             foreach (var s in spots)
             {
                 bool owned = inv != null && inv.Count(s.rewardId) > 0;
-                if (s.content != null) s.content.SetActive(owned);
+                if (s.content != null)
+                {
+                    bool wasActive = s.content.activeSelf;
+                    s.content.SetActive(owned);
+                    // meuble tout juste livré : il apparaît avec un rebond (pas au chargement de la partie)
+                    if (owned && !wasActive && Time.timeSinceLevelLoad > 3f)
+                        foreach (Transform m in s.content.transform) { var pa = m.GetComponent<ArcadeEmpire.Core.PopAppear>(); if (pa == null) m.gameObject.AddComponent<ArcadeEmpire.Core.PopAppear>(); else { pa.enabled = false; pa.enabled = true; } }
+                }
                 if (owned) FurnitureOwned++;
             }
 

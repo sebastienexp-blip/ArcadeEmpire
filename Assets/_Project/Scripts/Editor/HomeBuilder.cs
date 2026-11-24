@@ -281,6 +281,7 @@ namespace ArcadeEmpire.EditorTools
             ring.name = "Glow"; Object.DestroyImmediate(ring.GetComponent<Collider>());
             ring.transform.SetParent(padRoot, false); ring.transform.localScale = new Vector3(1.0f, 0.035f, 1.0f); ring.transform.localPosition = new Vector3(0f, 0.04f, 0f);
             ring.GetComponent<MeshRenderer>().sharedMaterial = glow;
+            ring.AddComponent<ArcadeEmpire.Core.GlowPulse>().speed = 2.4f;
             foreach (float s in new[] { -0.7f, 0.7f }) RoomBuilder.Box("ArchPost", padRoot, new Vector3(s, 1.15f, 0f), new Vector3(0.1f, 2.3f, 0.1f), metal, true, true);
             RoomBuilder.Box("ArchTop", padRoot, new Vector3(0f, 2.35f, 0f), new Vector3(1.5f, 0.12f, 0.12f), metal, false, true);
             var q = GameObject.CreatePrimitive(PrimitiveType.Quad);
@@ -291,6 +292,7 @@ namespace ArcadeEmpire.EditorTools
             var lg = new GameObject("PadLight").AddComponent<Light>();
             lg.transform.SetParent(padRoot, false); lg.transform.localPosition = new Vector3(0f, 0.6f, 0f);
             lg.type = LightType.Point; lg.range = 3f; lg.intensity = 2f; lg.color = color; lg.shadows = LightShadows.None;
+            lg.gameObject.AddComponent<ArcadeEmpire.Core.GlowPulse>().speed = 2.4f;
             return padRoot;
         }
 
@@ -341,6 +343,8 @@ namespace ArcadeEmpire.EditorTools
             {
                 Vector3 p = new Vector3(-2.6f + i * 1.0f, shelfY[2], -0.02f);
                 DisplayPrize(sc, locked[i], p, 0.4f);
+                var last = sc.GetChild(sc.childCount - 1);
+                if (last.name.StartsWith("Prize_")) last.gameObject.AddComponent<ArcadeEmpire.Core.Turntable>().bob = 0f;   // gros lots qui tournent sous cloche
                 LockBox(sc, p, glass, gold);
             }
             var kitPal = ModelLib.Palette(null);
