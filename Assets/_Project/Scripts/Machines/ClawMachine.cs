@@ -457,6 +457,7 @@ namespace ArcadeEmpire.Machines
         {
             if (prize != held) return;
             held = null;
+            Debug.Log($"[ClawSlip] force={force:0.00} grip={gripForce:0.00} hold={holdForce:0.00} poids={(prize.Body != null ? prize.Body.mass * 9.81f : 0f):0.00} hauteur={headLocal.y:0.000} haut={raisedY:0.000} contacts={prize.LabContacts}");
             lostMessage = headLocal.y > raisedY - 0.03f ? "Le lot a glissé en haut… la pince a lâché !" : "Le lot s'est échappé des branches !";
             StatusText = lostMessage;
             PlayLocal(ClawAudio.Id.Slip, 0.6f);

@@ -78,6 +78,10 @@ namespace ArcadeEmpire.Machines
             joint.breakTorque = f * 0.22f;
         }
 
+        /// <summary>Labo : objets touchés pendant que le lot est tenu (pour comprendre ce qui fait lâcher la prise).</summary>
+        public string LabContacts = "";
+        private void OnCollisionEnter(Collision c) { if (IsHeld && LabContacts.Length < 120) LabContacts += c.collider.name + "(" + c.impulse.magnitude.ToString("0.00") + ") "; }
+
         private void OnJointBreak(float force)
         {
             joint = null;
