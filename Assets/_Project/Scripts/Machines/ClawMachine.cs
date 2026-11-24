@@ -534,6 +534,7 @@ namespace ArcadeEmpire.Machines
             yield return new WaitForFixedUpdate();
             TryGrab();
             if (held == null && clawAngle > closedAngle + 0.5f) yield return AnimateClaw(closedAngle, 0.25f);   // la prise a raté : les branches glissent et se referment
+            if (held != null) { yield return new WaitForSeconds(0.35f); if (held != null) held.SetBreakForce(gripForce); }   // les branches ont fini de serrer
             if (held != null)   // décollage lent du tas (la pince force à pleine puissance), puis montée normale
                 yield return MoveHeadTo(new Vector3(headLocal.x, Mathf.Min(raisedY, headLocal.y + 0.06f), headLocal.z), verticalSpeed * 0.35f);
 
@@ -725,7 +726,7 @@ namespace ArcadeEmpire.Machines
             holdForce = weight * (0.85f + 2.2f * quality) * EffectiveGrip * Random.Range(0.8f, 1.15f);
             // le lot est tenu par son centre de gravité et ramené dans l'axe de la pince (les branches le centrent en serrant)
             Vector3 hold = new Vector3(axis.x, Mathf.Min(com.y, axis.y), axis.z);
-            best.AttachJoint(head, com, gripForce, clawColliders, hold);
+            best.AttachJoint(head, com, gripForce * 4f, clawColliders, hold);   // le temps que les branches recentrent le lot, la prise ne casse pas
             held = best;
             LabGrabs++;
             PlayLocal(ClawAudio.Id.Grip, 0.5f, 1.2f);
