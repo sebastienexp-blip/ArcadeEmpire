@@ -534,7 +534,7 @@ namespace ArcadeEmpire.Machines
             yield return new WaitForFixedUpdate();
             TryGrab();
             if (held == null && clawAngle > closedAngle + 0.5f) yield return AnimateClaw(closedAngle, 0.25f);   // la prise a raté : les branches glissent et se referment
-            if (held != null) { yield return new WaitForSeconds(0.35f); if (held != null) held.SetBreakForce(gripForce); }   // les branches ont fini de serrer
+            if (held != null) { yield return new WaitForSeconds(0.6f); if (held != null) held.SetBreakForce(gripForce); }   // les branches ont fini de serrer
             if (held != null)   // décollage lent du tas (la pince force à pleine puissance), puis montée normale
                 yield return MoveHeadTo(new Vector3(headLocal.x, Mathf.Min(raisedY, headLocal.y + 0.06f), headLocal.z), verticalSpeed * 0.35f);
 
@@ -725,7 +725,8 @@ namespace ArcadeEmpire.Machines
             gripForce = weight * (2.5f + 6f * quality) * EffectiveGrip;
             holdForce = weight * (1.2f + 2.8f * quality) * EffectiveGrip * Random.Range(0.8f, 1.15f);   // une prise bien enserrée tient mieux en haut
             // le lot est tenu par son centre de gravité et ramené dans l'axe de la pince (les branches le centrent en serrant)
-            Vector3 hold = new Vector3(axis.x, Mathf.Min(com.y, axis.y), axis.z);
+            // (déjà entre les branches : on ne le tire que d'un tiers vers l'axe, sinon le ressort de la liaison crée une force qui la casse)
+            Vector3 hold = Vector3.Lerp(com, new Vector3(axis.x, Mathf.Min(com.y, axis.y), axis.z), 0.35f);
             best.AttachJoint(head, com, gripForce * 4f, clawColliders, hold);   // le temps que les branches recentrent le lot, la prise ne casse pas
             held = best;
             LabGrabs++;
