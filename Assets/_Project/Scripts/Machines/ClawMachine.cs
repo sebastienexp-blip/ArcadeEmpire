@@ -723,7 +723,7 @@ namespace ArcadeEmpire.Machines
 
             float weight = mass * Physics.gravity.magnitude;
             gripForce = weight * (2.5f + 6f * quality) * EffectiveGrip;
-            holdForce = weight * (0.85f + 2.2f * quality) * EffectiveGrip * Random.Range(0.8f, 1.15f);
+            holdForce = weight * (1.2f + 2.8f * quality) * EffectiveGrip * Random.Range(0.8f, 1.15f);   // une prise bien enserrée tient mieux en haut
             // le lot est tenu par son centre de gravité et ramené dans l'axe de la pince (les branches le centrent en serrant)
             Vector3 hold = new Vector3(axis.x, Mathf.Min(com.y, axis.y), axis.z);
             best.AttachJoint(head, com, gripForce * 4f, clawColliders, hold);   // le temps que les branches recentrent le lot, la prise ne casse pas
