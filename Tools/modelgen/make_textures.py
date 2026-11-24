@@ -151,6 +151,11 @@ def sign(name, text, sub, c1, c2):
 
 sign("sign_claw", "CLAW", "GRAB & WIN", (30, 230, 255), (255, 60, 170))
 sign("sign_pusher", "COIN PUSHER", "JACKPOT", (255, 70, 170), (255, 220, 40))
+sign("sign_claw_kpop", "K-POP STARS", "IDOLS & GOODIES", (255, 90, 200), (140, 120, 255))
+sign("sign_claw_sweets", "SWEET CATCHER", "CANDY & SNACKS", (255, 140, 60), (255, 90, 160))
+sign("sign_claw_toys", "TOY BOX", "FIGURES & CAPSULES", (80, 220, 120), (60, 170, 255))
+sign("sign_pusher_ocean", "OCEAN TREASURE", "PIRATE JACKPOT", (40, 200, 255), (60, 255, 190))
+sign("sign_pusher_royal", "ROYAL GOLD", "MEGA JACKPOT", (255, 210, 60), (255, 120, 40))
 
 
 # --- Décalcomanie du pupitre

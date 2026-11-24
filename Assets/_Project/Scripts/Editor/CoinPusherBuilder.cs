@@ -16,24 +16,42 @@ namespace ArcadeEmpire.EditorTools
         const string DataDir = "Assets/_Project/Data";
         const string MatDir = "Assets/_Project/Materials";
 
-        public static CoinPusherMachine Build(Transform parent, Vector3 pos, float rotY)
+        /// <summary>Habillage d'un coin pusher (plusieurs styles dans la salle).</summary>
+        public sealed class PusherTheme
         {
+            public string key, id, name, sign; public Color lacquer, tray, coinA, coinB; public float hue;
+        }
+
+        public static readonly PusherTheme[] Themes =
+        {
+            new PusherTheme { key = "Classic", id = "coin_pusher", name = "Coin Pusher Jackpot", sign = "sign_pusher", lacquer = new Color(0.26f, 0.05f, 0.36f), tray = new Color(0.08f, 0.45f, 0.58f), coinA = new Color(0.95f, 0.74f, 0.32f), coinB = new Color(0.84f, 0.86f, 0.92f), hue = 0f },
+            new PusherTheme { key = "Ocean", id = "coin_pusher_ocean", name = "Ocean Treasure", sign = "sign_pusher_ocean", lacquer = new Color(0.04f, 0.28f, 0.52f), tray = new Color(0.05f, 0.25f, 0.45f), coinA = new Color(0.85f, 0.87f, 0.93f), coinB = new Color(0.95f, 0.74f, 0.32f), hue = 0.5f },
+            new PusherTheme { key = "Royal", id = "coin_pusher_royal", name = "Royal Gold", sign = "sign_pusher_royal", lacquer = new Color(0.06f, 0.05f, 0.05f), tray = new Color(0.45f, 0.05f, 0.1f), coinA = new Color(1f, 0.78f, 0.25f), coinB = new Color(0.98f, 0.86f, 0.5f), hue = 0.12f },
+        };
+
+        static PusherTheme theme = Themes[0];
+
+        public static CoinPusherMachine Build(Transform parent, Vector3 pos, float rotY) => Build(parent, pos, rotY, Themes[0]);
+
+        public static CoinPusherMachine Build(Transform parent, Vector3 pos, float rotY, PusherTheme t)
+        {
+            theme = t ?? Themes[0];
             ProjectSetup.EnsureFolder(DataDir + "/Rewards");
             ProjectSetup.EnsureFolder(MatDir);
 
-            var data = EnsureMachineData();
+            var data = EnsureMachineData(theme);
             var tokenSmall = EnsureReward("token_tickets", "Jeton tickets", Rarity.Rare, 10, 15);
             var tokenJackpot = EnsureReward("token_jackpot", "Jeton Jackpot", Rarity.Epic, 40, 50);
 
             var body = RoomBuilder.Mat("Pusher_Body", new Color(0.09f, 0.08f, 0.13f), 0.5f);
-            var tray = RoomBuilder.Mat("Pusher_Tray", new Color(0.08f, 0.45f, 0.58f), 0.3f);
+            var tray = RoomBuilder.Mat("Pusher_Tray_" + theme.key, theme.tray, 0.3f);
             var plateMat = RoomBuilder.Mat("Pusher_PlateSteel", new Color(0.55f, 0.58f, 0.68f), 0.9f);   // acier poli
             plateMat.SetFloat("_Metallic", 0.85f);
             var pink = RoomBuilder.Neon("Neon_Pink", new Color(1f, 0.1f, 0.6f));
             var cyan = RoomBuilder.Neon("Neon_Cyan", new Color(0.1f, 0.9f, 1f));
             var yellow = RoomBuilder.Neon("Neon_Yellow", new Color(1f, 0.85f, 0.1f));
             var glass = ClawGlass();
-            var coinMat = RoomBuilder.Mat("Pusher_Coin", new Color(0.95f, 0.74f, 0.32f), 0.85f);   // médailles laiton doré
+            var coinMat = RoomBuilder.Mat("Pusher_Coin_" + theme.key, theme.coinA, 0.85f);   // médailles laiton doré
             var tokenMat = RoomBuilder.Mat("Pusher_Token", new Color(0.2f, 0.9f, 0.5f), 0.6f);
             var jackpotMat = RoomBuilder.Mat("Pusher_Jackpot", new Color(0.8f, 0.3f, 1f), 0.6f);
 
@@ -44,7 +62,7 @@ namespace ArcadeEmpire.EditorTools
             var trayPhys = EnsurePhysicsMaterial("Tray_Physics", 0.07f, 0.055f, 0.03f, PhysicsMaterialCombine.Minimum);   // métal poli : les pièces glissent sur le plateau
             coinHull = EnsureCoinHull();
 
-            var root = new GameObject("CoinPusher_Classic").transform;
+            var root = new GameObject("CoinPusher_" + theme.key).transform;
             root.SetParent(parent, false);
             root.position = pos;
             root.rotation = Quaternion.Euler(0f, rotY, 0f);
@@ -82,7 +100,7 @@ namespace ArcadeEmpire.EditorTools
             mural.transform.SetParent(root, false);
             mural.transform.localPosition = new Vector3(0, 1.265f, 0.2992f);
             mural.transform.localScale = new Vector3(1.26f, 0.43f, 1f);
-            mural.GetComponent<MeshRenderer>().sharedMaterial = TexMat("Pusher_Mural", MuralTexture(), 1.1f);
+            mural.GetComponent<MeshRenderer>().sharedMaterial = TexMat("Pusher_Mural_" + theme.key, MuralTexture("Pusher_Mural_" + theme.key, theme.hue), 1.1f);
 
             // --- Couloir de chute : les pièces tombent debout (sur la tranche) contre la paroi du fond, guidées par une vitre fine (27 mm de large)
             // la vitre s'arrête au-dessus des pièces posées sur la plaque (bord bas à 1,145 m) : une pièce qui quitte les toboggans peut basculer à plat vers l'avant
@@ -221,7 +239,7 @@ namespace ArcadeEmpire.EditorTools
             var ballPlan = new[] { new Vector3(-0.05f, plateTop + 0.036f, -0.08f), new Vector3(0.42f, plateTop + 0.036f, -0.08f) };
             foreach (var bp in ballPlan) reserve(bp, 0.035f);
             reserve(new Vector3(0.6f, 0f, -0.5f), 0.045f);   // pied de l'ascenseur à balles
-            var coinMatLight = RoomBuilder.Mat("Pusher_Coin_Light", new Color(0.84f, 0.86f, 0.92f), 0.88f);   // médailles argentées
+            var coinMatLight = RoomBuilder.Mat("Pusher_CoinB_" + theme.key, theme.coinB, 0.88f);   // médailles argentées
 
             // plateau fixe : tapis serré (empilement hexagonal) jusqu'au bord, comme une machine en régime normal :
             // la poussée de la plaque se transmet à travers le tapis et fait tomber les pièces du bord.
@@ -284,11 +302,12 @@ namespace ArcadeEmpire.EditorTools
             var pal = ModelLib.Palette(null);
             // carrosserie laquée (violet profond) et chromes : fini « borne neuve » au lieu du métal brut texturé
             var cab = ModelLib.Palette(null);
-            var lacquer = RoomBuilder.Mat("Pusher_Lacquer", new Color(0.26f, 0.05f, 0.36f), 0.9f);
+            var lacquer = RoomBuilder.Mat("Pusher_Lacquer_" + theme.key, theme.lacquer, 0.9f);
             lacquer.SetFloat("_Metallic", 0.35f);
             var chrome = RoomBuilder.Mat("Pusher_Chrome", new Color(0.92f, 0.93f, 0.97f), 0.95f);
             chrome.SetFloat("_Metallic", 1f);
             cab["Main"] = lacquer; cab["Paint"] = lacquer; cab["Metal"] = chrome;
+            cab["SignPusher"] = ModelLib.Glowing("Sign_Pusher_" + theme.key, theme.sign, 1.6f);
             ModelLib.Textured(tray, "felt", null, 3f, 0f, 0.15f);
             var shell = ModelLib.Spawn("pusher_shell", root, cab);
             if (shell != null)
@@ -436,13 +455,19 @@ namespace ArcadeEmpire.EditorTools
         public static MachineData EnsurePrefab()
         {
             ProjectSetup.EnsureFolder("Assets/_Project/Prefabs");
-            MachineData data = EnsureMachineData();
-            var go = Build(null, Vector3.zero, 0f).gameObject;
-            foreach (var t in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(t.gameObject, 0);
-            data.prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/_Project/Prefabs/CoinPusher_Classic.prefab");
-            Object.DestroyImmediate(go);
-            EditorUtility.SetDirty(data);
-            return data;
+            MachineData first = null;
+            foreach (var t in Themes)
+            {
+                MachineData data = EnsureMachineData(t);
+                var go = Build(null, Vector3.zero, 0f, t).gameObject;
+                foreach (var tr in go.GetComponentsInChildren<Transform>(true)) GameObjectUtility.SetStaticEditorFlags(tr.gameObject, 0);
+                data.prefab = PrefabUtility.SaveAsPrefabAsset(go, "Assets/_Project/Prefabs/CoinPusher_" + t.key + ".prefab");
+                Object.DestroyImmediate(go);
+                EditorUtility.SetDirty(data);
+                if (first == null) first = data;
+            }
+            theme = Themes[0];
+            return first;
         }
 
         // ------------------------------------------------------------------ billets, fresque, guirlande
@@ -565,7 +590,10 @@ namespace ArcadeEmpire.EditorTools
         }
 
         /// <summary>Fresque du mur du fond : dégradé nuit, étoiles, vagues néon, bulles et soleil doré.</summary>
-        internal static Texture2D MuralTexture()
+        internal static Texture2D MuralTexture() => MuralTexture("Pusher_Mural", 0f);
+
+        /// <summary>Fresque ; hue décale la teinte de toute l'image (variantes de machines).</summary>
+        internal static Texture2D MuralTexture(string name, float hue)
         {
             const int W = 512, H = 176;
             var rng = new System.Random(7);
@@ -602,8 +630,10 @@ namespace ArcadeEmpire.EditorTools
                     if (bx >= 0 && bx < W && by >= 0 && by < H) px[by * W + bx] = new Color(0.7f, 0.95f, 1f);
                 }
             }
+            if (Mathf.Abs(hue) > 0.001f)
+                for (int i = 0; i < px.Length; i++) { Color.RGBToHSV(px[i], out float h, out float sa, out float v); px[i] = Color.HSVToRGB(Mathf.Repeat(h + hue, 1f), sa, v); }
             tex.SetPixels(px); tex.Apply();
-            return SaveTexture("Pusher_Mural", tex);
+            return SaveTexture(name, tex);
         }
 
         /// <summary>Guirlande d'ampoules chenillard autour de l'ouverture.</summary>
@@ -760,18 +790,18 @@ namespace ArcadeEmpire.EditorTools
             return m != null ? m : RoomBuilder.Mat("Pusher_Glass", new Color(0.6f, 0.85f, 1f), 0.9f);
         }
 
-        static MachineData EnsureMachineData()
+        static MachineData EnsureMachineData(PusherTheme t)
         {
             ProjectSetup.EnsureFolder(DataDir);
-            string path = DataDir + "/Machine_CoinPusher.asset";
+            string path = DataDir + (t.key == "Classic" ? "/Machine_CoinPusher.asset" : "/Machine_CoinPusher_" + t.key + ".asset");
             var d = AssetDatabase.LoadAssetAtPath<MachineData>(path);
             if (d == null)
             {
                 d = ScriptableObject.CreateInstance<MachineData>();
                 AssetDatabase.CreateAsset(d, path);
             }
-            d.id = "coin_pusher";
-            d.displayName = "Coin Pusher";
+            d.id = t.id;
+            d.displayName = t.name;
             d.category = MachineCategory.CoinPusher;
             d.costPerPlay = 1;
             d.purchasePrice = 800;

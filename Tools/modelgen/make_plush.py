@@ -7,7 +7,7 @@ import math, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import numpy as np
 from skimage.measure import marching_cubes
-from fbxlib import Part, Model, sphere, tube, rbox, rot, _norm
+from fbxlib import Part, Model, sphere, tube, rbox, rot, _norm, lathe, torus, cylinder
 from make_models import model
 
 
@@ -19,8 +19,10 @@ def _smin(a, b, k):
 class Plush:
     """Accumule des primitives douces puis produit le maillage."""
 
-    def __init__(self, name, res=48):
-        self.name = name; self.res = res; self.prims = []; self.details = []
+    default_res = 48
+
+    def __init__(self, name, res=None):
+        self.name = name; self.res = res or Plush.default_res; self.prims = []; self.details = []
 
     # --- primitives (centre, rayons, rotation en degrés, matériau, douceur de la fusion k)
     def ell(self, c, r, R=(0, 0, 0), mat="Main", k=0.07):
@@ -395,15 +397,313 @@ def prize_box():
     return m.finish()
 
 
+# ------------------------------------------------------------------ idoles K-pop (personnages inventés, style chibi)
+# Main = tenue de scène, Light = peau, Second = cheveux, Accent = détails dorés/argentés, Dark = chaussures/pantalon/fil
+def idol(name, hair, girl=False):
+    p = Plush(name)
+    p.ell((0, 0.74, 0.0), (0.27, 0.27, 0.25), mat="Light", k=0.06)                 # tête (peau)
+    p.ell((0, 0.47, 0.0), (0.06, 0.06, 0.05), mat="Light", k=0.03)                 # cou
+    p.ell((0, 0.3, 0.0), (0.16, 0.16, 0.12), k=0.06)                               # buste (tenue)
+    p.ell((0, 0.36, 0.1), (0.07, 0.1, 0.03), mat="Accent", k=0.01)                 # col / cravate / bijou
+    for s in (-1, 1):
+        p.cone((s * 0.14, 0.4, 0.0), (s * 0.2, 0.2, 0.05), 0.055, 0.045, k=0.04)   # bras (manches)
+        p.ell((s * 0.21, 0.17, 0.06), (0.04, 0.04, 0.04), mat="Light", k=0.02)     # mains
+        p.ell((s * 0.26, 0.74, 0.0), (0.03, 0.05, 0.035), mat="Light", k=0.02)     # oreilles
+    if girl:
+        p.cone((0, 0.2, 0.0), (0, 0.04, 0.0), 0.15, 0.2, k=0.04)                   # jupe
+        for s in (-1, 1):
+            p.cone((s * 0.07, 0.06, 0.0), (s * 0.075, -0.13, 0.02), 0.04, 0.035, mat="Light", k=0.02)
+            p.ell((s * 0.075, -0.16, 0.04), (0.045, 0.035, 0.07), mat="Dark", k=0.02)
+    else:
+        for s in (-1, 1):
+            p.cone((s * 0.075, 0.16, 0.0), (s * 0.08, -0.12, 0.02), 0.06, 0.05, mat="Dark", k=0.03)
+            p.ell((s * 0.08, -0.15, 0.05), (0.05, 0.035, 0.08), mat="Accent", k=0.02)
+    hair(p)
+    hc = (0, 0.72, 0.0)
+    for s in (-1, 1): p.eye(hc, (s * 0.36, -0.05, 1.0), r=0.052, sink=0.5)
+    for s in (-1, 1): p.ell((s * 0.15, 0.64, 0.22), (0.04, 0.02, 0.01), mat="Second", k=0.005)   # joues
+    p.stitch((0, 0.6, 0.0), [(-0.03, 0.0), (0, -0.012), (0.03, 0.0)], thick=0.006)
+    p.tag((0, 0.25, 0), (0.6, -0.2, -0.75), size=(0.08, 0.1, 0.01))
+    return p.build()
+
+
+def hair_short(p):        # coupe courte, raie sur le côté
+    p.ell((0, 0.82, -0.02), (0.29, 0.22, 0.27), mat="Second", k=0.03)
+    p.ell((0.05, 0.86, 0.16), (0.24, 0.09, 0.12), R=(0, 0, -10), mat="Second", k=0.03)
+    p.ell((0, 0.72, -0.12), (0.27, 0.2, 0.17), mat="Second", k=0.03)
+
+
+def hair_swept(p):        # cheveux relevés en arrière (style scène)
+    p.ell((0, 0.84, -0.04), (0.28, 0.2, 0.27), mat="Second", k=0.03)
+    p.ell((0, 0.98, 0.07), (0.17, 0.11, 0.17), R=(-25, 0, 0), mat="Second", k=0.04)
+    p.ell((0, 0.72, -0.13), (0.27, 0.19, 0.16), mat="Second", k=0.03)
+
+
+def hair_mullet(p):       # mi-long dégradé avec mèches sur le front
+    p.ell((0, 0.83, -0.03), (0.3, 0.22, 0.28), mat="Second", k=0.03)
+    p.ell((0, 0.6, -0.14), (0.25, 0.22, 0.13), mat="Second", k=0.04)
+    for x in (-0.1, 0.0, 0.1): p.cone((x, 0.92, 0.12), (x * 1.3, 0.8, 0.22), 0.06, 0.02, mat="Second", k=0.02)
+
+
+def hair_long(p):         # longs cheveux lisses
+    p.ell((0, 0.83, -0.02), (0.3, 0.22, 0.28), mat="Second", k=0.03)
+    p.ell((0, 0.88, 0.17), (0.25, 0.08, 0.1), mat="Second", k=0.02)
+    p.ell((0, 0.5, -0.12), (0.29, 0.36, 0.15), mat="Second", k=0.04)
+    for s in (-1, 1): p.ell((s * 0.24, 0.55, 0.05), (0.06, 0.25, 0.08), mat="Second", k=0.03)
+
+
+def hair_twin(p):         # couettes
+    p.ell((0, 0.83, -0.02), (0.29, 0.22, 0.27), mat="Second", k=0.03)
+    p.ell((0, 0.88, 0.17), (0.24, 0.08, 0.1), mat="Second", k=0.02)
+    for s in (-1, 1):
+        p.chain([(s * 0.25, 0.88, -0.05), (s * 0.38, 0.75, -0.08), (s * 0.4, 0.55, -0.06), (s * 0.36, 0.38, -0.04)], 0.08, 0.04, mat="Second", k=0.03)
+        p.ell((s * 0.25, 0.88, -0.05), (0.04, 0.04, 0.04), mat="Accent", k=0.01)
+
+
+def hair_bob(p):          # carré avec frange
+    p.ell((0, 0.82, -0.05), (0.31, 0.23, 0.27), mat="Second", k=0.03)
+    p.ell((0, 0.89, 0.15), (0.26, 0.07, 0.1), mat="Second", k=0.02)
+    p.ell((0, 0.64, -0.09), (0.31, 0.17, 0.22), mat="Second", k=0.03)
+
+
+for _n, _h, _g in (("idol_boy_a", hair_short, False), ("idol_boy_b", hair_swept, False), ("idol_boy_c", hair_mullet, False),
+                   ("idol_girl_a", hair_long, True), ("idol_girl_b", hair_twin, True), ("idol_girl_c", hair_bob, True)):
+    model(type("f", (), {})) if False else None
+    def _mk(n=_n, h=_h, g=_g): return idol(n, h, g)
+    _mk.__name__ = _n
+    model(_mk)
+
+
+@model
+def kpop_lightstick():
+    m = Model("kpop_lightstick", uv=2.0)
+    m.add(lathe([(0.0, 0.0), (0.05, 0.0), (0.055, 0.04), (0.045, 0.45), (0.06, 0.5), (0.0, 0.5)], seg=18, mat="Dark", smooth=True))
+    m.add(rbox((0.07, 0.04, 0.02), 0.4, mat="Accent"), (0, 0.32, 0.045))
+    m.add(lathe([(0.0, 0.5), (0.09, 0.5), (0.12, 0.54), (0.06, 0.58), (0.0, 0.58)], seg=18, mat="Accent", smooth=True))
+    m.add(sphere(0.2, seg=20, rings=14, mat="Main"), (0, 0.76, 0))                 # globe lumineux
+    m.add(torus(0.205, 0.015, seg=24, tube=6, mat="Accent"), (0, 0.76, 0), R=rot(90, 0, 0))
+    return m.finish()
+
+
+@model
+def kpop_album():
+    m = Model("kpop_album", uv=1.0)
+    m.add(rbox((0.8, 0.8, 0.14), e=0.05, mat="Main"))
+    m.add(rbox((0.6, 0.6, 0.01), e=0.2, mat="Light"), (0, 0.04, 0.07))
+    m.add(rbox((0.82, 0.1, 0.15), e=0.1, mat="Accent"), (0, -0.3, 0))
+    m.add(sphere(0.12, seg=14, rings=10, mat="Second"), (0, 0.06, 0.08), S=(1, 1, 0.15))
+    return m.finish()
+
+
+# ------------------------------------------------------------------ confiseries (machine « sweets »)
+@model
+def sweet_lollipop():
+    m = Model("sweet_lollipop", uv=2.0)
+    m.add(cylinder(0.025, 0.025, 0.6, seg=10, mat="Light"), (0, -0.6, 0))
+    m.add(cylinder(0.38, 0.38, 0.12, seg=36, mat="Main"), (0, 0, -0.06), R=rot(90, 0, 0))
+    for zf in (0.06, -0.06):
+        for k, r in enumerate((0.33, 0.24, 0.15, 0.07)):
+            m.add(torus(r, 0.03, seg=36, tube=6, mat="Second" if k % 2 == 0 else "Light"), (0, 0.0, zf), R=rot(90, 0, 0))
+    m.add(rbox((0.1, 0.08, 0.1), 0.3, mat="Accent"), (0, -0.38, 0))
+    return m.finish()
+
+
+@model
+def sweet_chocolate():
+    m = Model("sweet_chocolate", uv=1.0)
+    m.add(rbox((0.5, 1.0, 0.1), e=0.08, mat="Main"))
+    m.add(rbox((0.52, 0.18, 0.11), e=0.15, mat="Light"), (0, 0.42, 0))
+    m.add(rbox((0.42, 0.3, 0.012), e=0.2, mat="Accent"), (0, 0.0, 0.052))
+    for i in range(3): m.add(rbox((0.12, 0.08, 0.02), 0.3, mat="Second"), (-0.12 + i * 0.12, -0.28, 0.05))
+    return m.finish()
+
+
+@model
+def sweet_soda():
+    m = Model("sweet_soda", uv=2.0)
+    m.add(lathe([(0.0, 0.0), (0.2, 0.0), (0.23, 0.04), (0.23, 0.82), (0.19, 0.9), (0.0, 0.9)], seg=24, mat="Main", smooth=True))
+    m.add(cylinder(0.232, 0.232, 0.22, seg=24, mat="Accent"), (0, 0.35, 0))
+    m.add(cylinder(0.18, 0.18, 0.012, seg=20, mat="Light"), (0, 0.9, 0))
+    m.add(rbox((0.06, 0.012, 0.1), 0.4, mat="Light"), (0, 0.912, 0.04))
+    return m.finish()
+
+
+@model
+def sweet_gummy():
+    p = Plush("sweet_gummy")
+    p.ell((0, 0.35, 0), (0.3, 0.33, 0.24), k=0.1)
+    p.ell((0, 0.78, 0.02), (0.26, 0.23, 0.22), k=0.12)
+    for s in (-1, 1):
+        p.ell((s * 0.19, 0.97, 0.0), (0.085, 0.085, 0.06), k=0.05)
+        p.cone((s * 0.2, 0.5, 0.02), (s * 0.32, 0.38, 0.1), 0.085, 0.075, k=0.07)
+        p.cone((s * 0.14, 0.15, 0.03), (s * 0.17, 0.05, 0.18), 0.1, 0.095, k=0.06)
+    return p.build()
+
+
+@model
+def sweet_donut():
+    p = Plush("sweet_donut")
+    R, r = 0.32, 0.16
+    def torus_f(P):
+        q = np.stack([np.linalg.norm(P[..., [0, 2]], axis=-1) - R, P[..., 1]], -1)
+        return np.linalg.norm(q, axis=-1) - r
+    p.prims.append((torus_f, "Main", 0.05, np.zeros(3), R + r))
+    def icing(P):
+        q = np.stack([np.linalg.norm(P[..., [0, 2]], axis=-1) - R, P[..., 1] - 0.05], -1)
+        return np.maximum(np.linalg.norm(q, axis=-1) - (r * 0.98), 0.02 - P[..., 1])
+    p.prims.append((icing, "Second", 0.01, np.array([0, 0.05, 0]), R + r))
+    rng = np.random.default_rng(5)
+    for i in range(26):
+        a = rng.uniform(0, 2 * math.pi); rr = R + rng.uniform(-0.1, 0.1)
+        x, z = math.cos(a) * rr, math.sin(a) * rr
+        y = 0.05 + math.sqrt(max(0.0, (r * 0.98) ** 2 - (rr - R) ** 2)) + 0.004
+        b = rng.uniform(0, 2 * math.pi)
+        p.solid(tube([(x - 0.02 * math.cos(b), y, z - 0.02 * math.sin(b)), (x + 0.02 * math.cos(b), y, z + 0.02 * math.sin(b))], 0.008, seg=6,
+                     mat=("Accent", "Light", "Dark")[i % 3]))
+    return p.build()
+
+
+# ------------------------------------------------------------------ monstres doudous, squishies, porte-clés, consoles
+@model
+def monster_doll():
+    """Petit monstre en peluche (design original) : longues oreilles pointues, grand sourire plein de dents, gros yeux."""
+    p = Plush("monster_doll")
+    p.ell((0, 0.32, 0), (0.24, 0.3, 0.21), k=0.08)
+    p.ell((0, 0.76, 0.02), (0.3, 0.26, 0.26), k=0.1)
+    p.ell((0, 0.68, 0.2), (0.17, 0.1, 0.08), mat="Light", k=0.03)            # visage clair
+    for s in (-1, 1):
+        p.ell((s * 0.12, 1.12, -0.02), (0.07, 0.26, 0.05), R=(0, 0, -s * 14), k=0.05)
+        p.ell((s * 0.125, 1.1, 0.02), (0.04, 0.2, 0.02), R=(0, 0, -s * 14), mat="Accent", k=0.01)
+        p.cone((s * 0.18, 0.44, 0.03), (s * 0.27, 0.22, 0.12), 0.07, 0.06, k=0.05)
+        p.cone((s * 0.11, 0.1, 0.03), (s * 0.13, 0.0, 0.16), 0.085, 0.08, k=0.05)
+    hc = (0, 0.76, 0.02)
+    for s in (-1, 1): p.eye(hc, (s * 0.32, 0.15, 1.0), r=0.065, sink=0.5)
+    mp, mn = p.surface((0, 0.66, 0.0), (0, -0.05, 1.0))
+    p.solid(rbox((0.2, 0.05, 0.02), 0.6, mat="Dark"), mp - mn * 0.004)
+    for i in range(9):                                                         # rangée de petites dents pointues
+        x = -0.08 + i * 0.02
+        tp, tn = p.surface((x, 0.67, 0.0), (x, -0.05, 1.0))
+        p.solid(sphere((0.009, 0.016, 0.006), seg=6, rings=4, mat="Tag"), tp + tn * 0.006 + np.array([0, -0.004, 0]))
+    p.tag((0, 0.2, 0), (0.7, -0.2, -0.7), size=(0.08, 0.1, 0.01))
+    return p.build()
+
+
+@model
+def squishy_bun():
+    """Squishy (mousse ultra-moelleuse) en forme de brioche kawaii."""
+    p = Plush("squishy_bun")
+    p.ell((0, 0.3, 0), (0.45, 0.3, 0.42), k=0.1)
+    p.ell((0, 0.5, 0), (0.33, 0.12, 0.3), mat="Second", k=0.08)
+    hc = (0, 0.3, 0)
+    for s in (-1, 1): p.eye(hc, (s * 0.35, 0.05, 1.0), r=0.05, sink=0.55)
+    for s in (-1, 1):
+        bp, bn = p.surface(hc, (s * 0.55, -0.1, 1.0))
+        p.solid(sphere((0.06, 0.03, 0.01), seg=8, rings=5, mat="Accent"), bp + bn * 0.002)
+    p.stitch(hc, [(-0.04, -0.03), (0, -0.05), (0.04, -0.03)], thick=0.007)
+    return p.build()
+
+
+@model
+def squishy_peach():
+    p = Plush("squishy_peach")
+    p.ell((0, 0.42, 0), (0.4, 0.42, 0.38), k=0.1)
+    p.ell((0, 0.85, -0.02), (0.06, 0.06, 0.04), mat="Dark", k=0.04)
+    p.ell((0.12, 0.88, 0.0), (0.18, 0.04, 0.09), R=(0, 0, 20), mat="Second", k=0.02)   # feuille
+    hc = (0, 0.42, 0)
+    for s in (-1, 1): p.eye(hc, (s * 0.3, 0.0, 1.0), r=0.045, sink=0.55)
+    p.stitch(hc, [(-0.035, -0.07), (0, -0.09), (0.035, -0.07)], thick=0.007)
+    return p.build()
+
+
+@model
+def keychain_star():
+    """Porte-clés : petite étoile en peluche + anneau et chaînette métalliques."""
+    p = Plush("keychain_star", res=40)
+    for k in range(5):
+        a = math.radians(90 + k * 72)
+        p.cone((0, 0.4, 0), (math.cos(a) * 0.36, 0.4 + math.sin(a) * 0.36, 0), 0.17, 0.05, k=0.06)
+    p.ell((0, 0.4, 0), (0.2, 0.2, 0.13), k=0.06)
+    hc = (0, 0.4, 0)
+    for s in (-1, 1): p.eye(hc, (s * 0.35, 0.1, 1.0), r=0.04, sink=0.5)
+    p.stitch(hc, [(-0.03, -0.04), (0, -0.055), (0.03, -0.04)], thick=0.006)
+    p.solid(torus(0.03, 0.008, seg=14, tube=6, mat="Metal"), (0, 0.79, 0), R=rot(90, 0, 0))
+    for i in range(4): p.solid(torus(0.018, 0.006, seg=10, tube=5, mat="Metal"), (0, 0.84 + i * 0.035, 0), R=rot(90, 90 * (i % 2), 0))
+    p.solid(torus(0.09, 0.012, seg=24, tube=6, mat="Metal"), (0, 1.05, 0), R=rot(90, 0, 0))
+    return p.build()
+
+
+@model
+def keychain_heart():
+    p = Plush("keychain_heart", res=40)
+    for s in (-1, 1): p.ell((s * 0.14, 0.5, 0), (0.2, 0.2, 0.13), k=0.06)
+    p.cone((0, 0.42, 0), (0, 0.12, 0), 0.24, 0.03, k=0.1)
+    hc = (0, 0.42, 0)
+    for s in (-1, 1): p.eye(hc, (s * 0.3, 0.15, 1.0), r=0.04, sink=0.5)
+    p.solid(torus(0.03, 0.008, seg=14, tube=6, mat="Metal"), (0, 0.74, 0), R=rot(90, 0, 0))
+    for i in range(4): p.solid(torus(0.018, 0.006, seg=10, tube=5, mat="Metal"), (0, 0.79 + i * 0.035, 0), R=rot(90, 90 * (i % 2), 0))
+    p.solid(torus(0.09, 0.012, seg=24, tube=6, mat="Metal"), (0, 1.0, 0), R=rot(90, 0, 0))
+    return p.build()
+
+
+# consoles génériques (aucune marque, aucun design copié) : boîte avec visuel + console
+@model
+def console_box():
+    m = Model("console_box", uv=1.0)
+    m.add(rbox((1.0, 0.75, 0.28), e=0.04, mat="Main"))
+    m.add(rbox((0.7, 0.42, 0.012), e=0.12, mat="Light"), (-0.05, 0.05, 0.142))
+    m.add(rbox((0.24, 0.5, 0.06), e=0.3, mat="Second"), (-0.05, 0.05, 0.15))      # console dessinée sur la boîte
+    m.add(rbox((1.02, 0.08, 0.29), e=0.1, mat="Accent"), (0, -0.33, 0))
+    m.add(rbox((0.18, 0.1, 0.012), e=0.3, mat="Accent"), (0.36, 0.26, 0.142))
+    return m.finish()
+
+
+@model
+def console_handheld_box():
+    m = Model("console_handheld_box", uv=1.0)
+    m.add(rbox((1.0, 0.55, 0.2), e=0.05, mat="Main"))
+    m.add(rbox((0.56, 0.3, 0.02), e=0.15, mat="Dark"), (0, 0.02, 0.1))
+    m.add(rbox((0.42, 0.22, 0.012), e=0.1, mat="Light"), (0, 0.02, 0.111))
+    for s in (-1, 1): m.add(rbox((0.12, 0.3, 0.03), e=0.4, mat="Second" if s < 0 else "Accent"), (s * 0.34, 0.02, 0.1))
+    return m.finish()
+
+
+LOD_SOURCES = ["plush_bear", "plush_bunny", "plush_cat", "plush_dog", "plush_penguin", "plush_frog", "plush_duck", "plush_unicorn",
+               "plush_dino", "plush_panda", "plush_octopus", "plush_fox", "idol_boy_a", "idol_boy_b", "idol_boy_c", "idol_girl_a",
+               "idol_girl_b", "idol_girl_c", "sweet_gummy", "sweet_donut", "monster_doll", "squishy_bun", "squishy_peach"]
+
+
+def _register_lods():
+    """Versions allégées (LOD) des modèles lisses : utilisées par Unity à distance (téléphone)."""
+    from make_models import MODELS
+    for n in LOD_SOURCES:
+        base = MODELS[n]
+        def _lod(base=base, n=n):
+            old = Plush.default_res; Plush.default_res = 22
+            try:
+                m = base()
+            finally:
+                Plush.default_res = old
+            m.name = n + "_lod"
+            return m
+        _lod.__name__ = n + "_lod"
+        model(_lod)
+
+
+_register_lods()
+
+
 PLUSH = [n for n in ("plush_bear", "plush_bunny", "plush_cat", "plush_dog", "plush_penguin", "plush_frog", "plush_duck",
-                     "plush_unicorn", "plush_dino", "plush_panda", "plush_octopus", "plush_fox", "prize_box")]
+                     "plush_unicorn", "plush_dino", "plush_panda", "plush_octopus", "plush_fox", "prize_box",
+                     "idol_boy_a", "idol_boy_b", "idol_boy_c", "idol_girl_a", "idol_girl_b", "idol_girl_c", "kpop_lightstick", "kpop_album",
+                     "sweet_lollipop", "sweet_chocolate", "sweet_soda", "sweet_gummy", "sweet_donut",
+                     "monster_doll", "squishy_bun", "squishy_peach", "keychain_star", "keychain_heart", "console_box", "console_handheld_box")]
 
 if __name__ == "__main__":
     from make_models import MODELS
     from PIL import Image, ImageDraw
-    PAL = {"Main": (200, 140, 90), "Light": (245, 230, 210), "Second": (120, 80, 50), "Dark": (40, 30, 30), "Eye": (15, 15, 20),
+    PAL = {"Metal": (200, 200, 210), "Main": (200, 140, 90), "Light": (245, 230, 210), "Second": (120, 80, 50), "Dark": (40, 30, 30), "Eye": (15, 15, 20),
            "Accent": (255, 160, 40), "Tag": (250, 250, 250)}
-    W = 320; cols = 5; rows = math.ceil(len(PLUSH) / cols)
+    W = 260; cols = 6; rows = math.ceil(len(PLUSH) / cols)
     img = Image.new("RGB", (cols * W, rows * W), (24, 24, 36))
     for n, name in enumerate(PLUSH):
         mdl = MODELS[name]()

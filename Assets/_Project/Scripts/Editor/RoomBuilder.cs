@@ -13,7 +13,7 @@ namespace ArcadeEmpire.EditorTools
 {
     /// <summary>
     /// Génère la première salle d'arcade (rétro années 80) avec des PRIMITIVES Unity (modèles provisoires :
-    /// aucun modèle 3D final n'est importé à ce stade). Dimensions : 12 x 10 m, hauteur 3,5 m.
+    /// aucun modèle 3D final n'est importé à ce stade). Dimensions : 22 x 16 m, hauteur 4,2 m.
     /// Scène produite : Assets/_Project/Scenes/ArcadeRoom.unity.
     /// </summary>
     public static class RoomBuilder
@@ -21,7 +21,7 @@ namespace ArcadeEmpire.EditorTools
         public const string ScenePath = "Assets/_Project/Scenes/ArcadeRoom.unity";
         const string MatDir = "Assets/_Project/Materials";
 
-        const float W = 12f, D = 10f, H = 3.5f;
+        const float W = 22f, D = 16f, H = 4.2f;
 
         [MenuItem("ArcadeEmpire/Générer la salle d'arcade")]
         public static void Build()
@@ -71,16 +71,22 @@ namespace ArcadeEmpire.EditorTools
             Tag(Box("Neon_Front", neons, new Vector3(0, H - 0.2f, -D / 2 + 0.15f), new Vector3(W - 0.4f, 0.08f, 0.08f), neonCyan, false), RoomThemeTarget.Role.NeonB);
             Tag(Box("Neon_Left", neons, new Vector3(-W / 2 + 0.15f, H - 0.2f, 0), new Vector3(0.08f, 0.08f, D - 0.4f), neonCyan, false), RoomThemeTarget.Role.NeonB);
             Tag(Box("Neon_Right", neons, new Vector3(W / 2 - 0.15f, H - 0.2f, 0), new Vector3(0.08f, 0.08f, D - 0.4f), neonPink, false), RoomThemeTarget.Role.NeonA);
-            Tag(Box("Sign_Arcade", neons, new Vector3(0, 2.4f, D / 2 - 0.15f), new Vector3(4f, 0.6f, 0.1f), neonYellow, false), RoomThemeTarget.Role.NeonAccent);
+            Tag(Box("Sign_Arcade", neons, new Vector3(0, 3.4f, D / 2 - 0.15f), new Vector3(5f, 0.5f, 0.1f), neonYellow, false), RoomThemeTarget.Role.NeonAccent);
 
-            // Éclairage : lumières ponctuelles colorées + faible lumière d'ambiance
+            // Éclairage réaliste : dalles lumineuses blanches au plafond (grille) + quelques lumières colorées d'ambiance
             var lights = Group("Lights", root);
-            Tag(PointLight("Light_Pink", lights, new Vector3(-3.5f, 3f, 2f), new Color(1f, 0.2f, 0.65f), 6f), RoomThemeTarget.Role.LightA);
-            Tag(PointLight("Light_Cyan", lights, new Vector3(3.5f, 3f, 2f), new Color(0.2f, 0.9f, 1f), 6f), RoomThemeTarget.Role.LightB);
-            Tag(PointLight("Light_Pink2", lights, new Vector3(3.5f, 3f, -2.5f), new Color(1f, 0.2f, 0.65f), 6f), RoomThemeTarget.Role.LightA);
-            Tag(PointLight("Light_Cyan2", lights, new Vector3(-3.5f, 3f, -2.5f), new Color(0.2f, 0.9f, 1f), 6f), RoomThemeTarget.Role.LightB);
+            var panel = Neon("Ceiling_Panel", new Color(1f, 0.97f, 0.9f));
+            int li = 0;
+            for (float lx = -7.5f; lx <= 7.6f; lx += 5f)
+                for (float lz = -5f; lz <= 5.1f; lz += 5f)
+                {
+                    Box("Panel", lights, new Vector3(lx, H - 0.02f, lz), new Vector3(1.2f, 0.03f, 1.2f), panel, false);
+                    PointLight("Light_White_" + li++, lights, new Vector3(lx, H - 0.35f, lz), new Color(1f, 0.95f, 0.88f), 7.5f).intensity = 2.6f;   // blanc fixe (non recoloré par les thèmes)
+                }
+            Tag(PointLight("Light_Pink", lights, new Vector3(-9f, 2.6f, 5.5f), new Color(1f, 0.25f, 0.7f), 6f), RoomThemeTarget.Role.LightA);
+            Tag(PointLight("Light_Cyan", lights, new Vector3(9f, 2.6f, 5.5f), new Color(0.25f, 0.9f, 1f), 6f), RoomThemeTarget.Role.LightB);
             RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.10f, 0.09f, 0.16f);
+            RenderSettings.ambientLight = new Color(0.2f, 0.19f, 0.25f);
 
             // Machines et décorations : prefabs placés à l'exécution par BuildingManager (disposition sauvegardée)
             ClawMachineBuilder.EnsurePrefab();
@@ -100,7 +106,7 @@ namespace ArcadeEmpire.EditorTools
             // Point d'apparition du joueur
             var spawn = new GameObject("PlayerSpawn");
             spawn.transform.SetParent(root, false);
-            spawn.transform.position = new Vector3(0, 0, -1f);
+            spawn.transform.position = new Vector3(0, 0, -5f);
 
             // Joueur provisoire (capsule) + caméra 3e personne + post-traitement (bloom des néons)
             var player = BuildPlayer(spawn.transform.position);

@@ -19,10 +19,23 @@ namespace ArcadeEmpire.Building
         public enum PlaceResult { Ok, Invalid, NotEnoughCoins, LevelTooLow, NoPrefab }
 
         public const float Grid = 0.5f;
+        public const int LayoutVersion = 2;
+
+        /// <summary>Machines installées d'office : 4 pinces au fond, 3 coin pushers à gauche (face vers le centre).</summary>
+        public static readonly (string id, Vector3 pos, float rotY)[] DefaultLayout =
+        {
+            ("claw_classic", new Vector3(-4.5f, 0f, 6.6f), 0f),
+            ("claw_kpop", new Vector3(-1.5f, 0f, 6.6f), 0f),
+            ("claw_sweets", new Vector3(1.5f, 0f, 6.6f), 0f),
+            ("claw_toys", new Vector3(4.5f, 0f, 6.6f), 0f),
+            ("coin_pusher", new Vector3(-9.8f, 0f, 3.6f), 270f),
+            ("coin_pusher_ocean", new Vector3(-9.8f, 0f, 0f), 270f),
+            ("coin_pusher_royal", new Vector3(-9.8f, 0f, -3.6f), 270f),
+        };
 
         [SerializeField] private MachineCatalog catalog;
         [Tooltip("Demi-dimensions utilisables de la salle (x, z), murs exclus.")]
-        [SerializeField] private Vector2 roomHalfSize = new Vector2(5.8f, 4.8f);
+        [SerializeField] private Vector2 roomHalfSize = new Vector2(10.8f, 7.8f);
 
         private readonly List<PlacedObject> placed = new List<PlacedObject>();
         private SaveData fallback;
@@ -49,12 +62,14 @@ namespace ArcadeEmpire.Building
             player = FindFirstObjectByType<PlayerController>();
             SaveData data = Data;
 
-            // Première partie : disposition de départ (une pince et un coin pusher)
-            if (!data.layoutInitialized)
+            // Disposition de départ : la grande salle est livrée complète (toutes les machines installées, rien à acheter).
+            // Une ancienne sauvegarde (petite salle) est migrée vers cette disposition.
+            if (!data.layoutInitialized || data.layoutVersion < LayoutVersion)
             {
                 data.layoutInitialized = true;
-                AddEntry(data, "claw_classic", new Vector3(-1.5f, 0f, 3.6f), 0f);
-                AddEntry(data, "coin_pusher", new Vector3(3f, 0f, -3.6f), 180f);
+                data.layoutVersion = LayoutVersion;
+                data.placedMachines.Clear();
+                foreach (var (id, pos, rot) in DefaultLayout) AddEntry(data, id, pos, rot);
             }
 
             foreach (PlacedMachineData entry in data.placedMachines.ToArray())
