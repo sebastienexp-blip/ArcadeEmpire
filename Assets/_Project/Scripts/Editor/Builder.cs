@@ -54,11 +54,20 @@ namespace ArcadeEmpire.EditorTools
                     // La clé vient des secrets GitHub (ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASS), jamais du dépôt.
                     string b64 = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_BASE64");
                     string pw = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS");
-                    if (!string.IsNullOrEmpty(b64) && !string.IsNullOrEmpty(pw))
+                    byte[] ksBytes = null;
+                    if (!string.IsNullOrEmpty(b64))
                     {
+                        // tolère les espaces / retours à la ligne ajoutés au copier-coller depuis le téléphone
+                        string clean = new string(b64.Where(ch => !char.IsWhiteSpace(ch)).ToArray());
+                        try { ksBytes = Convert.FromBase64String(clean); }
+                        catch (FormatException) { rep.AppendLine($"- ⚠️ Secret ANDROID_KEYSTORE_BASE64 invalide ({clean.Length} caractères) : clé de débogage utilisée à la place"); }
+                    }
+                    if (ksBytes != null && !string.IsNullOrEmpty(pw))
+                    {
+                        pw = pw.Trim();
                         string ks = Path.GetFullPath("Temp/arcadeempire.keystore");
                         Directory.CreateDirectory(Path.GetDirectoryName(ks));
-                        File.WriteAllBytes(ks, Convert.FromBase64String(b64.Trim()));
+                        File.WriteAllBytes(ks, ksBytes);
                         string alias = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME");
                         PlayerSettings.Android.useCustomKeystore = true;
                         PlayerSettings.Android.keystoreName = ks;
