@@ -124,22 +124,7 @@ namespace ArcadeEmpire.Machines.Games
         }
     }
 
-    /// <summary>Marque un ballon pour ne compter qu'un seul panier par tir.</summary>
-    public class BasketBall : MonoBehaviour
-    {
-        public bool Scored;
-    }
 
-    /// <summary>Zone d'anneau : prévient la machine quand un ballon la traverse.</summary>
-    public class BasketHoopZone : MonoBehaviour
-    {
-        [SerializeField] private BasketballMachine machine;
-        public void Configure(BasketballMachine m) => machine = m;
 
-        private void OnTriggerEnter(Collider other)
-        {
-            if (machine != null && other.attachedRigidbody != null && other.GetComponent<BasketBall>() != null)
-                machine.RegisterBasket(other.attachedRigidbody);
-        }
-    }
+
 }
