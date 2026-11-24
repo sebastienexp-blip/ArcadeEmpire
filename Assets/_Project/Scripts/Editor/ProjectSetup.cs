@@ -160,7 +160,8 @@ namespace ArcadeEmpire.EditorTools
 
         public static void EnsureFolder(string path)
         {
-            if (!Directory.Exists(path)) Directory.CreateDirectory(path);
+            if (Directory.Exists(path)) return;
+            Directory.CreateDirectory(path);
             AssetDatabase.Refresh();
         }
     }
