@@ -234,7 +234,7 @@ namespace ArcadeEmpire.EditorTools
             };
             foreach (var b in bonusPlan) reserve(b.Item1, 0.0525f);
             foreach (var pz in prizePlan) reserve(pz.Item2, pz.Item3 * 0.55f);
-            foreach (var t in tokenPlan) reserve(t.Item1, t.Item3 * 0.5f);
+            foreach (var tk in tokenPlan) reserve(tk.Item1, tk.Item3 * 0.5f);
             foreach (var bl in billPlan) reserve(bl.Item1, 0.066f);
             var ballPlan = new[] { new Vector3(-0.05f, plateTop + 0.036f, -0.08f), new Vector3(0.42f, plateTop + 0.036f, -0.08f) };
             foreach (var bp in ballPlan) reserve(bp, 0.035f);
@@ -276,7 +276,7 @@ namespace ArcadeEmpire.EditorTools
                         BuildCoin("Coin_" + index, coins, p, yaw, rnd.NextDouble() < 0.2 ? coinMatLight : coinMat, CoinD, CoinT, null);
                     }
 
-            foreach (var t in tokenPlan) BuildCoin("Token_" + (++index), coins, t.Item1, (float)(rnd.NextDouble() * 360.0), t.Item2, t.Item3, 0.01f, t.Item4);
+            foreach (var tk in tokenPlan) BuildCoin("Token_" + (++index), coins, tk.Item1, (float)(rnd.NextDouble() * 360.0), tk.Item2, tk.Item3, 0.01f, tk.Item4);
             foreach (var bl in billPlan) BillAt(coins, "Bill_" + (++index), bl.Item1, (float)(rnd.NextDouble() * 360.0), bl.Item2, bl.Item3);
             foreach (var b in bonusPlan) BonusAt(coins, "Bonus_" + b.Item2 + "_" + (++index), b.Item1, b.Item2, b.Item3);
             foreach (var pz in prizePlan) PrizeAt(coins, pz.Item1, pz.Item2, pz.Item3);
