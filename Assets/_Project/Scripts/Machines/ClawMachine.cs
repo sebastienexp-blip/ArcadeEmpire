@@ -156,8 +156,8 @@ namespace ArcadeEmpire.Machines
                 s.rolloffMode = AudioRolloffMode.Linear; s.dopplerLevel = 0f;
                 voices[i] = s;
             }
-            motorA = MakeMotor("MotorXZ", PusherAudio.Get(PusherAudio.Id.Motor), 1.5f);
-            motorB = MakeMotor("MotorY", ClawAudio.Get(ClawAudio.Id.Whine), 1f);
+            motorA = MakeMotor("MotorXZ", ClawAudio.Get(ClawAudio.Id.Whine), 1.15f);
+            motorB = MakeMotor("MotorY", ClawAudio.Get(ClawAudio.Id.Whine), 0.85f);
         }
 
         private AudioSource MakeMotor(string name, AudioClip clip, float pitch)
@@ -521,6 +521,7 @@ namespace ArcadeEmpire.Machines
             headVel = Vector2.zero;
 
             StatusText = "Descente…";
+            ArcadeEmpire.Core.SoundBank.PlayAt("claw_drop", transform.position + Vector3.up * 1.6f, 0.55f);
             yield return DescendUntilContact();
 
             StatusText = "Prise…";

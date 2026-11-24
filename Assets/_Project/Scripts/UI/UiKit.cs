@@ -234,6 +234,7 @@ namespace ArcadeEmpire.UI
             b.colors = cb;
             b.interactable = interactable;
             if (onClick != null) b.onClick.AddListener(onClick);
+            b.onClick.AddListener(() => ArcadeEmpire.Core.SoundBank.Play2D("ui_click", 0.55f));
             var le = go.GetComponent<LayoutElement>();
             le.minWidth = le.preferredWidth = width; le.minHeight = le.preferredHeight = height;
 

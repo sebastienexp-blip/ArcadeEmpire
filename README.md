@@ -23,6 +23,7 @@ Jeu Unity 3D de gestion de salle d'arcade (machines à pinces, coin pusher, mini
 - [x] Vitrine des lots (comptoir) : lots en tickets, meubles, gros lots sous cadenas (tickets + clés dorées) ; comptoir de rachat (revente, doublons) ; clés dorées gagnées avec les balles du coin pusher, les lots épiques et au hasard
 - [x] Maison du joueur (téléporteur au fond de la salle) : salon, cuisine, chambre, salle de jeux ; 20 meubles obtenus comme lots (vitrine ou carton surprise à 6 % par gain) qui s'installent seuls ; étagères qui exposent les lots gagnés
 - [x] Personnage refait (surfaces lisses, `make_player.py`) ; interface refaite : joystick analogique, boutons d'action ronds contextuels, menus plein écran en cartes avec vignettes 3D des lots
+- [x] Sons réalistes générés avec ElevenLabs (`Assets/_Project/Resources/Audio`, chargés par `SoundBank`) : pièces, pince, coin pusher, roue, jackpot, interface, achats, clés, niveau, téléporteur, pas, ambiance de salle, musique lofi de la maison
 - [ ] Phase 10 (en cours) : sauvegarde validée à la lecture, musique d'ambiance générée (M musique on/off, - et + volume), optimisations, 10 succès (onglet Missions), HUD, boutique et inventaire en Canvas (UGUI) ; seul le mode construction reste en IMGUI. Mouvement avec inertie, caméra amortie (recentrage, FOV, pincement), animation de marche procédurale plus fidèle. Commandes tactiles (Android) : croix + boutons qui simulent le clavier (TouchControls)
 - [ ] Phase 10 : optimisation, tests, finition
 

@@ -56,6 +56,7 @@ namespace ArcadeEmpire.UI
             message = "";
             if (player != null) player.ControlEnabled = !value;
             canvas.gameObject.SetActive(value);
+            ArcadeEmpire.Core.SoundBank.Play2D("ui_open", value ? 0.5f : 0.3f, value ? 1f : 1.25f);
             if (value) Rebuild();
         }
 
@@ -88,7 +89,7 @@ namespace ArcadeEmpire.UI
         {
             var inv = InventoryManager.Instance;
             if (inv == null || amount <= 0) return;
-            if (inv.Sell(r, amount)) message = $"Vendu {amount} x {r.displayName} : +{r.SellValue * amount} pièces.";
+            if (inv.Sell(r, amount)) { message = $"Vendu {amount} x {r.displayName} : +{r.SellValue * amount} pièces."; ArcadeEmpire.Core.SoundBank.Play2D("sell", 0.7f); }
         }
 
         private void SellAllDuplicates()
@@ -103,6 +104,7 @@ namespace ArcadeEmpire.UI
                 if (extra > 0 && inv.Sell(r, extra)) { gain += r.SellValue * extra; items += extra; }
             }
             message = items > 0 ? $"{items} doublons vendus : +{gain:N0} pièces." : "Aucun doublon à vendre.";
+            if (items > 0) ArcadeEmpire.Core.SoundBank.Play2D("sell", 0.8f);
             Rebuild();
         }
     }

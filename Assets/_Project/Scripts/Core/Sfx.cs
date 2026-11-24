@@ -24,6 +24,9 @@ namespace ArcadeEmpire.Core
         {
             int i = (int)kind;
             if (cache[i] != null) return cache[i];
+            string file = kind == Kind.Coin ? "coin_insert" : kind == Kind.Grab ? "claw_grab" : kind == Kind.Drop ? "prize_fall" : kind == Kind.Win ? "win" : "miss";
+            var real = SoundBank.Get(file);
+            if (real != null) return cache[i] = real;
             switch (kind)
             {
                 case Kind.Coin:

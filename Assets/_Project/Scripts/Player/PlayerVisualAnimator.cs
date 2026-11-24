@@ -13,6 +13,7 @@ namespace ArcadeEmpire.Player
         [SerializeField] private Transform armLeft, armRight, legLeft, legRight, body;
         private Transform head, foreL, foreR, shinL, shinR;
         private float idleTimer, idleAction, idleActionT = -1f;
+        private int lastStep;
         private PlayerController pc;
         private MachineInteractor interactor;
 
@@ -59,6 +60,9 @@ namespace ArcadeEmpire.Player
             float step = Mathf.Lerp(0.62f, 0.95f, run01);
             phase += Mathf.PI * speed / step * dt;
             if (phase > 1000f) phase -= 1000f * 1f;
+            // bruits de pas : un pas à chaque demi-cycle (pied posé)
+            int stepIdx = Mathf.FloorToInt(phase / Mathf.PI);
+            if (stepIdx != lastStep) { lastStep = stepIdx; if (amount > 0.4f && pc.IsGrounded) ArcadeEmpire.Core.SoundBank.PlayAt("footstep", transform.position, Mathf.Lerp(0.25f, 0.45f, run01), Random.Range(0.9f, 1.12f)); }
 
             float swing = Mathf.Lerp(24f, 48f, run01) * amount;
             float s = Mathf.Sin(phase) * swing;

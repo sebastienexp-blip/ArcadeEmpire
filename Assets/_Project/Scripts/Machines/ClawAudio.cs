@@ -15,6 +15,10 @@ namespace ArcadeEmpire.Machines
         {
             int i = (int)id;
             if (cache[i] != null) return cache[i];
+            // sons réalistes (ElevenLabs) quand ils existent
+            string file = id == Id.Whine ? "claw_motor" : id == Id.Grip ? "claw_grab" : id == Id.Plush ? "prize_fall" : id == Id.Fanfare ? "win" : id == Id.Fail ? "miss" : null;
+            var real = ArcadeEmpire.Core.SoundBank.Get(file);
+            if (real != null) return cache[i] = real;
             var rng = new System.Random(300 + i);
             switch (id)
             {

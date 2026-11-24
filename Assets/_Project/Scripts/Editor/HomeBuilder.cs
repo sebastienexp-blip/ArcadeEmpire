@@ -140,8 +140,7 @@ namespace ArcadeEmpire.EditorTools
             foreach (var (pos, size) in new[] {
                 (new Vector3(-6.4f, 1.6f, -D / 2 + 0.11f), new Vector3(1.4f, 1.1f, 0.02f)), (new Vector3(1.6f, 1.6f, -D / 2 + 0.11f), new Vector3(1.2f, 1.0f, 0.02f)),
                 (new Vector3(7.2f, 1.6f, -D / 2 + 0.11f), new Vector3(0.9f, 1.0f, 0.02f)), (new Vector3(-W / 2 + 0.11f, 1.6f, 4.6f), new Vector3(0.02f, 1.1f, 1.4f)),
-                (new Vector3(-W / 2 + 0.11f, 1.9f, -4.8f), new Vector3(0.02f, 0.9f, 1.2f)), (new Vector3(-2.7f, 1.6f, D / 2 - 0.11f), new Vector3(1.4f, 1.1f, 0.02f)),
-                (new Vector3(W / 2 - 0.11f, 1.6f, 4.9f), new Vector3(0.02f, 1.0f, 1.2f)) })
+                (new Vector3(-W / 2 + 0.11f, 1.9f, -4.8f), new Vector3(0.02f, 0.9f, 1.2f)), (new Vector3(-2.7f, 1.6f, D / 2 - 0.11f), new Vector3(1.4f, 1.1f, 0.02f)) })
             {
                 RoomBuilder.Box("Window", root, pos, size, window, false, true);
                 bool alongX = size.x > size.z;
@@ -187,6 +186,7 @@ namespace ArcadeEmpire.EditorTools
                     if (m == null) continue;
                     m.transform.localPosition = pos; m.transform.localRotation = Quaternion.Euler(0f, rot, 0f);
                     if (f.model == "decor_pouf") m.transform.localScale = Vector3.one * 0.9f;
+                    if (f.model == "home_neon") m.transform.localScale = new Vector3(-1f, 1f, 1f);   // texte du néon lisible (l'import FBX inverse X)
                     var b = ModelLib.LocalBounds(m.transform);
                     if (f.model != "home_rug" && f.model != "home_neon")
                     {

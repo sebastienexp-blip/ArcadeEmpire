@@ -625,7 +625,7 @@ namespace ArcadeEmpire.Machines
             bonusMessageUntil = Time.time + 6f;
             mech.Show(5f);
             flash = 1f;
-            PlayVoice(PusherAudio.Id.Payout, transform.TransformPoint(0f, 1.3f, 0.3f), 0.8f);
+            ArcadeEmpire.Core.SoundBank.PlayAt("wheel_spin", transform.TransformPoint(0f, 1.3f, 0.3f), 0.8f);
             mech.SpinWheel(seg, 4.5f, () => { wheelBusy = false; ApplyOutcome((Outcome)seg); if (queuedBallSpins > 0) { queuedBallSpins--; StartCoroutine(DelayedBallSpin()); } });
         }
 
@@ -654,7 +654,9 @@ namespace ArcadeEmpire.Machines
             bonusMessageUntil = Time.time + 4.5f;
             flash = 1f;
             mech.Show(3f);
-            PlayVoice(PusherAudio.Id.Payout, transform.TransformPoint(0f, 1.2f, 0f), 1f);
+            if (o == Outcome.Jackpot) ArcadeEmpire.Core.SoundBank.PlayAt("jackpot", transform.TransformPoint(0f, 1.2f, 0f), 1f);
+            else if (o == Outcome.CoinRain || o == Outcome.BillRain) ArcadeEmpire.Core.SoundBank.PlayAt("coin_cascade", transform.TransformPoint(0f, 1.2f, 0f), 0.9f);
+            else ArcadeEmpire.Core.SoundBank.PlayAt("win", transform.TransformPoint(0f, 1.2f, 0f), 0.8f);
         }
 
         /// <summary>Une balle jackpot est tombée : ascenseur, roue « spéciale balle », puis la balle retombe sur la plaque.</summary>
@@ -667,7 +669,7 @@ namespace ArcadeEmpire.Machines
             StatusText = "BALLE JACKPOT !";
             bonusMessageUntil = Time.time + 3f;
             if (mech != null) mech.Show(4f);
-            PlayVoice(PusherAudio.Id.Payout, ball.transform.position, 1f, 1.2f);
+            ArcadeEmpire.Core.SoundBank.PlayAt("ball_roll", ball.transform.position, 0.9f);
             StartCoroutine(BallLift(ball));
         }
 

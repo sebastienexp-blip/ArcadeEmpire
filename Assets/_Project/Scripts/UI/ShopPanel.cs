@@ -69,6 +69,7 @@ namespace ArcadeEmpire.UI
             if (value && MissionManager.Instance != null) MissionManager.Instance.EnsureToday();
             if (player != null) player.ControlEnabled = !value;
             canvas.gameObject.SetActive(value);
+            ArcadeEmpire.Core.SoundBank.Play2D("ui_open", value ? 0.5f : 0.3f, value ? 1f : 1.25f);
             if (value) Rebuild();
         }
 
@@ -119,7 +120,7 @@ namespace ArcadeEmpire.UI
         {
             switch (ShopManager.Buy(r))
             {
-                case ShopManager.Result.Ok: message = r.furniture ? $"{r.displayName} livré à la maison !" : $"Acheté : {r.displayName} — ajouté à ta collection."; ArcadeEmpire.Core.Sfx.Play(ArcadeEmpire.Core.Sfx.Kind.Win, Camera.main != null ? Camera.main.transform.position : Vector3.zero, 0.5f); break;
+                case ShopManager.Result.Ok: message = r.furniture ? $"{r.displayName} livré à la maison !" : $"Acheté : {r.displayName} — ajouté à ta collection."; ArcadeEmpire.Core.SoundBank.Play2D("buy", 0.8f); break;
                 case ShopManager.Result.LevelTooLow: message = "Niveau insuffisant."; break;
                 case ShopManager.Result.NotEnoughTickets: message = "Pas assez de tickets."; break;
                 case ShopManager.Result.NotEnoughKeys: message = "Il faut plus de clés dorées pour ouvrir ce cadenas."; break;

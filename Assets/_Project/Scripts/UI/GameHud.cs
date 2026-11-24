@@ -168,6 +168,7 @@ namespace ArcadeEmpire.UI
             go.transform.SetParent(parent, false);
             var img = go.GetComponent<Image>(); img.sprite = UiTheme.Circle; img.color = new Color(color.r * 0.35f, color.g * 0.35f, color.b * 0.35f, 0.95f);
             var b = go.GetComponent<Button>(); b.targetGraphic = img; b.onClick.AddListener(onClick);
+            b.onClick.AddListener(() => ArcadeEmpire.Core.SoundBank.Play2D("ui_click", 0.55f));
             var le = go.GetComponent<LayoutElement>(); le.preferredHeight = le.minHeight = 84f; le.preferredWidth = 84f;
             var ring = new GameObject("Ring", typeof(RectTransform), typeof(Image));
             ring.transform.SetParent(go.transform, false);

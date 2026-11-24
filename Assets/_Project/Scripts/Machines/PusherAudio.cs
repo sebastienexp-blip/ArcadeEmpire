@@ -15,6 +15,9 @@ namespace ArcadeEmpire.Machines
         {
             int i = (int)id;
             if (cache[i] != null) return cache[i];
+            string file = id == Id.Insert ? "coin_insert" : id == Id.Payout ? "coin_drop" : id == Id.Motor ? "pusher_motor" : null;
+            var real = ArcadeEmpire.Core.SoundBank.Get(file);
+            if (real != null) return cache[i] = real;
             var rng = new System.Random(100 + i);
             switch (id)
             {

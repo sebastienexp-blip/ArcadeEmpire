@@ -68,6 +68,7 @@ namespace ArcadeEmpire.UI
             message = "";
             if (player != null) player.ControlEnabled = !value;
             canvas.gameObject.SetActive(value);
+            ArcadeEmpire.Core.SoundBank.Play2D("ui_open", value ? 0.5f : 0.3f, value ? 1f : 1.25f);
             if (value) Rebuild();
         }
 

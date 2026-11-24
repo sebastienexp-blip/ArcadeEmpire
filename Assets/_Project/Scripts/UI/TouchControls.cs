@@ -141,7 +141,7 @@ namespace ArcadeEmpire.UI
         /// <summary>Petit effet d'enfoncement du bouton.</summary>
         private sealed class PressScale : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
         {
-            public void OnPointerDown(PointerEventData e) => transform.localScale = Vector3.one * 0.9f;
+            public void OnPointerDown(PointerEventData e) { transform.localScale = Vector3.one * 0.9f; ArcadeEmpire.Core.SoundBank.Play2D("ui_click", 0.35f); }
             public void OnPointerUp(PointerEventData e) => transform.localScale = Vector3.one;
             private void OnDisable() => transform.localScale = Vector3.one;
         }

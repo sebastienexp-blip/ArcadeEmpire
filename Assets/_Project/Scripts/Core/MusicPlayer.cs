@@ -13,7 +13,7 @@ namespace ArcadeEmpire.Core
         private const int Rate = 32000;
         private const float Bpm = 118f;
 
-        private AudioSource source;
+        private AudioSource source, home;
         private bool muted;
         private float hudUntil;
         private string hud = "";
@@ -36,6 +36,13 @@ namespace ArcadeEmpire.Core
             source.playOnAwake = false;
             source.volume = GameAudio.EffectiveMusic * 0.6f;
             source.Play();
+            var lofi = SoundBank.Get("music_home");   // musique lofi de la maison (ElevenLabs)
+            if (lofi != null)
+            {
+                home = gameObject.AddComponent<AudioSource>();
+                home.clip = lofi; home.loop = true; home.spatialBlend = 0f; home.playOnAwake = false; home.volume = 0f;
+                home.Play();
+            }
         }
 
         private void Update()
@@ -47,7 +54,10 @@ namespace ArcadeEmpire.Core
                 if (kb.minusKey.wasPressedThisFrame || kb.numpadMinusKey.wasPressedThisFrame) { GameAudio.Master -= 0.1f; Show($"Volume {Mathf.RoundToInt(GameAudio.Master * 100)} %"); }
                 if (kb.equalsKey.wasPressedThisFrame || kb.numpadPlusKey.wasPressedThisFrame) { GameAudio.Master += 0.1f; Show($"Volume {Mathf.RoundToInt(GameAudio.Master * 100)} %"); }
             }
-            if (source != null) source.volume = muted ? 0f : GameAudio.EffectiveMusic * 0.6f;
+            bool atHome = home != null && GameSounds.AtHome;
+            float k = Time.unscaledDeltaTime * 0.6f;
+            if (source != null) source.volume = Mathf.MoveTowards(source.volume, muted || atHome ? 0f : GameAudio.EffectiveMusic * 0.6f, k);
+            if (home != null) home.volume = Mathf.MoveTowards(home.volume, muted || !atHome ? 0f : GameAudio.EffectiveMusic * 0.75f, k);
         }
 
         private void Show(string text) { hud = text; hudUntil = Time.unscaledTime + 1.5f; }
