@@ -641,20 +641,11 @@ namespace ArcadeEmpire.EditorTools
         static void PrizeAt(Transform parent, string id, Vector3 pos, float size)
         {
             RewardData reward = ClawMachineBuilder.GetReward(id);
-            if (reward == null || !ClawMachineBuilder.GetPrizeLook(id, out string model, out Color color, out Rarity rarity)) return;
-            var mat = RoomBuilder.Mat("Prize_" + id, color, 0.35f);
-            var visual = ModelLib.Spawn(model, null, ModelLib.Palette(mat));
-            if (visual == null) return;
-            var go = new GameObject("Prize_" + id);
-            go.transform.SetParent(parent, false);
-            visual.transform.SetParent(go.transform, false);
-            var raw = ModelLib.LocalBounds(go.transform);
-            float u = size / Mathf.Max(raw.size.x, raw.size.y, raw.size.z);
-            go.transform.localScale = new Vector3(u, u, u);
-            var b = ModelLib.LocalBounds(go.transform);
-            var bc = go.AddComponent<BoxCollider>(); bc.center = b.center; bc.size = b.size * 0.85f;
+            if (reward == null) return;
+            var go = ClawMachineBuilder.CreatePrize(id, parent, size);   // même modèle réaliste que dans la pince (peluche, matières, colliders)
+            if (go == null) return;
             go.transform.localPosition = pos;
-            go.transform.localRotation = Quaternion.Euler(0f, 30f, 0f);
+            go.transform.localRotation = Quaternion.Euler(0f, 160f, 0f);   // face au joueur
             var rb = go.AddComponent<Rigidbody>();
             rb.mass = 0.06f; rb.linearDamping = 0.1f; rb.angularDamping = 0.4f;
             rb.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;

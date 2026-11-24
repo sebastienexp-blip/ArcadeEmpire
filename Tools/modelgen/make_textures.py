@@ -309,3 +309,12 @@ for k in (1, 2):
     dash = ((yy[:, cx - 4:cx + 4] // 64) % 2 == 0)
     img[:, cx - 4:cx + 4] = np.where(dash[..., None], [0.92, 0.92, 0.85], img[:, cx - 4:cx + 4])
 Image.fromarray((np.clip(img, 0, 1) * 255).astype(np.uint8)).save(os.path.join(OUT, "road_screen.png"))
+
+
+# --- Fourrure de peluche (minky) : fibres fines orientées + touffes douces, quasi blanc (teinté par le matériau)
+fib = fft_noise(N, 0.35, 41)
+strands = np.mean([np.roll(fft_noise(N, 0.5, 42 + k), k * 3, 0) for k in range(4)], axis=0)
+tufts = fft_noise(N, 2.2, 47)
+h = 0.45 * fib + 0.35 * strands + 0.2 * tufts
+alb = 0.8 + 0.2 * (0.6 * tufts + 0.4 * fib)
+save("plush", gray(alb), h, 5.0)

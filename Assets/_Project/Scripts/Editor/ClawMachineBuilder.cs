@@ -21,20 +21,48 @@ namespace ArcadeEmpire.EditorTools
         {
             public string id, name; public Rarity rarity; public PrimitiveType shape;
             public string model; public float mass; public Color color; public Vector3 scale; public int count, tickets; public long xp; public bool glow;
+            // peluches réalistes : couleurs des zones (ventre/museau, 2e couleur, bec/corne) et taille (plus grande dimension, m)
+            public Color light = new Color(0.97f, 0.94f, 0.9f), second = new Color(0.35f, 0.22f, 0.15f), accent = new Color(1f, 0.6f, 0.15f);
+            public float size; public bool plush;
+        }
+
+        static PrizeSpec P(string id, string name, string model, Rarity r, Color main, int count, int tickets, long xp, float size, float mass,
+            Color? light = null, Color? second = null, Color? accent = null)
+        {
+            var s = new PrizeSpec { id = id, name = name, model = model, rarity = r, color = main, count = count, tickets = tickets, xp = xp, size = size, mass = mass,
+                plush = model.StartsWith("plush_"), shape = PrimitiveType.Sphere, scale = new Vector3(size, size, size) / 1.25f };
+            if (light.HasValue) s.light = light.Value;
+            if (second.HasValue) s.second = second.Value;
+            if (accent.HasValue) s.accent = accent.Value;
+            return s;
         }
 
         static readonly PrizeSpec[] Specs =
         {
-            new PrizeSpec { id = "plush_pink", model = "prize_bunny", name = "Peluche rose", rarity = Rarity.Common, mass = 0.12f, shape = PrimitiveType.Sphere, color = new Color(1f, 0.45f, 0.7f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
-            new PrizeSpec { id = "plush_blue", model = "prize_bear", name = "Peluche bleue", rarity = Rarity.Common, mass = 0.12f, shape = PrimitiveType.Sphere, color = new Color(0.35f, 0.6f, 1f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 4, tickets = 1, xp = 5 },
-            new PrizeSpec { id = "mini_toy_green", model = "prize_robot", name = "Mini-jouet vert", rarity = Rarity.Rare, mass = 0.17f, shape = PrimitiveType.Cube, color = new Color(0.2f, 0.9f, 0.4f), scale = new Vector3(0.22f, 0.22f, 0.22f), count = 4, tickets = 5, xp = 15 },
-            new PrizeSpec { id = "capsule_purple", model = "prize_capsule", name = "Capsule surprise", rarity = Rarity.Epic, mass = 0.24f, shape = PrimitiveType.Capsule, color = new Color(0.7f, 0.3f, 1f), scale = new Vector3(0.17f, 0.14f, 0.17f), count = 2, tickets = 15, xp = 40 },
-            new PrizeSpec { id = "figurine_gold", model = "prize_cat_gold", name = "Figurine dorée", rarity = Rarity.Legendary, mass = 0.34f, shape = PrimitiveType.Cube, color = new Color(1f, 0.8f, 0.15f), scale = new Vector3(0.2f, 0.26f, 0.2f), count = 1, tickets = 50, xp = 120, glow = true },
-            new PrizeSpec { id = "plush_green", model = "prize_bunny", name = "Peluche verte", rarity = Rarity.Common, mass = 0.12f, shape = PrimitiveType.Sphere, color = new Color(0.4f, 0.9f, 0.4f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 0, tickets = 1, xp = 5 },
-            new PrizeSpec { id = "plush_yellow", model = "prize_bear", name = "Peluche jaune", rarity = Rarity.Common, mass = 0.12f, shape = PrimitiveType.Sphere, color = new Color(1f, 0.85f, 0.25f), scale = new Vector3(0.24f, 0.24f, 0.24f), count = 0, tickets = 1, xp = 5 },
-            new PrizeSpec { id = "mini_toy_pink", model = "prize_robot", name = "Mini-jouet rose", rarity = Rarity.Rare, mass = 0.17f, shape = PrimitiveType.Cube, color = new Color(1f, 0.4f, 0.75f), scale = new Vector3(0.22f, 0.22f, 0.22f), count = 0, tickets = 5, xp = 15 },
-            new PrizeSpec { id = "capsule_cyan", model = "prize_capsule", name = "Capsule turquoise", rarity = Rarity.Epic, mass = 0.24f, shape = PrimitiveType.Capsule, color = new Color(0.2f, 0.9f, 1f), scale = new Vector3(0.17f, 0.14f, 0.17f), count = 0, tickets = 15, xp = 40, glow = true },
-            new PrizeSpec { id = "figurine_silver", model = "prize_cat_gold", name = "Figurine argentée", rarity = Rarity.Epic, mass = 0.34f, shape = PrimitiveType.Cube, color = new Color(0.8f, 0.85f, 0.95f), scale = new Vector3(0.2f, 0.26f, 0.2f), count = 0, tickets = 30, xp = 80, glow = true },
+            // --- peluches communes (les ids historiques restent valables pour le pousse-pièces)
+            P("plush_pink", "Lapin rose", "plush_bunny", Rarity.Common, new Color(1f, 0.62f, 0.78f), 3, 1, 5, 0.27f, 0.11f, new Color(1f, 0.93f, 0.95f)),
+            P("plush_blue", "Ourson bleu", "plush_bear", Rarity.Common, new Color(0.45f, 0.62f, 0.95f), 3, 1, 5, 0.26f, 0.12f, new Color(0.95f, 0.96f, 1f)),
+            P("plush_brown", "Ourson brun", "plush_bear", Rarity.Common, new Color(0.55f, 0.36f, 0.22f), 3, 1, 5, 0.26f, 0.12f, new Color(0.93f, 0.84f, 0.7f)),
+            P("plush_cat", "Chat roux", "plush_cat", Rarity.Common, new Color(0.95f, 0.62f, 0.3f), 3, 1, 5, 0.26f, 0.12f, new Color(1f, 0.95f, 0.88f), new Color(0.78f, 0.42f, 0.16f)),
+            P("plush_dog", "Chiot", "plush_dog", Rarity.Common, new Color(0.96f, 0.9f, 0.78f), 3, 1, 5, 0.26f, 0.12f, Color.white, new Color(0.55f, 0.38f, 0.25f)),
+            P("plush_yellow", "Canard", "plush_duck", Rarity.Common, new Color(1f, 0.86f, 0.25f), 3, 1, 5, 0.25f, 0.11f, null, null, new Color(1f, 0.55f, 0.1f)),
+            P("plush_green", "Grenouille", "plush_frog", Rarity.Common, new Color(0.4f, 0.78f, 0.3f), 3, 1, 5, 0.27f, 0.12f, new Color(0.88f, 0.96f, 0.68f)),
+            // --- rares
+            P("plush_penguin", "Pingouin", "plush_penguin", Rarity.Rare, new Color(0.15f, 0.17f, 0.24f), 2, 5, 15, 0.28f, 0.13f, Color.white, null, new Color(1f, 0.6f, 0.12f)),
+            P("plush_panda", "Panda", "plush_panda", Rarity.Rare, new Color(0.97f, 0.97f, 0.95f), 2, 5, 15, 0.28f, 0.13f, Color.white, new Color(0.1f, 0.1f, 0.12f)),
+            P("plush_fox", "Renard", "plush_fox", Rarity.Rare, new Color(0.95f, 0.45f, 0.15f), 2, 5, 15, 0.28f, 0.13f, Color.white),
+            P("plush_octopus", "Pieuvre", "plush_octopus", Rarity.Rare, new Color(0.75f, 0.45f, 0.9f), 2, 5, 15, 0.28f, 0.13f, null, new Color(1f, 0.5f, 0.6f)),
+            new PrizeSpec { id = "mini_toy_green", model = "prize_robot", name = "Mini-robot vert", rarity = Rarity.Rare, mass = 0.17f, shape = PrimitiveType.Cube, color = new Color(0.2f, 0.9f, 0.4f), scale = new Vector3(0.2f, 0.2f, 0.2f), count = 1, tickets = 5, xp = 15 },
+            new PrizeSpec { id = "mini_toy_pink", model = "prize_robot", name = "Mini-robot rose", rarity = Rarity.Rare, mass = 0.17f, shape = PrimitiveType.Cube, color = new Color(1f, 0.4f, 0.75f), scale = new Vector3(0.2f, 0.2f, 0.2f), count = 1, tickets = 5, xp = 15 },
+            // --- épiques
+            P("plush_unicorn", "Licorne", "plush_unicorn", Rarity.Epic, new Color(0.98f, 0.96f, 1f), 1, 15, 40, 0.3f, 0.14f, new Color(1f, 0.9f, 0.95f), new Color(0.78f, 0.62f, 1f), new Color(1f, 0.82f, 0.3f)),
+            P("plush_dino", "Dino", "plush_dino", Rarity.Epic, new Color(0.35f, 0.75f, 0.45f), 1, 15, 40, 0.32f, 0.14f, new Color(0.9f, 0.95f, 0.7f), new Color(1f, 0.6f, 0.2f)),
+            P("prize_box", "Figurine en boîte", "prize_box", Rarity.Epic, new Color(0.2f, 0.45f, 0.95f), 1, 15, 40, 0.24f, 0.2f, new Color(0.85f, 0.95f, 1f), new Color(1f, 0.85f, 0.2f), new Color(1f, 0.35f, 0.55f)),
+            new PrizeSpec { id = "capsule_purple", model = "prize_capsule", name = "Capsule surprise", rarity = Rarity.Epic, mass = 0.2f, shape = PrimitiveType.Capsule, color = new Color(0.7f, 0.3f, 1f), scale = new Vector3(0.14f, 0.12f, 0.14f), count = 1, tickets = 15, xp = 40 },
+            new PrizeSpec { id = "capsule_cyan", model = "prize_capsule", name = "Capsule turquoise", rarity = Rarity.Epic, mass = 0.2f, shape = PrimitiveType.Capsule, color = new Color(0.2f, 0.9f, 1f), scale = new Vector3(0.14f, 0.12f, 0.14f), count = 1, tickets = 15, xp = 40, glow = true },
+            new PrizeSpec { id = "figurine_silver", model = "prize_cat_gold", name = "Figurine argentée", rarity = Rarity.Epic, mass = 0.3f, shape = PrimitiveType.Cube, color = new Color(0.8f, 0.85f, 0.95f), scale = new Vector3(0.18f, 0.22f, 0.18f), count = 0, tickets = 30, xp = 80, glow = true },
+            // --- légendaire
+            new PrizeSpec { id = "figurine_gold", model = "prize_cat_gold", name = "Figurine dorée", rarity = Rarity.Legendary, mass = 0.3f, shape = PrimitiveType.Cube, color = new Color(1f, 0.8f, 0.15f), scale = new Vector3(0.18f, 0.22f, 0.18f), count = 1, tickets = 50, xp = 120, glow = true },
         };
 
         /// <summary>Données d'un lot de la pince (réutilisées par le pousse-pièces) : id = plush_pink, plush_blue, mini_toy_green, capsule_purple, figurine_gold.</summary>
@@ -89,6 +117,11 @@ namespace ArcadeEmpire.EditorTools
             B("PlayFloor_A", root, new Vector3(0.2f, 0.525f, 0), new Vector3(0.8f, 0.05f, 1.0f), floorMat, true);
             B("PlayFloor_B", root, new Vector3(-0.4f, 0.525f, 0.2f), new Vector3(0.4f, 0.05f, 0.6f), floorMat, true);
             B("ChuteGlow", root, new Vector3(-0.4f, 0.305f, -0.3f), new Vector3(0.38f, 0.01f, 0.38f), yellow, false);
+            // garde en plexiglas autour de la trappe (comme sur les vraies machines : un lot ne tombe pas dedans par hasard)
+            B("ChuteGuard_X", root, new Vector3(-0.2f, 0.62f, -0.3f), new Vector3(0.012f, 0.14f, 0.4f), glass, true);
+            B("ChuteGuard_Z", root, new Vector3(-0.4f, 0.62f, -0.1f), new Vector3(0.4f, 0.14f, 0.012f), glass, true);
+            B("ChuteGuardTrim_X", root, new Vector3(-0.2f, 0.693f, -0.3f), new Vector3(0.016f, 0.008f, 0.4f), yellow, false);
+            B("ChuteGuardTrim_Z", root, new Vector3(-0.4f, 0.693f, -0.1f), new Vector3(0.4f, 0.008f, 0.016f), yellow, false);
 
             // --- Vitres, montants, plafond
             foreach (var p in new[] { new Vector2(-0.62f, -0.52f), new Vector2(0.62f, -0.52f), new Vector2(-0.62f, 0.52f), new Vector2(0.62f, 0.52f) })
@@ -248,66 +281,127 @@ namespace ArcadeEmpire.EditorTools
             return data;
         }
 
+        /// <summary>Palette de matériaux d'un lot : tissu de peluche texturé (fourrure), yeux brillants, fil brodé, étiquette, plastique.</summary>
+        public static Dictionary<string, Material> PrizePalette(string id)
+        {
+            PrizeSpec s = null;
+            foreach (var sp in Specs) if (sp.id == id) s = sp;
+            if (s == null) return ModelLib.Palette(null);
+            var main = RoomBuilder.Mat("Prize_" + s.id, s.color, 0.12f);
+            var pal = ModelLib.Palette(main);
+            if (s.plush)
+            {
+                ModelLib.Textured(main, "plush", null, 1f, 0f, 0.12f);
+                pal["Light"] = ModelLib.Textured(RoomBuilder.Mat("Prize_" + s.id + "_Light", s.light, 0.12f), "plush", null, 1f, 0f, 0.12f);
+                pal["Second"] = ModelLib.Textured(RoomBuilder.Mat("Prize_" + s.id + "_Second", s.second, 0.12f), "plush", null, 1f, 0f, 0.12f);
+                pal["Accent"] = ModelLib.Textured(RoomBuilder.Mat("Prize_" + s.id + "_Accent", s.accent, 0.25f), "fabric", null, 2f, 0f, 0.25f);
+            }
+            else
+            {
+                switch (s.id)
+                {
+                    case "figurine_gold": ModelLib.Textured(main, "gold", null, 1f, 0.9f, 0.65f); break;
+                    case "figurine_silver": ModelLib.Textured(main, "metal", null, 1f, 0.9f, 0.75f); break;
+                    case "prize_box":
+                        ModelLib.Textured(main, "plastic", null, 1f, 0f, 0.35f);
+                        pal["Light"] = RoomBuilder.Mat("Prize_Box_Window", s.light, 0.95f);
+                        pal["Second"] = RoomBuilder.Mat("Prize_" + s.id + "_Second", s.second, 0.4f);
+                        pal["Accent"] = RoomBuilder.Mat("Prize_" + s.id + "_Accent", s.accent, 0.6f);
+                        break;
+                    default: ModelLib.Textured(main, "plastic", null, 1f, 0f, 0.6f); break;
+                }
+                if (s.glow) { main.EnableKeyword("_EMISSION"); main.SetColor("_EmissionColor", s.color * 0.6f); }
+            }
+            return pal;
+        }
+
+        /// <summary>Crée un lot physique (modèle FBX + colliders adaptés à sa forme). Utilisé par la pince et le pousse-pièces.</summary>
+        public static GameObject CreatePrize(string id, Transform parent, float sizeOverride = -1f)
+        {
+            PrizeSpec s = null;
+            foreach (var sp in Specs) if (sp.id == id) s = sp;
+            if (s == null) return null;
+            var visual = ModelLib.Spawn(s.model, null, PrizePalette(id));
+            if (visual == null) return null;
+            var go = new GameObject("Prize_" + s.id);
+            go.transform.SetParent(parent, false);
+            visual.transform.SetParent(go.transform, false);
+            var raw = ModelLib.LocalBounds(go.transform);
+            float target = sizeOverride > 0f ? sizeOverride : (s.size > 0f ? s.size : s.scale.y * 1.25f);
+            float u = target / Mathf.Max(raw.size.x, raw.size.y, raw.size.z);
+            go.transform.localScale = new Vector3(u, u, u);
+            var b = ModelLib.LocalBounds(go.transform);   // dans le repère du lot (non mis à l'échelle)
+            if (s.plush)
+            {
+                // peluche : deux sphères (corps + tête) — elle roule et s'emboîte dans le tas comme un objet mou
+                Vector3 c = b.center, e = b.extents;
+                var body = go.AddComponent<SphereCollider>();
+                body.center = c - new Vector3(0f, e.y * 0.38f, 0f);
+                body.radius = Mathf.Min(Mathf.Max(e.x, e.z) * 0.92f, e.y * 0.62f);
+                var headC = go.AddComponent<SphereCollider>();
+                headC.center = c + new Vector3(0f, e.y * 0.36f, e.z * 0.05f);
+                headC.radius = Mathf.Min(e.x, e.z, e.y * 0.55f) * 0.9f;
+            }
+            else if (s.shape == PrimitiveType.Capsule) { var sc = go.AddComponent<SphereCollider>(); sc.center = b.center; sc.radius = Mathf.Min(b.extents.x, b.extents.z); }
+            else { var bc = go.AddComponent<BoxCollider>(); bc.center = b.center; bc.size = b.size * 0.9f; }
+            return go;
+        }
+
+        public static bool IsPlush(string id) { foreach (var sp in Specs) if (sp.id == id) return sp.plush; return false; }
+
         static void SpawnPrizes(Transform root, Dictionary<string, RewardData> rewards)
         {
             var group = new GameObject("Prizes").transform;
             group.SetParent(root, false);
 
-            // emplacements en grille hors de la trappe, mélangés avec une graine fixe
-            var slots = new List<Vector2>();
-            for (float x = -0.45f; x <= 0.5f; x += 0.19f)
-                for (float z = -0.3f; z <= 0.4f; z += 0.2f)
-                    if (!(x < -0.1f && z < 0.05f)) slots.Add(new Vector2(x, z));
-            var rng = new System.Random(7);
-            for (int i = slots.Count - 1; i > 0; i--) { int j = rng.Next(i + 1); (slots[i], slots[j]) = (slots[j], slots[i]); }
+            // liste des lots (mélangée, graine fixe), puis empilés en couches au-dessus du sol de jeu, hors de la trappe
+            var rng = new System.Random(11);
+            var list = new List<PrizeSpec>();
+            foreach (var s in Specs) for (int n = 0; n < s.count; n++) list.Add(s);
+            for (int i = list.Count - 1; i > 0; i--) { int j = rng.Next(i + 1); (list[i], list[j]) = (list[j], list[i]); }
 
-            int k = 0;
-            foreach (var s in Specs)
+            var slots = new List<Vector2>();
+            for (float x = -0.5f; x <= 0.52f; x += 0.17f)
+                for (float z = -0.42f; z <= 0.44f; z += 0.17f)
+                    if (!(x < -0.12f && z < 0.0f)) slots.Add(new Vector2(x, z));   // hors trappe + garde
+
+            var bodies = new List<Rigidbody>();
+            for (int k = 0; k < list.Count; k++)
             {
-                var mat = RoomBuilder.Mat("Prize_" + s.id, s.color, 0.35f);
-                switch (s.id)
-                {
-                    case "plush_pink": case "plush_blue": ModelLib.Textured(mat, "fabric", null, 1f, 0f, 0.2f); break;
-                    case "figurine_gold": ModelLib.Textured(mat, "gold", null, 1f, 0.9f, 0.65f); break;
-                    default: ModelLib.Textured(mat, "plastic", null, 1f, 0f, 0.6f); break;
-                }
-                if (s.glow) { mat.EnableKeyword("_EMISSION"); mat.SetColor("_EmissionColor", s.color * 0.8f); }
-                for (int n = 0; n < s.count && k < slots.Count; n++, k++)
-                {
-                    GameObject go;
-                    var visual = ModelLib.Spawn(s.model, null, ModelLib.Palette(mat));
-                    if (visual != null)
-                    {
-                        // modèle FBX : racine physique (scale uniforme) + visuel enfant + collider ajusté au modèle
-                        go = new GameObject("Prize_" + s.id + "_" + n);
-                        go.transform.SetParent(group, false);
-                        visual.transform.SetParent(go.transform, false);
-                        var raw = ModelLib.LocalBounds(go.transform);
-                        float u = s.scale.y * 1.25f / Mathf.Max(raw.size.x, raw.size.y, raw.size.z);   // plus grande dimension = 1,25 x l'ancienne hauteur
-                        go.transform.localScale = new Vector3(u, u, u);
-                        var b = ModelLib.LocalBounds(go.transform);
-                        if (s.shape == PrimitiveType.Capsule) { var sc = go.AddComponent<SphereCollider>(); sc.center = b.center; sc.radius = Mathf.Min(b.extents.x, b.extents.z); }
-                        else { var bc = go.AddComponent<BoxCollider>(); bc.center = b.center; bc.size = b.size * 0.85f; }
-                    }
-                    else
-                    {
-                        go = GameObject.CreatePrimitive(s.shape);
-                        go.name = "Prize_" + s.id + "_" + n;
-                        go.transform.SetParent(group, false);
-                        go.transform.localScale = s.scale;
-                        go.GetComponent<MeshRenderer>().sharedMaterial = mat;
-                    }
-                    go.transform.localPosition = new Vector3(slots[k].x, 0.72f + (k % 3) * 0.16f, slots[k].y);
-                    go.transform.localRotation = Quaternion.Euler(0, rng.Next(360), 0);
-                    var rb = go.AddComponent<Rigidbody>();
-                    rb.mass = s.mass;
-                    rb.linearDamping = 0.35f;
-                    rb.angularDamping = 0.6f;
-                    var pcol = go.GetComponent<Collider>();
-                    if (pcol != null) pcol.sharedMaterial = (s.rarity == Rarity.Common) ? plushPhys : hardPhys;
-                    go.AddComponent<PrizeItem>().reward = rewards[s.id];
-                }
+                var s = list[k];
+                var go = CreatePrize(s.id, group);
+                if (go == null) continue;
+                go.name = "Prize_" + s.id + "_" + k;
+                Vector2 sl = slots[k % slots.Count];
+                int layer = k / slots.Count;
+                float jx = (float)(rng.NextDouble() - 0.5) * 0.05f, jz = (float)(rng.NextDouble() - 0.5) * 0.05f;
+                go.transform.localPosition = new Vector3(sl.x + jx, 0.75f + layer * 0.26f, sl.y + jz);
+                // la plupart assises, quelques-unes couchées sur le côté ou sur le dos (comme dans un vrai bac)
+                float tilt = rng.NextDouble() < 0.35 ? (float)(rng.NextDouble() * 90.0) : (float)(rng.NextDouble() * 15.0);
+                go.transform.localRotation = Quaternion.Euler(tilt, rng.Next(360), (float)(rng.NextDouble() - 0.5) * 30f);
+                var rb = go.AddComponent<Rigidbody>();
+                rb.mass = s.mass;
+                rb.linearDamping = 0.35f;
+                rb.angularDamping = 0.8f;
+                foreach (var col in go.GetComponents<Collider>()) col.sharedMaterial = s.plush ? plushPhys : hardPhys;
+                go.AddComponent<PrizeItem>().reward = rewards[s.id];
+                bodies.Add(rb);
             }
+
+            // le tas se tasse réellement (simulation physique pendant la construction) : le prefab contient un tas stable
+            var prevMode = Physics.simulationMode;
+            Physics.simulationMode = SimulationMode.Script;
+            Physics.SyncTransforms();
+            for (int i = 0; i < 360; i++) Physics.Simulate(0.02f);
+            Physics.simulationMode = prevMode;
+            int fell = 0;
+            foreach (var rb in bodies)
+            {
+                rb.linearVelocity = Vector3.zero; rb.angularVelocity = Vector3.zero;
+                var lp = root.InverseTransformPoint(rb.position);
+                if (lp.y < 0.5f || lp.x < -0.66f || lp.x > 0.66f || lp.z < -0.56f || lp.z > 0.56f) { Object.DestroyImmediate(rb.gameObject); fell++; }
+            }
+            Debug.Log($"[ClawBuilder] {bodies.Count} lots empilés, {fell} retirés (hors bac)");
         }
 
         static PhysicsMaterial plushPhys, hardPhys;

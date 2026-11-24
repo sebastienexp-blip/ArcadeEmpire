@@ -61,7 +61,6 @@ namespace ArcadeEmpire.Machines
         private float vertVel;
         private float clawAngle;
         private PrizeItem held;
-        private float gripEnergy;
         private Collider[] clawColliders;
         private float timeLeft;
         private bool dropRequested;
@@ -449,22 +448,53 @@ namespace ArcadeEmpire.Machines
         }
 
         // ------------------------------------------------------------------ prise
-        private void UpdateGrip(float dt)
+        private void UpdateGrip(float dt) { }   // la prise est physique : voir PrizeItem (liaison qui peut casser)
+
+        /// <summary>La liaison physique a cassé : le lot a glissé des branches.</summary>
+        public void OnPrizeSlipped(PrizeItem prize, float force)
         {
-            if (held == null || dt <= 0f) return;
-            // l'usure de la prise : temps + secousses (arrêts brusques)
-            float jerk = accel2.magnitude + Mathf.Abs(vertVel - prevVert) / dt * 0.25f;
-            prevVert = vertVel;
-            gripEnergy -= dt * (1f + 0.9f * jerk) * (1f + 0.25f * Mathf.Abs(Mathf.Sin(Time.time * 7f)) * Mathf.Clamp01(swing.magnitude * 6f));
-            if (gripEnergy <= 0f)
+            if (prize != held) return;
+            held = null;
+            lostMessage = headLocal.y > raisedY - 0.03f ? "Le lot a glissé en haut… la pince a lâché !" : "Le lot s'est échappé des branches !";
+            StatusText = lostMessage;
+            PlayLocal(ClawAudio.Id.Slip, 0.6f);
+            PlayLocal(ClawAudio.Id.Fail, 0.4f);
+        }
+
+        // force de serrage : pleine à la prise, réduite une fois en haut (réglage « strength at top » des vraies machines)
+        private const float TopStrength = 0.72f;
+        private float gripForce;
+
+        /// <summary>Descend jusqu'à toucher le tas (détection de contact comme le « mou » du câble), puis un petit peu plus.</summary>
+        private IEnumerator DescendUntilContact()
+        {
+            float stopAt = loweredY;
+            bool touched = false;
+            while (headLocal.y > stopAt + 0.0005f)
             {
-                held.Release();
-                held = null;
-                lostMessage = "Le lot a glissé des branches !";
-                StatusText = lostMessage;
-                PlayLocal(ClawAudio.Id.Slip, 0.6f);
-                PlayLocal(ClawAudio.Id.Fail, 0.4f);
+                float prev = headLocal.y;
+                headLocal.y = Mathf.MoveTowards(headLocal.y, stopAt, verticalSpeed * Time.deltaTime);
+                vertVel = (headLocal.y - prev) / Mathf.Max(Time.deltaTime, 1e-4f);
+                if (!touched && headLocal.y < raisedY - 0.08f && TouchingBelow())
+                {
+                    touched = true;
+                    stopAt = Mathf.Max(loweredY, headLocal.y - 0.03f);   // les branches s'enfoncent un peu dans le tas
+                }
+                yield return null;
             }
+            vertVel = 0f;
+        }
+
+        private bool TouchingBelow()
+        {
+            Vector3 tip = holdPoint.position - head.transform.up * 0.05f;
+            foreach (Collider c in Physics.OverlapSphere(tip, 0.04f, ~0, QueryTriggerInteraction.Ignore))
+            {
+                if (clawColliders != null && System.Array.IndexOf(clawColliders, c) >= 0) continue;
+                if (c.attachedRigidbody != null && c.attachedRigidbody == head) continue;
+                return true;
+            }
+            return false;
         }
 
         private float prevVert;
@@ -476,7 +506,7 @@ namespace ArcadeEmpire.Machines
             headVel = Vector2.zero;
 
             StatusText = "Descente…";
-            yield return MoveHeadTo(new Vector3(headLocal.x, loweredY, headLocal.z), verticalSpeed);
+            yield return DescendUntilContact();
 
             StatusText = "Prise…";
             PlayLocal(ClawAudio.Id.Grip, 0.6f);
@@ -484,6 +514,8 @@ namespace ArcadeEmpire.Machines
             TryGrab();
 
             yield return MoveHeadTo(new Vector3(headLocal.x, raisedY, headLocal.z), held != null ? verticalSpeed * 0.75f : verticalSpeed);
+            if (held != null) held.SetBreakForce(gripForce * TopStrength);   // en haut, la pince serre moins fort
+            yield return new WaitForSeconds(0.35f);
 
             StatusText = held != null ? "Direction la trappe…" : (lostMessage ?? StatusText);
             Vector3 chute = new Vector3(chuteXZ.x, raisedY, chuteXZ.y);
@@ -543,44 +575,68 @@ namespace ArcadeEmpire.Machines
         private void TryGrab()
         {
             Vector3 axis = holdPoint.position;
-            Collider[] hits = Physics.OverlapSphere(axis, grabRadius * 1.5f, ~0, QueryTriggerInteraction.Ignore);
+            Collider[] hits = Physics.OverlapSphere(axis, 0.12f, ~0, QueryTriggerInteraction.Ignore);
             PrizeItem best = null;
             float bestDist = float.MaxValue;
             foreach (Collider c in hits)
             {
                 PrizeItem p = c.GetComponentInParent<PrizeItem>();
                 if (p == null || !p.IsFree) continue;
-                Vector3 d = p.transform.position - axis; d.y = 0f;
+                Vector3 d = p.transform.TransformPoint(PrizeCenter(p)) - axis; d.y = 0f;
                 if (d.sqrMagnitude < bestDist) { bestDist = d.sqrMagnitude; best = p; }
             }
 
             if (best == null)
             {
-                lostMessage = "Rien sous la pince…";
+                lostMessage = "Les branches se sont refermées dans le vide…";
                 StatusText = lostMessage;
                 return;
             }
 
-            float centering = 1f - Mathf.Clamp01(Mathf.Sqrt(bestDist) / (grabRadius * 1.5f));
+            // qualité de la prise : centrage par rapport à la taille du lot, masse, matière, force de la pince
+            float radius = PrizeRadius(best);
+            float centering = 1f - Mathf.Clamp01(Mathf.Sqrt(bestDist) / (radius + 0.025f));
             float mass = best.Body != null ? best.Body.mass : 0.15f;
             float massFactor = Mathf.Clamp(0.17f / mass, 0.55f, 1.3f);
-            float quality = (0.4f + 0.6f * centering) * massFactor * Slipperiness(best.reward) * EffectiveGrip * Random.Range(0.85f, 1.15f);
+            float quality = centering * (0.6f + 0.4f * massFactor) * Slipperiness(best.reward) * EffectiveGrip * Random.Range(0.85f, 1.15f);
 
-            if (quality < 0.4f)
+            if (quality < 0.16f)
             {
-                lostMessage = centering < 0.35f ? "Raté : la pince n'a pris que le bord du lot !" : "Raté, le lot est trop lourd ou trop glissant !";
+                lostMessage = centering < 0.3f ? "Raté : les branches n'ont pris que le bord du lot !" : "Raté, le lot est trop lourd ou trop glissant !";
                 StatusText = lostMessage;
                 PlayLocal(ClawAudio.Id.Slip, 0.5f);
                 return;
             }
 
-            best.Attach(holdPoint, head.transform, clawColliders);
+            float weight = mass * Physics.gravity.magnitude;
+            gripForce = weight * (1.4f + 3.2f * quality);
+            best.AttachJoint(head, axis, gripForce, clawColliders);
             held = best;
             LabGrabs++;
-            gripEnergy = quality * 6.5f;
-            prevVert = 0f;
             PlayLocal(ClawAudio.Id.Grip, 0.5f, 1.2f);
             StatusText = "Attrapé !";
+        }
+
+        private static Vector3 PrizeCenter(PrizeItem p)
+        {
+            var b = new Bounds(); bool any = false;
+            foreach (var c in p.GetComponentsInChildren<Collider>())
+            {
+                Bounds cb = c.bounds;
+                if (!any) { b = cb; any = true; } else b.Encapsulate(cb);
+            }
+            return any ? p.transform.InverseTransformPoint(b.center) : Vector3.zero;
+        }
+
+        private static float PrizeRadius(PrizeItem p)
+        {
+            var b = new Bounds(); bool any = false;
+            foreach (var c in p.GetComponentsInChildren<Collider>())
+            {
+                Bounds cb = c.bounds;
+                if (!any) { b = cb; any = true; } else b.Encapsulate(cb);
+            }
+            return any ? Mathf.Max(0.04f, Mathf.Min(b.extents.x, b.extents.z)) : 0.08f;
         }
 
         private static float Slipperiness(RewardData r)
