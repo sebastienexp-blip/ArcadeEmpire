@@ -115,7 +115,7 @@ namespace ArcadeEmpire.EditorTools
             var wallGame = RoomBuilder.Mat("Home_WallGame", new Color(0.25f, 0.2f, 0.45f), 0.2f);
             var ceil = RoomBuilder.Mat("Home_Ceiling", new Color(0.97f, 0.97f, 0.96f), 0.1f);
             var trim = RoomBuilder.Mat("Home_Trim", new Color(0.98f, 0.98f, 0.98f), 0.4f);
-            var window = RoomBuilder.Neon("Home_Window", new Color(0.65f, 0.85f, 1f));
+            var window = RoomBuilder.Neon("Home_Window", new Color(0.35f, 0.5f, 0.7f));
             var lamp = RoomBuilder.Neon("Home_CeilingLamp", new Color(1f, 0.95f, 0.85f));
 
             // sols par pièce
@@ -350,9 +350,11 @@ namespace ArcadeEmpire.EditorTools
             for (int lv = 0; lv < 3; lv++)
                 for (int k = 0; k < 4; k++)
                     DisplayPrize(kiosk, new[] { "plush_cat", "gummy_red", "plush_green", "soda_cola", "idol_doyun", "keychain_star", "plush_yellow", "squishy_bun", "album_neon", "plush_pink", "monster_grey", "donut_pink" }[lv * 4 + k],
-                        new Vector3(-0.9f + k * 0.6f, 0.45f + lv * 0.7f, 0.85f), 0.3f, 0f);
+                        new Vector3(-0.9f + k * 0.6f, 0.45f + lv * 0.7f, 0.64f), 0.3f, 0f);
+            for (int lv = 0; lv < 3; lv++)
+                RoomBuilder.Box("ShelfBoard", kiosk, new Vector3(0f, 0.43f + lv * 0.7f, 0.66f), new Vector3(2.6f, 0.03f, 0.3f), white, false, true);
             var signB = Object.Instantiate(signQ, kiosk);
-            signB.transform.localPosition = new Vector3(0f, 2.65f, 0.75f); signB.transform.localRotation = Quaternion.Euler(0f, 180f, 0f); signB.transform.localScale = new Vector3(2.2f, 0.55f, 1f);
+            signB.transform.localPosition = new Vector3(0f, 2.65f, 0.78f); signB.transform.localRotation = Quaternion.identity; signB.transform.localScale = new Vector3(2.2f, 0.55f, 1f);
             signB.GetComponent<MeshRenderer>().sharedMaterial = ModelLib.Glowing("Sign_Buyback", "sign_buyback", 1.8f);
             var ip2 = new GameObject("BuybackPoint").AddComponent<InteractPoint>();
             ip2.transform.SetParent(room, false); ip2.transform.position = new Vector3(8.4f, 0f, -5.6f);

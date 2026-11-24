@@ -137,9 +137,11 @@ def sign(name, text, sub, c1, c2):
         t = i / H; d.line([(0, i), (W, i)], fill=tuple(int(a * (1 - t) + b * t) * 0 + int(14 + (a * (1 - t) + b * t) * 0.18) for a, b in zip(c1, c2)))
     d.rounded_rectangle([10, 10, W - 10, H - 10], radius=28, outline=c1, width=8)
     d.rounded_rectangle([26, 26, W - 26, H - 26], radius=20, outline=c2, width=3)
-    f = font(120); w = d.textlength(text, font=f)
+    sz = 120
+    while d.textlength(text, font=font(sz)) > W - 250: sz -= 4
+    f = font(sz); w = d.textlength(text, font=f)
     for off, col in ((6, tuple(int(v * 0.4) for v in c2)), (0, (255, 255, 255))):
-        d.text(((W - w) / 2 + off, 46 + off), text, font=f, fill=col)
+        d.text(((W - w) / 2 + off, 46 + (120 - sz) * 0.45 + off), text, font=f, fill=col)
     f2 = font(44); w2 = d.textlength(sub, font=f2)
     d.text(((W - w2) / 2, 176), sub, font=f2, fill=c1)
     for sx in (70, W - 70):

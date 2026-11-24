@@ -19,7 +19,7 @@ namespace ArcadeEmpire.Building
         public enum PlaceResult { Ok, Invalid, NotEnoughCoins, LevelTooLow, NoPrefab }
 
         public const float Grid = 0.5f;
-        public const int LayoutVersion = 2;
+        public const int LayoutVersion = 3;
 
         /// <summary>Machines installées d'office : 4 pinces au fond, 3 coin pushers à gauche (face vers le centre).</summary>
         public static readonly (string id, Vector3 pos, float rotY)[] DefaultLayout =
@@ -31,6 +31,17 @@ namespace ArcadeEmpire.Building
             ("coin_pusher", new Vector3(-9.8f, 0f, 3.6f), 270f),
             ("coin_pusher_ocean", new Vector3(-9.8f, 0f, 0f), 270f),
             ("coin_pusher_royal", new Vector3(-9.8f, 0f, -3.6f), 270f),
+            // décor : plantes dans les coins, colonnes néon et coin détente au centre
+            ("decor_plant", new Vector3(-10.2f, 0f, 6.9f), 0f),
+            ("decor_plant", new Vector3(10.2f, 0f, 6.9f), 0f),
+            ("decor_plant", new Vector3(6.4f, 0f, -7.2f), 0f),
+            ("decor_plant", new Vector3(-5.6f, 0f, -7.2f), 0f),
+            ("decor_neon_pillar", new Vector3(-4f, 0f, 1.5f), 0f),
+            ("decor_neon_pillar", new Vector3(4f, 0f, 1.5f), 0f),
+            ("decor_pouf", new Vector3(-1f, 0f, 0.6f), 0f),
+            ("decor_pouf", new Vector3(1f, 0f, 0.6f), 0f),
+            ("decor_pouf", new Vector3(0f, 0f, 1.8f), 0f),
+            ("decor_trophy", new Vector3(0f, 0f, 3.6f), 180f),
         };
 
         [SerializeField] private MachineCatalog catalog;
