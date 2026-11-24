@@ -80,7 +80,6 @@ namespace ArcadeEmpire.Machines
 
         /// <summary>Labo : objets touchés pendant que le lot est tenu (pour comprendre ce qui fait lâcher la prise).</summary>
         public string LabContacts = "";
-        private void OnCollisionEnter(Collision c) { if (IsHeld && LabContacts.Length < 120) LabContacts += c.collider.name + "(" + c.impulse.magnitude.ToString("0.00") + ") "; }
 
         private void OnJointBreak(float force)
         {
@@ -115,6 +114,7 @@ namespace ArcadeEmpire.Machines
 
         private void OnCollisionEnter(Collision c)
         {
+            if (IsHeld && LabContacts.Length < 120) LabContacts += c.collider.name + "(" + c.impulse.magnitude.ToString("0.00") + ") ";
             if (Machine == null) return;
             float speed = c.relativeVelocity.magnitude;
             if (speed > 0.25f) Machine.OnPrizeImpact(speed, c.GetContact(0).point, c.rigidbody != null && c.rigidbody.GetComponent<PrizeItem>() != null);
