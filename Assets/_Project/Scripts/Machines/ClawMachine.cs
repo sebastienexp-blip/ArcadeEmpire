@@ -494,7 +494,7 @@ namespace ArcadeEmpire.Machines
                 if (!touched && headLocal.y < raisedY - 0.08f && TouchingBelow())
                 {
                     touched = true;
-                    stopAt = Mathf.Max(loweredY, headLocal.y - 0.03f);   // les branches s'enfoncent un peu dans le tas
+                    stopAt = Mathf.Max(loweredY, headLocal.y - 0.015f);   // la paume s'enfonce à peine dans les peluches
                 }
                 yield return null;
             }
@@ -503,8 +503,10 @@ namespace ArcadeEmpire.Machines
 
         private bool TouchingBelow()
         {
-            Vector3 tip = holdPoint.position - head.transform.up * 0.05f;
-            foreach (Collider c in Physics.OverlapSphere(tip, 0.04f, ~0, QueryTriggerInteraction.Ignore))
+            // comme une vraie pince : la descente s'arrête quand le BOÎTIER (la paume) se pose sur le tas et que le câble se détend.
+            // Les branches ouvertes passent autour du lot : leurs pointes finissent plus bas que lui, prêtes à l'enserrer.
+            Vector3 palm = head.position - head.transform.up * 0.07f;
+            foreach (Collider c in Physics.OverlapSphere(palm, 0.045f, ~0, QueryTriggerInteraction.Ignore))
             {
                 if (clawColliders != null && System.Array.IndexOf(clawColliders, c) >= 0) continue;
                 if (c.attachedRigidbody != null && c.attachedRigidbody == head) continue;
