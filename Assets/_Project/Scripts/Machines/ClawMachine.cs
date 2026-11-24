@@ -109,6 +109,15 @@ namespace ArcadeEmpire.Machines
             bridge = bridgeT; carriage = carriageT; insertCoin = coinVisual; displayAnchor = display; leds = ledLights;
         }
 
+        // --- accès pour le labo automatique (ClawLab)
+        public Vector3 HeadLocalPos => headLocal;
+        public bool LabIdle => phase == Phase.Idle;
+        public bool LabHolding => held != null;
+        public int LabWins { get; private set; }
+        public int LabGrabs { get; private set; }
+        public Vector2 PlayMin => minXZ;
+        public Vector2 PlayMax => maxXZ;
+        public Vector2 ChuteXZ => chuteXZ;
         public void SetExternalMove(Vector2 move) => externalMove = move;
         public void RequestDrop() => externalDrop = true;
 
@@ -567,6 +576,7 @@ namespace ArcadeEmpire.Machines
 
             best.Attach(holdPoint, head.transform, clawColliders);
             held = best;
+            LabGrabs++;
             gripEnergy = quality * 6.5f;
             prevVert = 0f;
             PlayLocal(ClawAudio.Id.Grip, 0.5f, 1.2f);
@@ -590,6 +600,7 @@ namespace ArcadeEmpire.Machines
         {
             if (prize == null || !prize.IsFree) return;
             prize.Collected = true;
+            LabWins++;
             GrantReward(prize.reward);
             justWon = true;
             winsThisSession++;
