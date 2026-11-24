@@ -630,7 +630,7 @@ namespace ArcadeEmpire.Machines
 
             float weight = mass * Physics.gravity.magnitude;
             gripForce = weight * (2.5f + 6f * quality) * EffectiveGrip;     // force à la prise (pleine puissance)
-            holdForce = weight * (1.1f + 2.6f * quality) * EffectiveGrip;   // force une fois en haut
+            holdForce = weight * (0.6f + 1.6f * quality) * EffectiveGrip * Random.Range(0.72f, 1.12f);   // force une fois en haut (varie d'une partie à l'autre)
             best.AttachJoint(head, axis, gripForce, clawColliders);
             held = best;
             LabGrabs++;

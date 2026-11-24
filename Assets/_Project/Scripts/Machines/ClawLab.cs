@@ -75,7 +75,8 @@ namespace ArcadeEmpire.Machines
                 if (target == null) { Note("Plus de lots"); break; }
                 string targetName = target.name + " (" + (target.reward != null ? target.reward.displayName : "?") + ")";
                 Vector3 tl = machine.transform.InverseTransformPoint(target.transform.position);
-                Vector2 goal = new Vector2(Mathf.Clamp(tl.x, machine.PlayMin.x, machine.PlayMax.x), Mathf.Clamp(tl.z, machine.PlayMin.y, machine.PlayMax.y));
+                Vector2 aimError = Random.insideUnitCircle * 0.04f;   // visée humaine : jusqu'à 4 cm d'erreur
+                Vector2 goal = new Vector2(Mathf.Clamp(tl.x + aimError.x, machine.PlayMin.x, machine.PlayMax.x), Mathf.Clamp(tl.z + aimError.y, machine.PlayMin.y, machine.PlayMax.y));
                 t0 = Time.time;
                 while (machine.IsMoving && Time.time - t0 < 15f)
                 {
