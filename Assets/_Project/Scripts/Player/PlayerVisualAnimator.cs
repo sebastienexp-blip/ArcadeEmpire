@@ -11,7 +11,8 @@ namespace ArcadeEmpire.Player
     public class PlayerVisualAnimator : MonoBehaviour
     {
         [SerializeField] private Transform armLeft, armRight, legLeft, legRight, body;
-        private Transform head;
+        private Transform head, foreL, foreR, shinL, shinR;
+        private float idleTimer, idleAction, idleActionT = -1f;
         private PlayerController pc;
         private MachineInteractor interactor;
 
@@ -31,6 +32,8 @@ namespace ArcadeEmpire.Player
         {
             pc = GetComponent<PlayerController>();
             if (body != null) head = body.Find("Head");
+            foreL = armLeft != null ? armLeft.Find("Forearm") : null; foreR = armRight != null ? armRight.Find("Forearm") : null;
+            shinL = legLeft != null ? legLeft.Find("Shin") : null; shinR = legRight != null ? legRight.Find("Shin") : null;
             if (legLeft != null) legLBase = legLeft.localPosition;
             if (legRight != null) legRBase = legRight.localPosition;
         }
@@ -74,14 +77,43 @@ namespace ArcadeEmpire.Player
 
             // Jambes : balancement + levée du pied quand la jambe passe vers l'avant
             Swing(legLeft, s); Swing(legRight, -s);
-            if (legLeft != null) legLeft.localPosition = legLBase + Vector3.up * (Mathf.Max(0f, Mathf.Cos(phase)) * 0.035f * amount);
-            if (legRight != null) legRight.localPosition = legRBase + Vector3.up * (Mathf.Max(0f, -Mathf.Cos(phase)) * 0.035f * amount);
+            // genoux : la jambe qui revient vers l'avant plie le genou (pied levé), l'autre reste presque tendue (appui)
+            float kneeMax = Mathf.Lerp(42f, 85f, run01);
+            float liftL = Mathf.Max(0f, -Mathf.Cos(phase)), liftR = Mathf.Max(0f, Mathf.Cos(phase));
+            float kneeIdle = 3f + Mathf.Max(0f, Mathf.Sin(t * 0.5f)) * 4f * idle;   // léger déhanché à l'arrêt
+            Swing(shinL, (6f + kneeMax * liftL * liftL) * amount + kneeIdle);
+            Swing(shinR, (6f + kneeMax * liftR * liftR) * amount + 3f);
+            if (legLeft != null) legLeft.localPosition = legLBase;
+            if (legRight != null) legRight.localPosition = legRBase;
 
             // Bras : balancement opposé aux jambes, plus mou à l'arrêt, levés vers la machine
             float armSwing = -s * 0.85f + Mathf.Sin(t * 1.3f) * 1.5f * idle;
             float raised = -68f + Mathf.Sin(t * 2.1f) * 2f;
-            Swing(armLeft, Mathf.Lerp(armSwing, raised, armRaise));
-            Swing(armRight, Mathf.Lerp(-armSwing, raised, armRaise));
+            // petites actions à l'arrêt : s'étirer, regarder autour, taper du pied
+            if (amount < 0.05f && !using_)
+            {
+                idleTimer += dt;
+                if (idleActionT < 0f && idleTimer > 6f) { idleActionT = 0f; idleAction = Random.value; idleTimer = 0f; }
+            }
+            else { idleTimer = 0f; idleActionT = -1f; }
+            float stretch = 0f, look = 0f;
+            if (idleActionT >= 0f)
+            {
+                idleActionT += dt;
+                float w = Mathf.Sin(Mathf.Clamp01(idleActionT / 2.2f) * Mathf.PI);
+                if (idleAction < 0.4f) stretch = w; else look = w * (idleAction < 0.7f ? 1f : -1f);
+                if (idleActionT > 2.2f) idleActionT = -1f;
+            }
+            float armL = Mathf.Lerp(armSwing, raised, armRaise), armR = Mathf.Lerp(-armSwing, raised, armRaise);
+            armL = Mathf.Lerp(armL, -165f, stretch); armR = Mathf.Lerp(armR, -165f, stretch);
+            Swing(armLeft, armL); Swing(armRight, armR);
+            if (armLeft != null) armLeft.localRotation *= Quaternion.Euler(0f, 0f, -(4f + 6f * run01) * (1f - stretch));   // bras un peu écartés du corps
+            if (armRight != null) armRight.localRotation *= Quaternion.Euler(0f, 0f, (4f + 6f * run01) * (1f - stretch));
+            // coudes : pliés en marchant, beaucoup en courant, plus encore vers les commandes de la machine
+            float elbowBase = Mathf.Lerp(12f, 18f, amount) + 55f * run01;
+            float elbowL = elbowBase + Mathf.Max(0f, -s) * 0.5f, elbowR = elbowBase + Mathf.Max(0f, s) * 0.5f;
+            Swing(foreL, -Mathf.Lerp(Mathf.Lerp(elbowL, 45f, armRaise), 10f, stretch));
+            Swing(foreR, -Mathf.Lerp(Mathf.Lerp(elbowR, 45f, armRaise), 10f, stretch));
 
             // Buste : inclinaison selon l'accélération et la vitesse, roulis dans les virages, torsion du bassin
             float targetLean = Mathf.Clamp(accelForward * 0.35f, -5f, 7f) + run01 * 6f + amount * 2f;
@@ -101,7 +133,7 @@ namespace ArcadeEmpire.Player
                 body.localPosition = Hip - q * Hip + new Vector3(sway, bob, 0f);
                 body.localScale = new Vector3(1f, breathe, 1f);
                 if (head != null)
-                    head.localRotation = Quaternion.Euler(-lean * 0.6f + Mathf.Sin(t * 0.7f) * 1.2f * idle, -twist * 0.8f + Mathf.Sin(t * 0.33f) * 3f * idle, -roll * 0.7f);
+                    head.localRotation = Quaternion.Euler(-lean * 0.6f + Mathf.Sin(t * 0.7f) * 1.2f * idle - stretch * 12f, -twist * 0.8f + Mathf.Sin(t * 0.33f) * 3f * idle + look * 55f, -roll * 0.7f);
             }
         }
 

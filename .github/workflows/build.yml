@@ -103,6 +103,10 @@ jobs:
           buildMethod: ${{ matrix.method }}
           allowDirtyBuild: true
           dockerMemoryLimit: 30g
+          androidKeystoreBase64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          androidKeystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          androidKeyaliasName: arcadeempire
+          androidKeyaliasPass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
 
       - name: Rapport
         if: always()

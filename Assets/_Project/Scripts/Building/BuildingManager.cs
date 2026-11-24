@@ -19,15 +19,16 @@ namespace ArcadeEmpire.Building
         public enum PlaceResult { Ok, Invalid, NotEnoughCoins, LevelTooLow, NoPrefab }
 
         public const float Grid = 0.5f;
-        public const int LayoutVersion = 3;
+        public const int LayoutVersion = 4;
 
         /// <summary>Machines installées d'office : 4 pinces au fond, 3 coin pushers à gauche (face vers le centre).</summary>
         public static readonly (string id, Vector3 pos, float rotY)[] DefaultLayout =
         {
-            ("claw_classic", new Vector3(-4.5f, 0f, 6.6f), 0f),
-            ("claw_kpop", new Vector3(-1.5f, 0f, 6.6f), 0f),
-            ("claw_sweets", new Vector3(1.5f, 0f, 6.6f), 0f),
-            ("claw_toys", new Vector3(4.5f, 0f, 6.6f), 0f),
+            ("claw_classic", new Vector3(-6f, 0f, 6.6f), 0f),
+            ("claw_kpop", new Vector3(-3f, 0f, 6.6f), 0f),
+            ("claw_kpop_girls", new Vector3(0f, 0f, 6.6f), 0f),
+            ("claw_sweets", new Vector3(3f, 0f, 6.6f), 0f),
+            ("claw_toys", new Vector3(6f, 0f, 6.6f), 0f),
             ("coin_pusher", new Vector3(-9.8f, 0f, 3.6f), 270f),
             ("coin_pusher_ocean", new Vector3(-9.8f, 0f, 0f), 270f),
             ("coin_pusher_royal", new Vector3(-9.8f, 0f, -3.6f), 270f),
@@ -41,7 +42,7 @@ namespace ArcadeEmpire.Building
             ("decor_pouf", new Vector3(-1f, 0f, 0.6f), 0f),
             ("decor_pouf", new Vector3(1f, 0f, 0.6f), 0f),
             ("decor_pouf", new Vector3(0f, 0f, 1.8f), 0f),
-            ("decor_trophy", new Vector3(0f, 0f, 3.6f), 180f),
+            ("decor_trophy", new Vector3(0f, 0f, 3.4f), 180f),
         };
 
         [SerializeField] private MachineCatalog catalog;

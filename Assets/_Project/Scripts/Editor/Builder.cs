@@ -50,6 +50,24 @@ namespace ArcadeEmpire.EditorTools
                     PlayerSettings.Android.minSdkVersion = AndroidSdkVersions.AndroidApiLevel26;
                     PlayerSettings.Android.targetSdkVersion = AndroidSdkVersions.AndroidApiLevelAuto;
                     PlayerSettings.Android.bundleVersionCode = build;
+                    // signature fixe (même clé à chaque build) : chaque nouvel APK met à jour le précédent sans désinstaller.
+                    // La clé vient des secrets GitHub (ANDROID_KEYSTORE_BASE64 / ANDROID_KEYSTORE_PASS), jamais du dépôt.
+                    string b64 = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_BASE64");
+                    string pw = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS");
+                    if (!string.IsNullOrEmpty(b64) && !string.IsNullOrEmpty(pw))
+                    {
+                        string ks = Path.GetFullPath("Temp/arcadeempire.keystore");
+                        Directory.CreateDirectory(Path.GetDirectoryName(ks));
+                        File.WriteAllBytes(ks, Convert.FromBase64String(b64.Trim()));
+                        string alias = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME");
+                        PlayerSettings.Android.useCustomKeystore = true;
+                        PlayerSettings.Android.keystoreName = ks;
+                        PlayerSettings.Android.keystorePass = pw;
+                        PlayerSettings.Android.keyaliasName = string.IsNullOrEmpty(alias) ? "arcadeempire" : alias;
+                        PlayerSettings.Android.keyaliasPass = pw;
+                        rep.AppendLine("- Signature : clé fixe (secrets GitHub) — les mises à jour s'installent sans désinstaller");
+                    }
+                    else rep.AppendLine("- Signature : clé de débogage temporaire (ajouter les secrets ANDROID_KEYSTORE_BASE64 et ANDROID_KEYSTORE_PASS)");
                     PlayerSettings.defaultInterfaceOrientation = UIOrientation.AutoRotation;
                     EditorUserBuildSettings.buildAppBundle = false;
                     EditorUserBuildSettings.androidCreateSymbols = AndroidCreateSymbols.Disabled;   // pas de fichiers de débogage : économise le disque du serveur de build

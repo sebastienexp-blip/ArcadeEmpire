@@ -183,6 +183,7 @@ namespace ArcadeEmpire.EditorTools
             var pal = ModelLib.Palette(null);
             var visual = new GameObject("Visual").transform;
             visual.SetParent(go.transform, false);
+            pal["Iris"] = RoomBuilder.Mat("Player_Iris", new Color(0.38f, 0.22f, 0.1f), 0.9f);
             bool ok = ModelLib.Spawn("player_torso", visual, pal) != null;
             Transform Part(string model, string name, Vector3 pos, float scaleX = 1f)
             {
@@ -196,10 +197,20 @@ namespace ArcadeEmpire.EditorTools
             if (ok)
             {
                 Part("player_head", "Head", new Vector3(0f, 1.64f, 0f));
-                var armL = Part("player_arm", "ArmL", new Vector3(-0.29f, 1.45f, 0f), -1f);
-                var armR = Part("player_arm", "ArmR", new Vector3(0.29f, 1.45f, 0f));
-                var legL = Part("player_leg", "LegL", new Vector3(-0.11f, 0.92f, 0f), -1f);
-                var legR = Part("player_leg", "LegR", new Vector3(0.11f, 0.92f, 0f));
+                // membres articulés : bras -> avant-bras (coude), cuisse -> tibia (genou)
+                Transform Limb(string upper, string lower, string name, Vector3 pos, float joint, float sx)
+                {
+                    var top = Part(upper, name, pos, sx);
+                    var low = new GameObject(name.Substring(0, name.Length - 1) == "Arm" ? "Forearm" : "Shin").transform;
+                    low.SetParent(top, false);
+                    low.localPosition = new Vector3(0f, joint, 0f);
+                    ModelLib.Spawn(lower, low, pal);
+                    return top;
+                }
+                var armL = Limb("player_uarm", "player_farm", "ArmL", new Vector3(-0.29f, 1.45f, 0f), -0.27f, -1f);
+                var armR = Limb("player_uarm", "player_farm", "ArmR", new Vector3(0.29f, 1.45f, 0f), -0.27f, 1f);
+                var legL = Limb("player_thigh", "player_shin", "LegL", new Vector3(-0.11f, 0.92f, 0f), -0.42f, -1f);
+                var legR = Limb("player_thigh", "player_shin", "LegR", new Vector3(0.11f, 0.92f, 0f), -0.42f, 1f);
                 go.AddComponent<PlayerVisualAnimator>().Configure(armL, armR, legL, legR, visual);
             }
             else

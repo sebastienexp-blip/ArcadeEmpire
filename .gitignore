@@ -38,3 +38,4 @@ Thumbs.db
 # Licence Unity : ne jamais committer, utiliser le secret UNITY_LICENSE
 .licence/
 *.ulf
+Signing/

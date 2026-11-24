@@ -399,8 +399,9 @@ def prize_box():
 
 # ------------------------------------------------------------------ idoles K-pop (personnages inventés, style chibi)
 # Main = tenue de scène, Light = peau, Second = cheveux, Accent = détails dorés/argentés, Dark = chaussures/pantalon/fil
-def idol(name, hair, girl=False):
+def idol(name, hair, girl=False, outfit=None):
     p = Plush(name)
+    if outfit: outfit(p)
     p.ell((0, 0.74, 0.0), (0.27, 0.27, 0.25), mat="Light", k=0.06)                 # tête (peau)
     p.ell((0, 0.47, 0.0), (0.06, 0.06, 0.05), mat="Light", k=0.03)                 # cou
     p.ell((0, 0.3, 0.0), (0.16, 0.16, 0.12), k=0.06)                               # buste (tenue)
@@ -466,10 +467,67 @@ def hair_bob(p):          # carré avec frange
     p.ell((0, 0.64, -0.09), (0.31, 0.17, 0.22), mat="Second", k=0.03)
 
 
-for _n, _h, _g in (("idol_boy_a", hair_short, False), ("idol_boy_b", hair_swept, False), ("idol_boy_c", hair_mullet, False),
-                   ("idol_girl_a", hair_long, True), ("idol_girl_b", hair_twin, True), ("idol_girl_c", hair_bob, True)):
-    model(type("f", (), {})) if False else None
-    def _mk(n=_n, h=_h, g=_g): return idol(n, h, g)
+def hair_spiky(p):        # épis dressés
+    p.ell((0, 0.83, -0.03), (0.29, 0.2, 0.27), mat="Second", k=0.03)
+    p.ell((0, 0.72, -0.13), (0.27, 0.19, 0.16), mat="Second", k=0.03)
+    for x, z in ((-0.16, 0.05), (-0.05, 0.08), (0.07, 0.07), (0.17, 0.02), (-0.1, -0.1), (0.1, -0.1), (0.0, -0.02)):
+        p.cone((x * 0.7, 0.9, z * 0.7), (x * 1.2, 1.08, z * 1.2), 0.08, 0.015, mat="Second", k=0.03)
+
+
+def hair_curtain(p):      # raie au milieu, mèches rideau
+    p.ell((0, 0.84, -0.03), (0.3, 0.21, 0.28), mat="Second", k=0.03)
+    p.ell((0, 0.7, -0.12), (0.28, 0.21, 0.17), mat="Second", k=0.03)
+    for s in (-1, 1): p.ell((s * 0.12, 0.83, 0.18), (0.13, 0.1, 0.07), R=(0, 0, s * 25), mat="Second", k=0.02)
+
+
+def hair_beanie(p):       # bonnet (Dark) avec mèches qui dépassent
+    p.ell((0, 0.86, -0.02), (0.3, 0.2, 0.29), mat="Dark", k=0.02)
+    p.ell((0, 0.79, 0.0), (0.305, 0.05, 0.295), mat="Accent", k=0.01)
+    p.ell((0, 0.7, -0.14), (0.26, 0.15, 0.14), mat="Second", k=0.03)
+    for x in (-0.12, 0.0, 0.12): p.cone((x, 0.78, 0.2), (x * 1.2, 0.7, 0.25), 0.045, 0.015, mat="Second", k=0.02)
+
+
+def hair_undercut(p):     # dessus long rabattu, côtés rasés
+    p.ell((0, 0.9, 0.0), (0.24, 0.14, 0.26), mat="Second", k=0.03)
+    p.ell((0.08, 0.9, 0.18), (0.2, 0.08, 0.1), R=(0, 0, -20), mat="Second", k=0.02)
+    p.ell((0, 0.74, -0.14), (0.25, 0.17, 0.13), mat="Second", k=0.03)
+
+
+def hair_ponytail(p):     # queue de cheval haute
+    p.ell((0, 0.83, -0.03), (0.29, 0.22, 0.27), mat="Second", k=0.03)
+    p.ell((0, 0.88, 0.17), (0.24, 0.07, 0.09), mat="Second", k=0.02)
+    p.ell((0, 0.92, -0.25), (0.05, 0.05, 0.05), mat="Accent", k=0.01)
+    p.chain([(0, 0.92, -0.26), (0, 0.85, -0.38), (0, 0.65, -0.4), (0, 0.45, -0.34)], 0.08, 0.035, mat="Second", k=0.03)
+
+
+def hair_buns(p):         # deux chignons
+    p.ell((0, 0.83, -0.02), (0.29, 0.22, 0.27), mat="Second", k=0.03)
+    p.ell((0, 0.88, 0.17), (0.24, 0.07, 0.09), mat="Second", k=0.02)
+    for sx in (-1, 1): p.ell((sx * 0.2, 1.0, -0.04), (0.1, 0.1, 0.1), mat="Second", k=0.03)
+
+
+def hair_wavy(p):         # longs cheveux ondulés
+    p.ell((0, 0.83, -0.02), (0.31, 0.22, 0.28), mat="Second", k=0.03)
+    p.ell((0.04, 0.88, 0.17), (0.24, 0.08, 0.1), R=(0, 0, -12), mat="Second", k=0.02)
+    for sx in (-1, 1):
+        p.chain([(sx * 0.24, 0.75, -0.02), (sx * 0.3, 0.6, 0.0), (sx * 0.26, 0.45, 0.02), (sx * 0.31, 0.3, 0.0)], 0.09, 0.06, mat="Second", k=0.04)
+    p.ell((0, 0.5, -0.13), (0.3, 0.33, 0.14), mat="Second", k=0.04)
+
+
+def outfit_coat(p):       # long manteau de scène (pans)
+    for sx in (-1, 1): p.ell((sx * 0.11, 0.12, -0.02), (0.08, 0.16, 0.1), mat="Main", k=0.03)
+
+
+def outfit_hood(p):       # sweat à capuche
+    p.ell((0, 0.45, -0.11), (0.15, 0.08, 0.08), mat="Main", k=0.03)
+
+
+for _n, _h, _g, _o in (("idol_boy_a", hair_short, False, None), ("idol_boy_b", hair_swept, False, None), ("idol_boy_c", hair_mullet, False, None),
+                   ("idol_boy_d", hair_spiky, False, outfit_coat), ("idol_boy_e", hair_curtain, False, outfit_hood),
+                   ("idol_boy_f", hair_beanie, False, outfit_hood), ("idol_boy_g", hair_undercut, False, outfit_coat),
+                   ("idol_girl_a", hair_long, True, None), ("idol_girl_b", hair_twin, True, None), ("idol_girl_c", hair_bob, True, None),
+                   ("idol_girl_d", hair_ponytail, True, None), ("idol_girl_e", hair_buns, True, None), ("idol_girl_f", hair_wavy, True, None)):
+    def _mk(n=_n, h=_h, g=_g, o=_o): return idol(n, h, g, o)
     _mk.__name__ = _n
     model(_mk)
 
@@ -669,7 +727,8 @@ def console_handheld_box():
 
 LOD_SOURCES = ["plush_bear", "plush_bunny", "plush_cat", "plush_dog", "plush_penguin", "plush_frog", "plush_duck", "plush_unicorn",
                "plush_dino", "plush_panda", "plush_octopus", "plush_fox", "idol_boy_a", "idol_boy_b", "idol_boy_c", "idol_girl_a",
-               "idol_girl_b", "idol_girl_c", "sweet_gummy", "sweet_donut", "monster_doll", "squishy_bun", "squishy_peach"]
+               "idol_girl_b", "idol_girl_c", "idol_boy_d", "idol_boy_e", "idol_boy_f", "idol_boy_g", "idol_girl_d", "idol_girl_e", "idol_girl_f",
+               "sweet_gummy", "sweet_donut", "monster_doll", "squishy_bun", "squishy_peach"]
 
 
 def _register_lods():
@@ -694,7 +753,8 @@ _register_lods()
 
 PLUSH = [n for n in ("plush_bear", "plush_bunny", "plush_cat", "plush_dog", "plush_penguin", "plush_frog", "plush_duck",
                      "plush_unicorn", "plush_dino", "plush_panda", "plush_octopus", "plush_fox", "prize_box",
-                     "idol_boy_a", "idol_boy_b", "idol_boy_c", "idol_girl_a", "idol_girl_b", "idol_girl_c", "kpop_lightstick", "kpop_album",
+                     "idol_boy_a", "idol_boy_b", "idol_boy_c", "idol_boy_d", "idol_boy_e", "idol_boy_f", "idol_boy_g",
+                     "idol_girl_a", "idol_girl_b", "idol_girl_c", "idol_girl_d", "idol_girl_e", "idol_girl_f", "kpop_lightstick", "kpop_album",
                      "sweet_lollipop", "sweet_chocolate", "sweet_soda", "sweet_gummy", "sweet_donut",
                      "monster_doll", "squishy_bun", "squishy_peach", "keychain_star", "keychain_heart", "console_box", "console_handheld_box")]
 

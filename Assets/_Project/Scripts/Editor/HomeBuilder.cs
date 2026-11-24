@@ -30,30 +30,32 @@ namespace ArcadeEmpire.EditorTools
 
         static readonly Furn[] Furniture =
         {
-            // salon (x -8..0, z -6..1)
-            F("home_sofa", "Canapé moelleux", "home_sofa", 120, 0, new Color(0.25f, 0.35f, 0.55f), Cream, new Color(0.35f, 0.45f, 0.68f), Pink, (new Vector3(-4.5f, 0f, -2.4f), 0f)),
-            F("home_coffee_table", "Table basse", "home_coffee_table", 60, 0, Oak, Oak, White, Cyan, (new Vector3(-4.5f, 0f, -3.8f), 0f)),
-            F("home_rug", "Grand tapis", "home_rug", 50, 0, new Color(0.55f, 0.2f, 0.3f), new Color(0.85f, 0.65f, 0.4f), Cream, Cyan, (new Vector3(-4.5f, 0f, -3.7f), 0f)),
-            F("home_tv", "TV écran géant", "home_tv", 250, 1, Walnut, Walnut, White, Screen, (new Vector3(-4.5f, 0f, -5.55f), 180f)),
-            F("home_lamp", "Lampadaire", "home_lamp", 40, 0, Cream, Cream, White, new Color(1f, 0.9f, 0.7f), (new Vector3(-7.2f, 0f, -5.3f), 0f)),
-            F("home_bookshelf", "Bibliothèque", "home_bookshelf", 90, 0, new Color(0.8f, 0.3f, 0.3f), Oak, new Color(0.3f, 0.6f, 0.9f), new Color(0.95f, 0.8f, 0.3f), (new Vector3(-7.7f, 0f, -3.6f), 270f)),
-            F("home_plant", "Plante verte", "home_plant", 30, 0, new Color(0.2f, 0.6f, 0.25f), Oak, White, Cyan, (new Vector3(-0.8f, 0f, -5.4f), 0f)),
-            // cuisine (x 0..8, z -6..1)
-            F("home_kitchen", "Cuisine équipée", "home_kitchen", 200, 0, White, Oak, new Color(0.2f, 0.2f, 0.22f), Cyan, (new Vector3(4.5f, 0f, -5.6f), 180f)),
-            F("home_fridge", "Réfrigérateur", "home_fridge", 150, 0, new Color(0.8f, 0.82f, 0.86f), Oak, White, Cyan, (new Vector3(7.35f, 0f, -5.55f), 180f)),
-            F("home_table", "Table à manger", "home_table", 80, 0, Oak, Oak, White, Cyan, (new Vector3(4.5f, 0f, -2.3f), 0f)),
-            F("home_chair", "Chaises (x2)", "home_chair", 60, 0, Oak, Oak, new Color(0.9f, 0.4f, 0.35f), Cyan, (new Vector3(4.5f, 0f, -1.55f), 0f), (new Vector3(4.5f, 0f, -3.05f), 180f)),
-            // chambre (x -8..0, z 1..6)
-            F("home_bed", "Lit double", "home_bed", 220, 0, new Color(0.45f, 0.55f, 0.85f), Walnut, White, Cyan, (new Vector3(-4.5f, 0f, 4.85f), 0f)),
-            F("home_nightstand", "Table de chevet", "home_nightstand", 50, 0, new Color(1f, 0.9f, 0.7f), Walnut, White, Cyan, (new Vector3(-6.05f, 0f, 5.6f), 0f)),
-            F("home_wardrobe", "Armoire", "home_wardrobe", 160, 0, White, Oak, White, Cyan, (new Vector3(-1.0f, 0f, 5.6f), 0f)),
-            F("home_desk", "Bureau gamer", "home_desk", 180, 1, new Color(0.12f, 0.12f, 0.14f), Walnut, White, Pink, (new Vector3(-7.4f, 0f, 2.7f), 270f)),
-            F("home_gaming_chair", "Fauteuil gamer", "home_gaming_chair", 120, 1, new Color(0.15f, 0.15f, 0.18f), Walnut, White, Pink, (new Vector3(-6.6f, 0f, 2.7f), 90f)),
-            // salle de jeux (x 0..8, z 1..6)
-            F("home_arcade", "Borne d'arcade", "home_arcade", 400, 3, new Color(0.15f, 0.1f, 0.4f), Pink, White, Cyan, (new Vector3(6.8f, 0f, 5.45f), 0f)),
-            F("home_neon", "Néon mural", "home_neon", 60, 0, Pink, Cyan, White, Pink, (new Vector3(4.2f, 1.5f, 5.93f), 0f)),
-            F("home_beanbag", "Pouf poire", "decor_pouf", 70, 0, new Color(0.95f, 0.45f, 0.2f), Cream, Cream, Cyan, (new Vector3(3.2f, 0f, 3.4f), 0f)),
-            F("home_tv_game", "Écran de jeux", "home_tv", 300, 2, new Color(0.1f, 0.1f, 0.12f), new Color(0.1f, 0.1f, 0.12f), White, new Color(0.9f, 0.4f, 1f), (new Vector3(3.2f, 0f, 1.55f), 180f)),
+            // Repères : rot 0 = façade vers -Z, 180 = vers +Z, 90 = vers -X, 270 = vers +X. Passages (1,2 m) à garder libres :
+            // porte d'entrée x=-4 (façade z=-6) ; salon<->cuisine z=-2,5 (x=0) ; salon<->chambre x=-2 (z=1) ; cuisine<->jeux x=2 (z=1) ; chambre<->jeux z=3,5 (x=0)
+            // salon (x -8..0, z -6..1) : coin TV contre le mur gauche
+            F("home_tv", "TV écran géant", "home_tv", 250, 1, Walnut, Walnut, White, Screen, (new Vector3(-7.62f, 0f, -2.6f), 270f)),
+            F("home_rug", "Grand tapis", "home_rug", 50, 0, new Color(0.55f, 0.2f, 0.3f), new Color(0.85f, 0.65f, 0.4f), Cream, Cyan, (new Vector3(-5.7f, 0f, -2.6f), 90f)),
+            F("home_coffee_table", "Table basse", "home_coffee_table", 60, 0, Oak, Oak, White, Cyan, (new Vector3(-5.75f, 0f, -2.6f), 90f)),
+            F("home_sofa", "Canapé moelleux", "home_sofa", 120, 0, new Color(0.25f, 0.35f, 0.55f), Cream, new Color(0.35f, 0.45f, 0.68f), Pink, (new Vector3(-4.2f, 0f, -2.6f), 90f)),
+            F("home_lamp", "Lampadaire", "home_lamp", 40, 0, Cream, Cream, White, new Color(1f, 0.9f, 0.7f), (new Vector3(-7.45f, 0f, -0.45f), 0f)),
+            F("home_bookshelf", "Bibliothèque", "home_bookshelf", 90, 0, new Color(0.8f, 0.3f, 0.3f), Oak, new Color(0.3f, 0.6f, 0.9f), new Color(0.95f, 0.8f, 0.3f), (new Vector3(-5.9f, 0f, 0.73f), 0f)),
+            F("home_plant", "Plante verte", "home_plant", 30, 0, new Color(0.2f, 0.6f, 0.25f), Oak, White, Cyan, (new Vector3(-0.45f, 0f, -5.5f), 0f)),
+            // cuisine (x 0..8, z -6..1) : plan de travail et frigo contre la façade, table au centre
+            F("home_kitchen", "Cuisine équipée", "home_kitchen", 200, 0, White, Oak, new Color(0.2f, 0.2f, 0.22f), Cyan, (new Vector3(4.0f, 0f, -5.6f), 180f)),
+            F("home_fridge", "Réfrigérateur", "home_fridge", 150, 0, new Color(0.8f, 0.82f, 0.86f), Oak, White, Cyan, (new Vector3(6.0f, 0f, -5.58f), 180f)),
+            F("home_table", "Table à manger", "home_table", 80, 0, Oak, Oak, White, Cyan, (new Vector3(4.5f, 0f, -2.2f), 0f)),
+            F("home_chair", "Chaises (x2)", "home_chair", 60, 0, Oak, Oak, new Color(0.9f, 0.4f, 0.35f), Cyan, (new Vector3(4.5f, 0f, -1.45f), 0f), (new Vector3(4.5f, 0f, -2.95f), 180f)),
+            // chambre (x -8..0, z 1..6) : lit contre le mur du fond, coin bureau contre le mur gauche
+            F("home_bed", "Lit double", "home_bed", 220, 0, new Color(0.45f, 0.55f, 0.85f), Walnut, White, Cyan, (new Vector3(-4.6f, 0f, 4.8f), 0f)),
+            F("home_nightstand", "Table de chevet", "home_nightstand", 50, 0, new Color(1f, 0.9f, 0.7f), Walnut, White, Cyan, (new Vector3(-5.75f, 0f, 5.62f), 0f)),
+            F("home_wardrobe", "Armoire", "home_wardrobe", 160, 0, White, Oak, White, Cyan, (new Vector3(-1.2f, 0f, 5.6f), 0f)),
+            F("home_desk", "Bureau gamer", "home_desk", 180, 1, new Color(0.12f, 0.12f, 0.14f), Walnut, White, Pink, (new Vector3(-7.58f, 0f, 2.6f), 270f)),
+            F("home_gaming_chair", "Fauteuil gamer", "home_gaming_chair", 120, 1, new Color(0.15f, 0.15f, 0.18f), Walnut, White, Pink, (new Vector3(-6.75f, 0f, 2.6f), 90f)),
+            // salle de jeux (x 0..8, z 1..6) : borne au fond, écran contre le mur droit, pouf devant
+            F("home_arcade", "Borne d'arcade", "home_arcade", 400, 3, new Color(0.15f, 0.1f, 0.4f), Pink, White, Cyan, (new Vector3(6.9f, 0f, 5.38f), 0f)),
+            F("home_neon", "Néon mural", "home_neon", 60, 0, Pink, Cyan, White, Pink, (new Vector3(5.2f, 1.6f, 5.88f), 0f)),
+            F("home_beanbag", "Pouf poire", "decor_pouf", 70, 0, new Color(0.95f, 0.45f, 0.2f), Cream, Cream, Cyan, (new Vector3(5.6f, 0f, 3.0f), 0f)),
+            F("home_tv_game", "Écran de jeux", "home_tv", 300, 2, new Color(0.1f, 0.1f, 0.12f), new Color(0.1f, 0.1f, 0.12f), White, new Color(0.9f, 0.4f, 1f), (new Vector3(7.62f, 0f, 3.0f), 90f)),
         };
 
         // ------------------------------------------------------------------ récompenses « meuble »
@@ -125,31 +127,42 @@ namespace ArcadeEmpire.EditorTools
             Floor(root, "Floor_Game", new Vector3(4f, 0f, 3.5f), new Vector2(8f, 5f), gameFloor);
             RoomBuilder.Box("Ceiling", root, new Vector3(0f, H + 0.05f, 0f), new Vector3(W, 0.1f, D), ceil, false, true);
 
-            // murs extérieurs (porte d'entrée au milieu de la façade avant) avec fenêtres lumineuses
+            // murs extérieurs : porte d'entrée dans le salon (x = -4), fenêtres lumineuses
+            const float DW = 1.2f, DH = 2.2f;   // passages : largeur et hauteur
+            var doorMat = RoomBuilder.Mat("Home_Door", Walnut, 0.4f);
             RoomBuilder.Box("Wall_Back", root, new Vector3(0f, H / 2, D / 2), new Vector3(W, H, 0.2f), wall, true, true);
             RoomBuilder.Box("Wall_Left", root, new Vector3(-W / 2, H / 2, 0f), new Vector3(0.2f, H, D), wall, true, true);
             RoomBuilder.Box("Wall_Right", root, new Vector3(W / 2, H / 2, 0f), new Vector3(0.2f, H, D), wall, true, true);
-            RoomBuilder.Box("Wall_FrontL", root, new Vector3(-4.35f, H / 2, -D / 2), new Vector3(7.3f, H, 0.2f), wall, true, true);
-            RoomBuilder.Box("Wall_FrontR", root, new Vector3(4.35f, H / 2, -D / 2), new Vector3(7.3f, H, 0.2f), wall, true, true);
-            RoomBuilder.Box("Wall_FrontTop", root, new Vector3(0f, 2.6f, -D / 2), new Vector3(1.4f, 0.8f, 0.2f), wall, true, true);
-            RoomBuilder.Box("Door", root, new Vector3(0f, 1.1f, -D / 2 - 0.05f), new Vector3(1.3f, 2.2f, 0.06f), RoomBuilder.Mat("Home_Door", Walnut, 0.4f), false, true);
+            WallWithDoor(root, "Wall_Front", true, -D / 2, -W / 2, W / 2, -4f, 1.4f, DH, H, 0.2f, wall, trim);
+            RoomBuilder.Box("FrontDoor", root, new Vector3(-4f, 1.1f, -D / 2 - 0.02f), new Vector3(1.3f, 2.2f, 0.08f), doorMat, true, true);   // porte fermée (on arrive par le téléporteur)
+            RoomBuilder.Box("FrontDoorKnob", root, new Vector3(-3.55f, 1.0f, -D / 2 + 0.05f), new Vector3(0.06f, 0.06f, 0.06f), trim, false, true);
+            RoomBuilder.Box("Doormat", root, new Vector3(-4f, 0.01f, -5.45f), new Vector3(1.2f, 0.02f, 0.7f), RoomBuilder.Mat("Home_Doormat", new Color(0.35f, 0.25f, 0.18f), 0.1f), false, true);
             foreach (var (pos, size) in new[] {
-                (new Vector3(-4.5f, 1.6f, -D / 2 + 0.11f), new Vector3(1.6f, 1.1f, 0.02f)), (new Vector3(4.5f, 1.6f, -D / 2 + 0.11f), new Vector3(1.6f, 1.1f, 0.02f)),
-                (new Vector3(-W / 2 + 0.11f, 1.6f, 3.5f), new Vector3(0.02f, 1.1f, 1.6f)), (new Vector3(W / 2 - 0.11f, 1.6f, -2.5f), new Vector3(0.02f, 1.1f, 1.6f)) })
+                (new Vector3(-6.4f, 1.6f, -D / 2 + 0.11f), new Vector3(1.4f, 1.1f, 0.02f)), (new Vector3(1.6f, 1.6f, -D / 2 + 0.11f), new Vector3(1.2f, 1.0f, 0.02f)),
+                (new Vector3(7.2f, 1.6f, -D / 2 + 0.11f), new Vector3(0.9f, 1.0f, 0.02f)), (new Vector3(-W / 2 + 0.11f, 1.6f, 4.6f), new Vector3(0.02f, 1.1f, 1.4f)),
+                (new Vector3(-W / 2 + 0.11f, 1.9f, -4.8f), new Vector3(0.02f, 0.9f, 1.2f)), (new Vector3(-2.7f, 1.6f, D / 2 - 0.11f), new Vector3(1.4f, 1.1f, 0.02f)),
+                (new Vector3(W / 2 - 0.11f, 1.6f, 4.9f), new Vector3(0.02f, 1.0f, 1.2f)) })
             {
                 RoomBuilder.Box("Window", root, pos, size, window, false, true);
-                RoomBuilder.Box("WindowFrame", root, pos + new Vector3(0f, -0.6f, 0f), new Vector3(Mathf.Max(size.x, 0.1f) + 0.1f, 0.06f, Mathf.Max(size.z, 0.1f) + 0.1f), trim, false, true);
+                bool alongX = size.x > size.z;
+                RoomBuilder.Box("WindowSill", root, pos + new Vector3(alongX ? 0f : Mathf.Sign(-pos.x) * 0.04f, -size.y / 2 - 0.03f, alongX ? Mathf.Sign(-pos.z) * 0.04f : 0f),
+                    alongX ? new Vector3(size.x + 0.12f, 0.05f, 0.1f) : new Vector3(0.1f, 0.05f, size.z + 0.12f), trim, false, true);
             }
 
-            // cloisons intérieures avec passages
-            Partition(root, "Part_X_A", new Vector3(0f, H / 2, -4.75f), new Vector3(0.14f, H, 2.5f), wall);   // x=0, z -6..-3.5
-            Partition(root, "Part_X_B", new Vector3(0f, H / 2, -0.25f), new Vector3(0.14f, H, 4.5f), wall);   // z -2.5..2
-            Partition(root, "Part_X_C", new Vector3(0f, H / 2, 5.0f), new Vector3(0.14f, H, 2.0f), wall);     // z 4..6
-            Partition(root, "Part_Z_A", new Vector3(-6.0f, H / 2, 1f), new Vector3(4f, H, 0.14f), wall);       // x -8..-4
-            Partition(root, "Part_Z_B", new Vector3(-1.5f, H / 2, 1f), new Vector3(3f, H, 0.14f), wall);       // x -3..0
-            Partition(root, "Part_Z_C", new Vector3(1.5f, H / 2, 1f), new Vector3(3f, H, 0.14f), wallGame);   // x 0..3
-            Partition(root, "Part_Z_D", new Vector3(6.0f, H / 2, 1f), new Vector3(4f, H, 0.14f), wallGame);   // x 4..8
-            RoomBuilder.Box("GameWallBack", root, new Vector3(4f, H / 2, D / 2 - 0.11f), new Vector3(8f, H, 0.02f), wallGame, false, true);
+            // cloisons intérieures : un passage encadré (chambranle + linteau) par mur, loin des meubles
+            WallWithDoor(root, "Part_X_South", false, 0f, -D / 2, 1f, -2.5f, DW, DH, H, 0.14f, wall, trim);     // salon <-> cuisine
+            WallWithDoor(root, "Part_X_North", false, 0f, 1f, D / 2, 3.5f, DW, DH, H, 0.14f, wall, trim);      // chambre <-> salle de jeux
+            WallWithDoor(root, "Part_Z_West", true, 1f, -W / 2, 0f, -2f, DW, DH, H, 0.14f, wall, trim);        // salon <-> chambre
+            WallWithDoor(root, "Part_Z_East", true, 1f, 0f, W / 2, 2f, DW, DH, H, 0.14f, wall, trim);          // cuisine <-> salle de jeux
+            // peinture violette côté salle de jeux uniquement
+            RoomBuilder.Box("GameWallBack", root, new Vector3(4f, H / 2, D / 2 - 0.11f), new Vector3(7.96f, H, 0.02f), wallGame, false, true);
+            RoomBuilder.Box("GameWallRight", root, new Vector3(W / 2 - 0.11f, H / 2, 3.5f), new Vector3(0.02f, H, 4.9f), wallGame, false, true);
+            foreach (var (x0, x1) in new[] { (0.08f, 2f - DW / 2), (2f + DW / 2, W / 2 - 0.12f) })
+                RoomBuilder.Box("GameWallSouth", root, new Vector3((x0 + x1) / 2, H / 2, 1.08f), new Vector3(x1 - x0, H, 0.02f), wallGame, false, true);
+            foreach (var (z0, z1) in new[] { (1.08f, 3.5f - DW / 2), (3.5f + DW / 2, D / 2 - 0.12f) })
+                RoomBuilder.Box("GameWallWest", root, new Vector3(0.08f, H / 2, (z0 + z1) / 2), new Vector3(0.02f, H, z1 - z0), wallGame, false, true);
+            RoomBuilder.Box("GameLintelS", root, new Vector3(2f, (DH + H) / 2, 1.08f), new Vector3(DW, H - DH, 0.02f), wallGame, false, true);
+            RoomBuilder.Box("GameLintelW", root, new Vector3(0.08f, (DH + H) / 2, 3.5f), new Vector3(0.02f, H - DH, DW), wallGame, false, true);
 
             // éclairage : plafonniers + lumière chaude par pièce
             foreach (var c in new[] { new Vector3(-4f, 0f, -2.5f), new Vector3(4f, 0f, -2.5f), new Vector3(-4f, 0f, 3.5f), new Vector3(4f, 0f, 3.5f) })
@@ -187,7 +200,8 @@ namespace ArcadeEmpire.EditorTools
             var shelfPal = ModelLib.Palette(null);
             shelfPal["Second"] = RoomBuilder.Mat("Home_ShelfWood", White, 0.4f);
             shelfPal["Accent"] = RoomBuilder.Neon("Home_ShelfLed", new Color(1f, 0.85f, 0.6f));
-            foreach (var (pos, rot) in new[] { (new Vector3(1.6f, 0f, 5.75f), 0f), (new Vector3(7.75f, 0f, 2.8f), 270f), (new Vector3(-2.2f, 0f, -5.75f), 180f), (new Vector3(-0.25f, 0f, 3.0f), 270f) })
+            // contre un mur plein, jamais devant un passage : salon (façade), cuisine (mur droit), chambre (cloison), salle de jeux (fond)
+            foreach (var (pos, rot) in new[] { (new Vector3(-1.65f, 0f, -5.78f), 180f), (new Vector3(7.78f, 0f, -2.2f), 90f), (new Vector3(-4.6f, 0f, 1.29f), 180f), (new Vector3(3.2f, 0f, 5.78f), 0f) })
             {
                 var sh = ModelLib.Spawn("home_shelf", root, shelfPal);
                 if (sh == null) continue;
@@ -205,22 +219,40 @@ namespace ArcadeEmpire.EditorTools
             // arrivée (devant la porte, côté intérieur) + téléporteur retour
             var spawn = new GameObject("HouseSpawn").transform;
             spawn.SetParent(root, false);
-            spawn.localPosition = new Vector3(0f, 0f, -4.4f);
+            spawn.localPosition = new Vector3(-4f, 0f, -4.5f);
             spawn.localRotation = Quaternion.identity;
-            var pad = Pad(root, new Vector3(1.6f, 0f, -5.2f), "sign_home", new Color(0.5f, 0.75f, 1f));
+            var pad = Pad(root, new Vector3(-6.7f, 0f, -4.9f), "sign_home", new Color(0.5f, 0.75f, 1f));
             returnPadSpot = pad;
 
             // points de vue du labo
-            View(root, "maison_salon", new Vector3(-1.2f, 1.7f, -0.5f), new Vector3(-5f, 0.6f, -4f));
-            View(root, "maison_cuisine", new Vector3(1.2f, 1.7f, 0f), new Vector3(5f, 0.8f, -4.5f));
-            View(root, "maison_chambre", new Vector3(-1.5f, 1.7f, 1.8f), new Vector3(-5f, 0.6f, 4.5f));
-            View(root, "maison_jeux", new Vector3(1.0f, 1.7f, 1.6f), new Vector3(5f, 0.9f, 5f));
+            View(root, "maison_salon", new Vector3(-1.0f, 1.8f, -5.2f), new Vector3(-6f, 0.6f, -1.5f));
+            View(root, "maison_salon2", new Vector3(-7.2f, 1.8f, -5.3f), new Vector3(-2f, 0.8f, 0.5f));
+            View(root, "maison_cuisine", new Vector3(1.0f, 1.8f, 0.3f), new Vector3(5f, 0.8f, -4.5f));
+            View(root, "maison_chambre", new Vector3(-0.8f, 1.8f, 1.6f), new Vector3(-5f, 0.6f, 4.5f));
+            View(root, "maison_jeux", new Vector3(0.8f, 1.8f, 1.6f), new Vector3(5.5f, 0.9f, 4.5f));
+            View(root, "maison_haut", new Vector3(0f, 14f, -9f), new Vector3(0f, 0f, 0f));
             return spawn;
         }
 
         static void Floor(Transform root, string name, Vector3 c, Vector2 size, Material m)
         {
             var f = RoomBuilder.Box(name, root, c + new Vector3(0f, -0.05f, 0f), new Vector3(size.x, 0.1f, size.y), m, true, true);
+        }
+
+        /// <summary>Mur droit avec un passage encadré : deux pans, un linteau au-dessus, chambranle blanc autour de l'ouverture.
+        /// alongX : le mur suit l'axe X à z = fixed (sinon l'axe Z à x = fixed), de a à b, ouverture centrée sur door.</summary>
+        static void WallWithDoor(Transform root, string name, bool alongX, float fixedC, float a, float b, float door, float dw, float dh, float h, float thick, Material m, Material trim)
+        {
+            float d0 = door - dw / 2, d1 = door + dw / 2;
+            Vector3 P(float along, float y) => alongX ? new Vector3(along, y, fixedC) : new Vector3(fixedC, y, along);
+            Vector3 S(float len, float hh, float t) => alongX ? new Vector3(len, hh, t) : new Vector3(t, hh, len);
+            if (d0 - a > 0.01f) RoomBuilder.Box(name + "_A", root, P((a + d0) / 2, h / 2), S(d0 - a, h, thick), m, true, true);
+            if (b - d1 > 0.01f) RoomBuilder.Box(name + "_B", root, P((d1 + b) / 2, h / 2), S(b - d1, h, thick), m, true, true);
+            RoomBuilder.Box(name + "_Lintel", root, P(door, (dh + h) / 2), S(dw, h - dh, thick), m, true, true);
+            // chambranle (montants + traverse), un peu plus épais que le mur
+            foreach (float e in new[] { d0 - 0.04f, d1 + 0.04f })
+                RoomBuilder.Box(name + "_Jamb", root, P(e, dh / 2), S(0.08f, dh, thick + 0.04f), trim, false, true);
+            RoomBuilder.Box(name + "_Head", root, P(door, dh + 0.04f), S(dw + 0.16f, 0.08f, thick + 0.04f), trim, false, true);
         }
 
         static void Partition(Transform root, string name, Vector3 c, Vector3 size, Material m) => RoomBuilder.Box(name, root, c, size, m, true, true);

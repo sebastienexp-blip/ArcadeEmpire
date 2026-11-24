@@ -172,7 +172,7 @@ namespace ArcadeEmpire.EditorTools
                 ["Jacket"] = Lit("Player_Jacket", new Color(0.22f, 0.27f, 0.42f), 0.25f, 0f, "denim", 2f),
                 ["Pants"] = Lit("Player_Pants", new Color(0.2f, 0.34f, 0.62f), 0.2f, 0f, "denim", 2.5f),
                 ["Sneaker"] = Lit("Player_Sneaker", new Color(0.9f, 0.22f, 0.3f), 0.45f, 0f, "plastic", 2f),
-                ["Skin"] = Lit("Player_Skin", new Color(0.93f, 0.72f, 0.56f), 0.35f, 0f, "skin", 1f),
+                ["Skin"] = Lit("Player_Skin", new Color(1f, 0.8f, 0.66f), 0.35f, 0f, "skin", 1f),
                 ["Hair"] = Lit("Player_Hair", new Color(0.27f, 0.17f, 0.1f), 0.4f, 0f, "fabric", 3f),
                 ["Mouth"] = RoomBuilder.Mat("Player_Mouth", new Color(0.55f, 0.2f, 0.2f), 0.3f),
             };
