@@ -336,7 +336,7 @@ namespace ArcadeEmpire.Machines
         private Vector2 HandleInput()
         {
             Keyboard kb = Keyboard.current;
-            Vector2 move = externalMove;
+            Vector2 move = externalMove + ArcadeEmpire.Core.TouchInput.Move;
             bool action = externalDrop;
             bool exit = false;
             externalDrop = false;

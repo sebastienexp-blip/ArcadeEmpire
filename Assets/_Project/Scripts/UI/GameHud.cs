@@ -31,6 +31,7 @@ namespace ArcadeEmpire.UI
 
         private static readonly bool Mobile = Application.isMobilePlatform;
         private MachineInteractor interactor;
+        private ArcadeEmpire.Building.HomeDisplay home;
         private string toast = "";
         private float toastUntil;
 
@@ -61,7 +62,7 @@ namespace ArcadeEmpire.UI
         }
 
         private void OnReward(MachineBase machine, RewardData reward) =>
-            Show($"{reward.displayName} — {ClawMachine.RarityName(reward.rarity)}");
+            Show(reward.furniture ? $"CARTON SURPRISE : {reward.displayName} livré à ta maison !" : $"{reward.displayName} — {ClawMachine.RarityName(reward.rarity)}", reward.furniture ? 5f : 3.5f);
 
         private void OnLevelUp(int level, long coins, int tokens) =>
             Show($"NIVEAU {level} !   +{coins} pièces" + (tokens > 0 ? $"   +{tokens} jeton premium" : ""), 4.5f);
@@ -75,6 +76,8 @@ namespace ArcadeEmpire.UI
         // ------------------------------------------------------------------ construction
         private Canvas canvas;
         private GameObject root, menuButtons, cameraPad, statusBox, promptBox, toastBox, keysBox, hintBox;
+        private Text keysText, locationText;
+        private GameObject locationBox;
         private Text coinsText, ticketsText, tokensText, levelNum, xpText, nameText, statusText, hintText, camHintText, promptText, promptKey, toastText;
         private RectTransform cameraPadRect;
         private Image xpRing, xpBar, toastIcon;
@@ -105,18 +108,20 @@ namespace ArcadeEmpire.UI
             coinsText = Pill(r, "coin", 0, UiTheme.Gold);
             ticketsText = Pill(r, "ticket", 1, new Color(1f, 0.62f, 0.4f));
             tokensText = Pill(r, "gem", 2, UiTheme.Cyan);
+            keysText = Pill(r, "key", 3, new Color(1f, 0.88f, 0.45f));
+            locationBox = Box(r, "Location", new Vector2(0, 1), new Vector2(0, 1), new Vector2(354f, -62f), new Vector2(340, 32), new Color(0.05f, 0.04f, 0.14f, 0.85f)).gameObject;
+            locationText = Text(locationBox.transform, "Loc", 16, TextAnchor.MiddleCenter, Vector2.zero, Vector2.zero, UiTheme.TextDim, true);
 
             // ---- boutons du menu (haut droite)
             menuButtons = new GameObject("MenuButtons", typeof(RectTransform), typeof(VerticalLayoutGroup));
             menuButtons.transform.SetParent(r, false);
             var mr = menuButtons.GetComponent<RectTransform>();
-            mr.anchorMin = mr.anchorMax = mr.pivot = new Vector2(1, 1); mr.anchoredPosition = new Vector2(-12, -12); mr.sizeDelta = new Vector2(216, 280);
+            mr.anchorMin = mr.anchorMax = mr.pivot = new Vector2(1, 1); mr.anchoredPosition = new Vector2(-12, -12); mr.sizeDelta = new Vector2(84, 300);
             var v = menuButtons.GetComponent<VerticalLayoutGroup>();
-            v.spacing = 8f; v.childControlWidth = true; v.childControlHeight = true; v.childForceExpandWidth = true; v.childForceExpandHeight = false;
-            UiKit.AddIconButton(mr, "bag", "Inventaire", 216f, 56f, () => UIState.Request("inventory"), Mobile ? null : "I");
-            UiKit.AddIconButton(mr, "shop", "Boutique", 216f, 56f, () => UIState.Request("shop"), Mobile ? null : "B");
-            UiKit.AddIconButton(mr, "hammer", "Construire", 216f, 56f, () => UIState.Request("build"), Mobile ? null : "C");
-            UiKit.AddIconButton(mr, "gear", "Options", 216f, 56f, () => UIState.Request("options"), Mobile ? null : "Échap");
+            v.spacing = 10f; v.childControlWidth = true; v.childControlHeight = true; v.childForceExpandWidth = true; v.childForceExpandHeight = false;
+            RoundMenu(mr, "bag", "Collection", new Color(0.3f, 0.75f, 1f), () => UIState.Request("inventory"));
+            RoundMenu(mr, "shop", "Vitrine", new Color(1f, 0.35f, 0.65f), () => UIState.Request("shop"));
+            RoundMenu(mr, "gear", "Options", new Color(0.6f, 0.6f, 0.8f), () => UIState.Request("options"));
 
             // ---- caméra (milieu droit)
             BuildCameraPad(r);
@@ -154,6 +159,28 @@ namespace ArcadeEmpire.UI
             var kh = keysBox.GetComponent<HorizontalLayoutGroup>();
             kh.spacing = 6f; kh.childAlignment = TextAnchor.MiddleLeft; kh.childControlWidth = true; kh.childControlHeight = true; kh.childForceExpandWidth = false; kh.childForceExpandHeight = false;
             Hint(kr, "Z Q S D", "marcher"); Hint(kr, "Maj", "courir"); Hint(kr, "Clic droit", "caméra"); Hint(kr, "E", "machine"); Hint(kr, "M", "musique");
+        }
+
+        /// <summary>Bouton de menu rond (icône + petit libellé), façon jeu mobile.</summary>
+        private static void RoundMenu(Transform parent, string icon, string label, Color color, UnityEngine.Events.UnityAction onClick)
+        {
+            var go = new GameObject("Menu_" + label, typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
+            go.transform.SetParent(parent, false);
+            var img = go.GetComponent<Image>(); img.sprite = UiTheme.Circle; img.color = new Color(color.r * 0.35f, color.g * 0.35f, color.b * 0.35f, 0.95f);
+            var b = go.GetComponent<Button>(); b.targetGraphic = img; b.onClick.AddListener(onClick);
+            var le = go.GetComponent<LayoutElement>(); le.preferredHeight = le.minHeight = 84f; le.preferredWidth = 84f;
+            var ring = new GameObject("Ring", typeof(RectTransform), typeof(Image));
+            ring.transform.SetParent(go.transform, false);
+            var ri = ring.GetComponent<Image>(); ri.sprite = UiTheme.Ring; ri.color = color; ri.raycastTarget = false;
+            var rr = ring.GetComponent<RectTransform>(); rr.anchorMin = Vector2.zero; rr.anchorMax = Vector2.one; rr.offsetMin = rr.offsetMax = Vector2.zero;
+            var ic = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            ic.transform.SetParent(go.transform, false);
+            var ii = ic.GetComponent<Image>(); ii.sprite = UiTheme.Icon(icon); ii.preserveAspect = true; ii.raycastTarget = false;
+            var ir = ic.GetComponent<RectTransform>(); ir.anchorMin = new Vector2(0.26f, 0.34f); ir.anchorMax = new Vector2(0.74f, 0.82f); ir.offsetMin = ir.offsetMax = Vector2.zero;
+            var t = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            t.transform.SetParent(go.transform, false);
+            var tx = t.GetComponent<Text>(); tx.font = UiKit.Font; tx.text = label; tx.fontSize = 12; tx.fontStyle = FontStyle.Bold; tx.color = Color.white; tx.alignment = TextAnchor.LowerCenter; tx.raycastTarget = false;
+            var tr = t.GetComponent<RectTransform>(); tr.anchorMin = Vector2.zero; tr.anchorMax = Vector2.one; tr.offsetMin = new Vector2(0, 10); tr.offsetMax = Vector2.zero;
         }
 
         private static void Hint(Transform parent, string key, string label)
@@ -293,6 +320,14 @@ namespace ArcadeEmpire.UI
             coinsText.text = cm != null ? Compact(cm.Get(CurrencyType.Coins)) : "—";
             ticketsText.text = cm != null ? Compact(cm.Get(CurrencyType.Tickets)) : "—";
             tokensText.text = cm != null ? Compact(cm.Get(CurrencyType.PremiumTokens)) : "—";
+            keysText.text = cm != null ? Compact(cm.Get(CurrencyType.Keys)) : "—";
+            bool atHome = interactor != null && interactor.transform.position.x > 40f;
+            if (atHome)
+            {
+                if (home == null) home = FindFirstObjectByType<ArcadeEmpire.Building.HomeDisplay>();
+                locationText.text = home != null ? $"MA MAISON — meubles {home.FurnitureOwned} / {home.FurnitureTotal}" : "MA MAISON";
+            }
+            else locationText.text = "SALLE D'ARCADE";
             if (pm != null)
             {
                 levelNum.text = pm.Level.ToString();
@@ -303,6 +338,7 @@ namespace ArcadeEmpire.UI
 
             bool active = interactor != null && interactor.Active != null;
             bool near = interactor != null && !active && interactor.Nearest != null && interactor.Nearest.Data != null;
+            var point = interactor != null && !active ? interactor.NearestPoint : null;
             bool pad = GameSettings.ShowCameraPad;
             menuButtons.SetActive(!active);
             cameraPad.SetActive(pad);
@@ -316,11 +352,14 @@ namespace ArcadeEmpire.UI
             statusBox.SetActive(active);
             hintBox.SetActive(active);
             camHintText.gameObject.SetActive(!Mobile && GameSettings.ShowKeyHints);
-            promptBox.SetActive(near);
+            promptBox.SetActive(near || point != null);
+            locationBox.SetActive(!active);
             if (active)
             {
                 statusText.text = interactor.Active.StatusText;
-                hintText.text = Mobile ? "Flèches : choisir la fente    ACTION : insérer    R : gains    X : quitter" : interactor.Active.ControlsHint;
+                hintText.text = !Mobile ? interactor.Active.ControlsHint :
+                    interactor.Active is CoinPusherMachine ? "Joystick ou touche les fentes : choisir    PIÈCE : insérer    GAINS : encaisser    RETOUR : quitter"
+                    : "Joystick : déplacer la pince    PINCE : descendre et attraper    RETOUR : quitter";
             }
             else if (near)
             {
@@ -328,6 +367,11 @@ namespace ArcadeEmpire.UI
                 bool unlocked = interactor.Nearest.IsUnlocked;
                 promptKey.text = unlocked ? "E" : "×";
                 promptText.text = unlocked ? $"Jouer — {d.displayName}   ({d.costPerPlay} pièce{(d.costPerPlay > 1 ? "s" : "")})" : $"{d.displayName} — niveau {d.unlockLevel} requis";
+            }
+            else if (point != null)
+            {
+                promptKey.text = Mobile ? "●" : "E";
+                promptText.text = point.label;
             }
             bool showToast = Time.time < toastUntil;
             toastBox.SetActive(showToast);

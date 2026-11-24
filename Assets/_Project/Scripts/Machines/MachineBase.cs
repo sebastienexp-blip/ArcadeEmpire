@@ -107,6 +107,20 @@ namespace ArcadeEmpire.Machines
             AddToInventory(reward);
             OnRewardWon?.Invoke(this, reward);
             AnyRewardWon?.Invoke(this, reward);
+            TryBonusFurniture();
+        }
+
+        /// <summary>Carton surprise : 6 % de chance à chaque gain de remporter un meuble (non premium) pas encore possédé pour la maison.</summary>
+        private void TryBonusFurniture()
+        {
+            var inv = InventoryManager.Instance;
+            if (inv == null || inv.Catalog == null || UnityEngine.Random.value > 0.06f) return;
+            var pool = new System.Collections.Generic.List<RewardData>();
+            foreach (var r in inv.Catalog.rewards) if (r != null && r.furniture && r.keyPrice == 0 && inv.Count(r.id) == 0) pool.Add(r);
+            if (pool.Count == 0) return;
+            var f = pool[UnityEngine.Random.Range(0, pool.Count)];
+            inv.Add(f, 1);
+            AnyRewardWon?.Invoke(this, f);
         }
 
         /// <summary>

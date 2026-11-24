@@ -1,6 +1,5 @@
 using ArcadeEmpire.Data;
 using ArcadeEmpire.Economy;
-using ArcadeEmpire.Machines;
 using ArcadeEmpire.Player;
 using ArcadeEmpire.Save;
 using UnityEngine;
@@ -10,55 +9,55 @@ using UnityEngine.UI;
 namespace ArcadeEmpire.UI
 {
     /// <summary>
-    /// Panneau d'inventaire et de collection (touche I) : lots possédés par rareté, progression de la collection,
-    /// revente contre des pièces, sauvegarde manuelle. Interface Canvas (UGUI).
+    /// Collection (touche I) : album de tous les lots du jeu en cartes illustrées (silhouette pour ceux pas encore gagnés),
+    /// onglets par rareté et meubles de la maison. La revente se fait au comptoir de rachat de la salle.
     /// </summary>
     public class InventoryPanel : MonoBehaviour
     {
+        private static readonly string[] TabNames = { "Tout", "Légendaire", "Épique", "Rare", "Commun", "Maison" };
+        private static readonly Color Accent = new Color(0.3f, 0.75f, 1f);
         private bool open;
+        private int tab;
         private string message = "";
         private MachineInteractor interactor;
         private PlayerController player;
 
         private Canvas canvas;
-        private Text infoText, messageText;
+        private Text currencies, infoText, messageText;
         private RectTransform content;
+        private Button[] tabButtons;
 
         private void Start()
         {
             interactor = FindFirstObjectByType<MachineInteractor>();
             player = FindFirstObjectByType<PlayerController>();
-            BuildUi();
-            canvas.gameObject.SetActive(false);
-        }
-
-        private void BuildUi()
-        {
             UiKit.EnsureEventSystem();
             canvas = UiKit.NewCanvas(transform, "InventoryCanvas", 20);
-            var win = UiKit.Window(canvas.transform, new Vector2(800, 640));
-            UiKit.AddText(win, "INVENTAIRE ET COLLECTION", 22, UiKit.Gold, -1f, 32f, TextAnchor.MiddleLeft, true);
-            infoText = UiKit.AddText(win, "", 17, UiKit.Light, -1f, 28f);
-            content = UiKit.AddScroll(win, 450f);
-            messageText = UiKit.AddText(win, "", 15, UiKit.Dim, -1f, 24f);
-            var bottom = UiKit.AddRow(win, 38f);
-            UiKit.AddButton(bottom, "Sauvegarder", 160f, 36f, () =>
+            var win = UiCards.Screen(canvas.transform, "bag", "MA COLLECTION", Accent, () => SetOpen(false), out currencies);
+            tabButtons = UiCards.Tabs(win, TabNames, null, Accent, i => { tab = i; Rebuild(); });
+            foreach (var b in tabButtons) b.GetComponent<LayoutElement>().preferredWidth = 150f;
+            var row = UiKit.AddRow(win, 44f);
+            infoText = UiKit.AddText(row, "", 17, UiKit.Light, -1f, 40f);
+            UiKit.AddButton(row, "Sauvegarder", 180f, 40f, () =>
             {
                 bool ok = SaveManager.Instance != null && SaveManager.Instance.SaveNow();
                 message = ok ? "Partie sauvegardée." : "Sauvegarde impossible.";
             });
-            UiKit.AddButton(bottom, "Fermer (I / Échap)", 190f, 36f, () => SetOpen(false));
+            content = UiKit.AddScroll(win, 380f);
+            var le = content.parent.GetComponent<LayoutElement>(); le.flexibleHeight = 1f; le.minHeight = 200f;
+            messageText = UiKit.AddText(win, "", 16, UiKit.Gold, -1f, 24f, TextAnchor.MiddleCenter, true);
+            canvas.gameObject.SetActive(false);
         }
 
         private void Update()
         {
             Keyboard kb = Keyboard.current;
-            if (kb == null) return;
             bool inMachine = interactor != null && interactor.Active != null;
-
-            if (!open && (kb.iKey.wasPressedThisFrame || UIState.Consume("inventory")) && !inMachine && !UIState.PanelOpen) SetOpen(true);
-            else if (open && (kb.iKey.wasPressedThisFrame || kb.escapeKey.wasPressedThisFrame)) SetOpen(false);
-            if (open) RefreshHeader();
+            bool i = kb != null && kb.iKey.wasPressedThisFrame;
+            bool esc = kb != null && kb.escapeKey.wasPressedThisFrame;
+            if (!open && (i || UIState.Consume("inventory")) && !inMachine && !UIState.PanelOpen) SetOpen(true);
+            else if (open && (i || esc)) SetOpen(false);
+            if (open) { currencies.text = UiCards.CurrencyLine(); messageText.text = message; }
         }
 
         private void SetOpen(bool value)
@@ -71,45 +70,33 @@ namespace ArcadeEmpire.UI
             if (value) Rebuild();
         }
 
-        private void RefreshHeader()
-        {
-            InventoryManager inv = InventoryManager.Instance;
-            var cm = CurrencyManager.Instance;
-            if (inv == null || inv.Catalog == null) { infoText.text = "Inventaire indisponible (lance le jeu depuis la scène Boot)."; return; }
-            infoText.text = $"Pièces : {(cm != null ? cm.Get(CurrencyType.Coins) : 0)}   Tickets : {(cm != null ? cm.Get(CurrencyType.Tickets) : 0)}" +
-                            $"   Collection : {inv.DistinctOwned} / {inv.Catalog.rewards.Count}   Objets : {inv.TotalItems}";
-            messageText.text = message;
-        }
-
         private void Rebuild()
         {
             UiKit.Clear(content);
-            InventoryManager inv = InventoryManager.Instance;
-            if (inv == null || inv.Catalog == null) { RefreshHeader(); return; }
-            for (int r = 3; r >= 0; r--)
+            UiCards.HighlightTab(tabButtons, tab, Accent);
+            var inv = InventoryManager.Instance;
+            if (inv == null || inv.Catalog == null) { infoText.text = "Collection indisponible (lance le jeu depuis la scène Boot)."; return; }
+            int lots = 0, lotsOwned = 0, furn = 0, furnOwned = 0;
+            foreach (var r in inv.Catalog.rewards)
             {
-                var rarity = (Rarity)r;
-                UiKit.AddText(content, $"— {ClawMachine.RarityName(rarity)} —", 22, UiKit.Gold, -1f, 34f, TextAnchor.MiddleLeft, true);
-                foreach (RewardData reward in inv.Catalog.rewards)
-                {
-                    if (reward == null || reward.rarity != rarity) continue;
-                    int count = inv.Count(reward.id);
-                    RewardData rw = reward;
-                    var row = UiKit.AddRow(content, 32f);
-                    UiKit.AddText(row, count > 0 ? reward.displayName : "???", 18, UiKit.Light, 270f);
-                    UiKit.AddText(row, $"x{count}", 18, UiKit.Light, 60f);
-                    UiKit.AddText(row, $"{reward.SellValue} pièces / unité", 14, UiKit.Dim, 160f);
-                    UiKit.AddButton(row, "Vendre 1", 90f, 28f, () => { Sell(inv, rw, 1); Rebuild(); }, count > 0);
-                    UiKit.AddButton(row, "Tout vendre", 100f, 28f, () => { Sell(inv, rw, inv.Count(rw.id)); Rebuild(); }, count > 0);
-                }
+                if (r == null) continue;
+                bool own = inv.Count(r.id) > 0;
+                if (r.furniture) { furn++; if (own) furnOwned++; } else { lots++; if (own) lotsOwned++; }
             }
-            RefreshHeader();
-        }
+            infoText.text = $"Lots découverts : {lotsOwned} / {lots}     Meubles de la maison : {furnOwned} / {furn}     Objets : {inv.TotalItems}";
 
-        private void Sell(InventoryManager inv, RewardData reward, int amount)
-        {
-            if (inv.Sell(reward, amount))
-                message = $"Vendu {amount} x {reward.displayName} : +{reward.SellValue * amount} pièces.";
+            var grid = UiCards.Grid(content, 170f, 230f);
+            UiCards.FitColumns(grid, ((RectTransform)canvas.transform).rect.width * 0.92f - 70f);
+            for (int rr = 3; rr >= 0; rr--)
+                foreach (var r in inv.Catalog.rewards)
+                {
+                    if (r == null || (int)r.rarity != rr) continue;
+                    if (tab == 5 ? !r.furniture : r.furniture) continue;
+                    if (tab >= 1 && tab <= 4 && (int)r.rarity != 4 - tab) continue;
+                    int n = inv.Count(r.id);
+                    string info = n > 0 ? (r.furniture ? "Installé" : $"x{n}") : (r.furniture ? "Vitrine des lots" : "Pas encore gagné");
+                    UiCards.PrizeCard(grid, r, n > 0, info, null, null, false, null, n > 1 ? $"x{n}" : null);
+                }
         }
     }
 }

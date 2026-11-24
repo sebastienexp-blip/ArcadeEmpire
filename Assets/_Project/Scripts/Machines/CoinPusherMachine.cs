@@ -357,9 +357,11 @@ namespace ArcadeEmpire.Machines
 
         private void HandleInput()
         {
+            int flick = ArcadeEmpire.Core.TouchInput.ConsumeFlick();
+            if (flick < 0) selectedSlot = Mathf.Max(0, selectedSlot - 1);
+            if (flick > 0) selectedSlot = Mathf.Min(SlotX.Length - 1, selectedSlot + 1);
             Keyboard kb = Keyboard.current;
             if (kb == null) return;
-
             if (kb.aKey.wasPressedThisFrame || kb.qKey.wasPressedThisFrame || kb.leftArrowKey.wasPressedThisFrame) selectedSlot = Mathf.Max(0, selectedSlot - 1);
             if (kb.dKey.wasPressedThisFrame || kb.rightArrowKey.wasPressedThisFrame) selectedSlot = Mathf.Min(SlotX.Length - 1, selectedSlot + 1);
             if (kb.digit1Key.wasPressedThisFrame) { InsertAt(0); return; }

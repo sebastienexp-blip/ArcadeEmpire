@@ -66,6 +66,15 @@ namespace ArcadeEmpire.EditorTools
             r.id = f.id; r.displayName = f.name; r.furniture = true;
             r.rarity = f.keys >= 2 ? Rarity.Legendary : f.keys == 1 ? Rarity.Epic : f.tickets >= 150 ? Rarity.Rare : Rarity.Common;
             r.shopTicketPrice = f.tickets; r.keyPrice = f.keys; r.ticketValue = 0; r.experienceValue = 20 + f.tickets / 5;
+            // prefab d'affichage (vignette de la vitrine / collection)
+            ProjectSetup.EnsureFolder("Assets/_Project/Prefabs/Furniture");
+            var vis = ModelLib.Spawn(f.model, null, FurnPalette(f));
+            if (vis != null)
+            {
+                vis.name = "Furniture_" + f.id;
+                r.prefab = PrefabUtility.SaveAsPrefabAsset(vis, "Assets/_Project/Prefabs/Furniture/" + f.id + ".prefab");
+                Object.DestroyImmediate(vis);
+            }
             EditorUtility.SetDirty(r);
             return r;
         }

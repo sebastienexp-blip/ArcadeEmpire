@@ -24,7 +24,7 @@ namespace ArcadeEmpire.Core
         public static bool InvertY { get => GetI("invy", 0) == 1; set => SetI("invy", value ? 1 : 0); }
         public static float UiScale { get => GetF("ui", 1f); set => SetF("ui", Mathf.Clamp(value, 0.8f, 1.3f)); }
         public static bool ShowKeyHints { get => GetI("hints", 1) == 1; set => SetI("hints", value ? 1 : 0); }
-        public static bool ShowCameraPad { get => GetI("campad", 1) == 1; set => SetI("campad", value ? 1 : 0); }
+        public static bool ShowCameraPad { get => GetI("campad", UnityEngine.Application.isMobilePlatform ? 0 : 1) == 1; set => SetI("campad", value ? 1 : 0); }
         public static float TouchScale { get => GetF("touch", 1f); set => SetF("touch", Mathf.Clamp(value, 0.7f, 1.5f)); }
         public static float TouchOpacity { get => GetF("touchop", 0.6f); set => SetF("touchop", Mathf.Clamp(value, 0.2f, 1f)); }
         public static bool AutoSave { get => GetI("autosave", 1) == 1; set => SetI("autosave", value ? 1 : 0); }

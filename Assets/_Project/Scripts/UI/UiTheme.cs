@@ -290,6 +290,38 @@ namespace ArcadeEmpire.UI
                 case "bolt":
                     p.Fill((x, y) => Mathf.Min(Poly(x, y, -0.35f, -0.1f, 0.12f, -0.1f, 0.05f, 0.9f, -0.5f, 0.9f), Poly(x, y, -0.05f, -0.95f, 0.5f, -0.1f, 0.12f, -0.1f, -0.2f, -0.1f)), gold);
                     break;
+                case "key":
+                    p.Fill((x, y) => Ring2(x, y, -0.42f, 0.3f, 0.3f, 0.12f), goldD);
+                    p.Fill((x, y) => Ring2(x, y, -0.42f, 0.3f, 0.3f, 0.07f), gold);
+                    p.Fill((x, y) => RotBox(x, y, 0.2f, -0.18f, 0.55f, 0.08f, 0.03f, -38f), gold);
+                    p.Fill((x, y) => RotBox(x, y, 0.52f, -0.62f, 0.07f, 0.16f, 0.02f, -38f), gold);
+                    p.Fill((x, y) => RotBox(x, y, 0.34f, -0.48f, 0.07f, 0.12f, 0.02f, -38f), gold);
+                    break;
+                case "home":
+                    p.Fill((x, y) => Poly(x, y, -0.9f, 0.05f, 0f, 0.85f, 0.9f, 0.05f), C(1f, 0.45f, 0.4f));
+                    p.Fill((x, y) => Box(x, y, 0f, -0.4f, 0.62f, 0.48f, 0.04f), white);
+                    p.Fill((x, y) => Box(x, y, 0f, -0.6f, 0.16f, 0.28f, 0.04f), C(0.45f, 0.3f, 0.2f));
+                    p.Fill((x, y) => Box(x, y, 0.35f, -0.25f, 0.12f, 0.12f, 0.02f), C(0.5f, 0.8f, 1f));
+                    break;
+                case "hand":
+                    p.Fill((x, y) => Box(x, y, 0f, -0.35f, 0.42f, 0.45f, 0.2f), white);
+                    for (int i = 0; i < 4; i++) { float fx = -0.3f + i * 0.2f; float top = i == 0 || i == 3 ? 0.35f : 0.55f; p.Fill((x, y) => Box(x, y, fx, top * 0.5f, 0.08f, top * 0.5f + 0.1f, 0.08f), white); }
+                    p.Fill((x, y) => RotBox(x, y, -0.5f, -0.2f, 0.08f, 0.3f, 0.08f, 40f), white);
+                    break;
+                case "run":
+                    p.Fill((x, y) => Circ(x, y, 0.25f, 0.68f, 0.16f), white);
+                    p.Fill((x, y) => RotBox(x, y, 0.08f, 0.2f, 0.11f, 0.32f, 0.08f, -25f), white);
+                    p.Fill((x, y) => RotBox(x, y, -0.18f, -0.42f, 0.09f, 0.34f, 0.07f, 35f), white);
+                    p.Fill((x, y) => RotBox(x, y, 0.22f, -0.45f, 0.09f, 0.34f, 0.07f, -30f), white);
+                    p.Fill((x, y) => RotBox(x, y, -0.18f, 0.25f, 0.08f, 0.26f, 0.06f, 60f), white);
+                    p.Fill((x, y) => RotBox(x, y, 0.35f, 0.18f, 0.08f, 0.24f, 0.06f, -70f), white);
+                    break;
+                case "sell":
+                    p.Fill((x, y) => RotBox(x, y, 0.05f, 0.05f, 0.62f, 0.45f, 0.12f, -30f), C(0.3f, 0.88f, 0.5f));
+                    p.Fill((x, y) => Circ(x, y, -0.32f, 0.3f, 0.1f), dark);
+                    p.Fill((x, y) => Circ(x, y, 0.42f, -0.42f, 0.32f), goldD);
+                    p.Fill((x, y) => Circ(x, y, 0.42f, -0.42f, 0.25f), gold);
+                    break;
                 default:
                     p.Fill((x, y) => Circ(x, y, 0, 0, 0.8f), white);
                     break;

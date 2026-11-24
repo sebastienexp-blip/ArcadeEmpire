@@ -116,17 +116,21 @@ namespace ArcadeEmpire.Player
 
         private void ReadKeyboard()
         {
+            Vector2 input = Vector2.zero; bool run = false;
             Keyboard kb = Keyboard.current;
-            if (kb == null) return;
-
-            bool left = kb.aKey.isPressed || kb.qKey.isPressed || kb.leftArrowKey.isPressed;      // A (QWERTY) ou Q (AZERTY)
-            bool fwd = kb.wKey.isPressed || kb.zKey.isPressed || kb.upArrowKey.isPressed;         // W (QWERTY) ou Z (AZERTY)
-            bool right = kb.dKey.isPressed || kb.rightArrowKey.isPressed;
-            bool back = kb.sKey.isPressed || kb.downArrowKey.isPressed;
-
-            Vector2 input = new Vector2((right ? 1f : 0f) - (left ? 1f : 0f), (fwd ? 1f : 0f) - (back ? 1f : 0f));
+            if (kb != null)
+            {
+                bool left = kb.aKey.isPressed || kb.qKey.isPressed || kb.leftArrowKey.isPressed;      // A (QWERTY) ou Q (AZERTY)
+                bool fwd = kb.wKey.isPressed || kb.zKey.isPressed || kb.upArrowKey.isPressed;         // W (QWERTY) ou Z (AZERTY)
+                bool right = kb.dKey.isPressed || kb.rightArrowKey.isPressed;
+                bool back = kb.sKey.isPressed || kb.downArrowKey.isPressed;
+                input = new Vector2((right ? 1f : 0f) - (left ? 1f : 0f), (fwd ? 1f : 0f) - (back ? 1f : 0f));
+                run = kb.leftShiftKey.isPressed;
+            }
+            // joystick tactile (analogique : on marche doucement en le poussant peu)
+            if (ArcadeEmpire.Core.TouchInput.Move.sqrMagnitude > 0.0025f) { input = ArcadeEmpire.Core.TouchInput.Move; run |= ArcadeEmpire.Core.TouchInput.Run; }
             MoveInput = Vector2.ClampMagnitude(input, 1f);
-            RunInput = kb.leftShiftKey.isPressed;
+            RunInput = run;
         }
     }
 }
